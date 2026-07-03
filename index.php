@@ -51,6 +51,9 @@ switch ($page) {
             case 'delete':
                 $controller->delete();
                 break;
+            case 'save':          // ← add this line
+                $controller->save();
+                break;
             default:
                 $controller->list();
         }

@@ -134,3 +134,96 @@ body.login-page {
     border-color: #fecaca;
     color: #991b1b;
 }
+
+/* ===== Existing styles ===== */
+/* ... (keep all previous login styles) ... */
+
+/* ===== New Sidebar Styles ===== */
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    min-width: 260px;
+    max-width: 260px;
+    background: linear-gradient(180deg, #182919 0%, #243C25 50%, #345635 100%);
+    color: #fff;
+    transition: all 0.3s;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+}
+
+.sidebar.active {
+    margin-left: -260px;
+}
+
+.sidebar-header {
+    text-align: center;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+}
+
+.sidebar-logo {
+    max-width: 100px;
+    height: auto;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.sidebar-header h5 {
+    color: #FBBF24;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.sidebar .nav-link {
+    color: #d1eec8;
+    padding: 12px 24px;
+    font-weight: 500;
+    border-radius: 0;
+    transition: 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.sidebar .nav-link.active {
+    background: rgba(251, 191, 36, 0.2);
+    color: #FBBF24;
+    border-right: 4px solid #FBBF24;
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Page content */
+#content {
+    width: 100%;
+    padding: 0;
+    background: #f4f7f4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-left: -260px;
+        position: absolute;
+        height: 100%;
+        z-index: 999;
+    }
+    .sidebar.active {
+        margin-left: 0;
+    }
+}

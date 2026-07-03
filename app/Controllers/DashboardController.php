@@ -12,6 +12,9 @@ class DashboardController {
             header('Location: index.php');
             exit;
         }
-        require_once __DIR__ . '/../Views/dashboard.php';
+        $pageTitle = 'Dashboard';
+        $currentPage = 'dashboard';
+        $viewFile = __DIR__ . '/../Views/dashboard.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 }

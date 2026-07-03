@@ -25,7 +25,10 @@ class AssetController {
      */
     public function list() {
         $assets = $this->assetModel->getAll();
-        require_once __DIR__ . '/../Views/assets/list.php';
+        $pageTitle = 'Asset Registry';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/list.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
     /**
@@ -33,10 +36,12 @@ class AssetController {
      */
     public function add() {
         $accounts = $this->assetModel->getAssetAccounts();
-        // Define enum options for status and condition (from schema)
-        $statusOptions = ['active', 'inactive', 'disposed', 'missing']; // adjust based on your enum
+        $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
-        require_once __DIR__ . '/../Views/assets/form.php';
+        $pageTitle = 'Add Asset';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/form.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
     /**
@@ -56,7 +61,10 @@ class AssetController {
         $accounts = $this->assetModel->getAssetAccounts();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
-        require_once __DIR__ . '/../Views/assets/form.php';
+        $pageTitle = 'Edit Asset';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/form.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
     /**
@@ -90,7 +98,6 @@ class AssetController {
         if (empty($data['asset_accounts_id'])) $errors[] = 'Account is required.';
 
         if (!empty($errors)) {
-            // Pass errors back to form
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $data;
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -98,18 +105,18 @@ class AssetController {
         }
 
         if ($id) {
-            // Update
             $success = $this->assetModel->update($id, $data);
         } else {
-            // Create
             $success = $this->assetModel->create($data);
         }
 
         if ($success) {
             unset($_SESSION['form_errors'], $_SESSION['form_data']);
             $_SESSION['flash'] = 'Asset saved successfully.';
+            $_SESSION['flash_type'] = 'success';
         } else {
-            $_SESSION['form_errors'] = ['Failed to save asset. Please try again.'];
+            $_SESSION['flash'] = 'Failed to save asset. Please try again.';
+            $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
         }
@@ -126,6 +133,7 @@ class AssetController {
         if ($id) {
             $this->assetModel->delete($id);
             $_SESSION['flash'] = 'Asset deleted (soft delete).';
+            $_SESSION['flash_type'] = 'warning';
         }
         header('Location: index.php?page=assets&sub=list');
         exit;

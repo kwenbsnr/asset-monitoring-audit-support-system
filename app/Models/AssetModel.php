@@ -80,10 +80,11 @@ class AssetModel {
                 acquisition_cost, acquisition_date, asset_accounts_id, status, `condition`, remarks
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        // Generate a placeholder QR code reference (you can replace with real QR later)
+        // Generate a placeholder QR code reference
         $qr_code_ref = 'QR-' . strtoupper(uniqid());
+        // ✅ Fixed: 12 parameters, 12 type characters
         $stmt->bind_param(
-            'ssssssdsiss',
+            'ssssssdsisss', // s s s s s s d s i s s s  (12 chars)
             $data['asset_code'],
             $qr_code_ref,
             $data['description'],
@@ -119,8 +120,9 @@ class AssetModel {
                 remarks = ?
             WHERE asset_id = ?
         ");
+        // ✅ Fixed: 12 parameters, 12 type characters
         $stmt->bind_param(
-            'sssssdsissi',
+            'sssssdsisssi', // s s s s s d s i s s s i  (12 chars)
             $data['asset_code'],
             $data['description'],
             $data['brand'],
