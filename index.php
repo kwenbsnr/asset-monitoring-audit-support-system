@@ -57,6 +57,9 @@ switch ($page) {
             case 'details':
                 $controller->details();
                 break;
+            case 'list_all':
+                $controller->listAll();
+                break;
             default:
                 $controller->browse();
         }

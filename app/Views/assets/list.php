@@ -1,14 +1,36 @@
 <?php if (!defined('APP_START')) exit; ?>
 <div class="card shadow">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <h4 class="mb-0"><?= htmlspecialchars($pageTitle ?? 'Assets') ?></h4>
-        <div>
+        <div class="d-flex gap-2">
+            <!-- Search Form -->
+            <form method="GET" action="index.php" class="d-flex gap-2">
+                <input type="hidden" name="page" value="assets">
+                <input type="hidden" name="sub" value="<?= isset($_GET['cat_id']) ? 'browse' : 'list_all' ?>">
+                <?php if (isset($_GET['cat_id'])): ?>
+                    <input type="hidden" name="cat_id" value="<?= (int)$_GET['cat_id'] ?>">
+                <?php endif; ?>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Search by code, name, serial, custodian..." 
+                           value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                    <button class="btn btn-outline-success" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <?php if (!empty($_GET['search'])): ?>
+                        <a href="?page=assets&sub=<?= isset($_GET['cat_id']) ? 'browse&cat_id=' . (int)$_GET['cat_id'] : 'list_all' ?>" 
+                           class="btn btn-outline-secondary" title="Clear search">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </form>
             <a href="index.php?page=assets&sub=browse<?= isset($_GET['cat_id']) ? '&cat_id=' . (int)$_GET['cat_id'] : '' ?>" 
-               class="btn btn-secondary me-2">
-                <i class="bi bi-arrow-left"></i> Back to Categories
+               class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
             </a>
             <a href="index.php?page=assets&sub=add" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Add New Asset
+                <i class="bi bi-plus-circle"></i> Add New
             </a>
         </div>
     </div>
@@ -21,6 +43,16 @@
             <?php unset($_SESSION['flash'], $_SESSION['flash_type']); ?>
         <?php endif; ?>
 
+        <?php if (!empty($_GET['search'])): ?>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> 
+                Showing results for: <strong>"<?= htmlspecialchars($_GET['search']) ?>"</strong>
+                <?php if (!empty($assets)): ?>
+                    (<?= count($assets) ?> found)
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -30,14 +62,22 @@
                         <th>Brand / Model</th>
                         <th>Serial #</th>
                         <th>Account</th>
+                        <th>Custodian</th>
                         <th>Status</th>
-                        <th>Condition</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($assets)): ?>
-                        <tr><td colspan="8" class="text-center">No assets found in this category.</td></tr>
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <?php if (!empty($_GET['search'])): ?>
+                                    No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
+                                <?php else: ?>
+                                    No assets found in this category.
+                                <?php endif; ?>
+                            </td>
+                        </tr>
                     <?php else: ?>
                         <?php foreach ($assets as $asset): ?>
                             <tr>
@@ -46,8 +86,14 @@
                                 <td><?= htmlspecialchars($asset['brand'] ?? '') ?> <?= htmlspecialchars($asset['model'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($asset['serial_number'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($asset['account_code'] ?? '') ?></td>
+                                <td>
+                                    <?php if (!empty($asset['custodians'])): ?>
+                                        <?= htmlspecialchars($asset['custodians']) ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">Not assigned</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><span class="badge bg-<?= $asset['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $asset['status'] ?></span></td>
-                                <td><span class="badge bg-<?= $asset['condition'] === 'good' ? 'success' : 'warning' ?>"><?= $asset['condition'] ?></span></td>
                                 <td>
                                     <button class="btn btn-sm btn-info view-details" 
                                             data-id="<?= $asset['asset_id'] ?>" 
@@ -67,7 +113,7 @@
     </div>
 </div>
 
-<!-- ========== MODAL ========== -->
+<!-- Modal (same as before) -->
 <div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-labelledby="assetDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -94,11 +140,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const modalBody = document.getElementById('modalBody');
 
-    // Listen for click on any "View Details" button
     document.querySelectorAll('.view-details').forEach(btn => {
         btn.addEventListener('click', function(e) {
             const assetId = this.dataset.id;
-            // Show loading spinner
             modalBody.innerHTML = `
                 <div class="text-center py-4">
                     <div class="spinner-border text-success" role="status">
@@ -108,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
-            // Fetch data
             fetch(`index.php?page=assets&sub=details&id=${assetId}`)
                 .then(response => {
                     if (!response.ok) {
@@ -121,9 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         modalBody.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
                         return;
                     }
-                    // Build the details HTML
-                    let html = buildDetailsHTML(data);
-                    modalBody.innerHTML = html;
+                    modalBody.innerHTML = buildDetailsHTML(data);
                 })
                 .catch(error => {
                     modalBody.innerHTML = `<div class="alert alert-danger">Failed to load asset details: ${error.message}</div>`;
@@ -199,7 +240,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
 
-    // Simple escape function
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');

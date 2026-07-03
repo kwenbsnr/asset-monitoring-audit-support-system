@@ -215,12 +215,16 @@ class AssetModel {
     }
 
     /**
-     * Get all assets that belong to a specific category (directly, not including sub‑categories).
+     * Search assets across multiple fields.
+     * If categoryId is provided, only search within that category.
      *
-     * @param int $categoryId
+     * @param string      $search     The search term
+     * @param int|null    $categoryId Optional category to filter
      * @return array
      */
-    public function getAssetsByCategory($categoryId) {
+    public function searchAssets($search, $categoryId = null) {
+        $search = '%' . $search . '%';
+        
         $sql = "
             SELECT 
                 a.asset_id,
@@ -237,11 +241,83 @@ class AssetModel {
                 a.remarks,
                 aa.account_code,
                 aa.account_name,
-                ac.name AS category_name
+                ac.name AS category_name,
+                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
             LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
+            LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
+            LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
+            WHERE a.status != 'inactive'
+        ";
+
+        if ($categoryId) {
+            $sql .= " AND aa.asset_category_id = ?";
+        }
+
+        $sql .= " AND (
+            a.asset_code LIKE ?
+            OR a.description LIKE ?
+            OR a.brand LIKE ?
+            OR a.model LIKE ?
+            OR a.serial_number LIKE ?
+            OR aa.account_code LIKE ?
+            OR aa.account_name LIKE ?
+            OR p.full_name LIKE ?
+        )
+        GROUP BY a.asset_id
+        ORDER BY a.asset_code";
+
+        $stmt = $this->db->prepare($sql);
+        
+        if ($categoryId) {
+            $stmt->bind_param('issssssss', $categoryId, $search, $search, $search, $search, $search, $search, $search, $search);
+        } else {
+            $stmt->bind_param('ssssssss', $search, $search, $search, $search, $search, $search, $search, $search);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets by category with optional search.
+     *
+     * @param int         $categoryId
+     * @param string|null $search     Optional search term
+     * @return array
+     */
+    public function getAssetsByCategory($categoryId, $search = null) {
+        if ($search) {
+            return $this->searchAssets($search, $categoryId);
+        }
+        
+        $sql = "
+            SELECT 
+                a.asset_id,
+                a.asset_code,
+                a.qr_code_ref,
+                a.description,
+                a.brand,
+                a.model,
+                a.serial_number,
+                a.acquisition_cost,
+                a.acquisition_date,
+                a.status,
+                a.condition,
+                a.remarks,
+                aa.account_code,
+                aa.account_name,
+                ac.name AS category_name,
+                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians
+            FROM assets a
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
+            LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
+            LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
             WHERE aa.asset_category_id = ? AND a.status != 'inactive'
+            GROUP BY a.asset_id
             ORDER BY a.asset_code
         ";
         $stmt = $this->db->prepare($sql);
@@ -251,6 +327,19 @@ class AssetModel {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
    
+    /**
+     * Get all assets with optional search (for the "all assets" view).
+     *
+     * @param string|null $search Optional search term
+     * @return array
+     */
+    public function getAllAssets($search = null) {
+        if ($search) {
+            return $this->searchAssets($search);
+        }
+        return $this->getAll();
+    }
+    
     /**
      * Get full asset details including custody history and audit trail.
      * @param int $assetId
@@ -326,5 +415,5 @@ class AssetModel {
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
-
+    
 }

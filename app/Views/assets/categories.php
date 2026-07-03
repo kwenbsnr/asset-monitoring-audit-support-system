@@ -5,6 +5,9 @@
         <a href="index.php?page=assets&sub=add" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Add New Asset
         </a>
+        <a href="index.php?page=assets&sub=list_all" class="btn btn-primary">
+            <i class="bi bi-list-ul"></i> View All Assets
+        </a>
     </div>
     <div class="card-body">
         <?php if (isset($_SESSION['flash'])): ?>

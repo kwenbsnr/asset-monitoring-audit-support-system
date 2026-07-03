@@ -26,9 +26,11 @@ class AssetController {
      */
     public function browse() {
         $catId = isset($_GET['cat_id']) ? (int)$_GET['cat_id'] : null;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        
         if ($catId) {
-            // If this category has children, show them; otherwise show assets
             if ($this->assetModel->hasChildren($catId)) {
+                // Show sub‑categories
                 $categories = $this->assetModel->getCategoryTree($catId);
                 $pageTitle = 'Sub‑Categories';
                 $currentPage = 'assets';
@@ -36,8 +38,8 @@ class AssetController {
                 require_once __DIR__ . '/../Views/layouts/main.php';
             } else {
                 // Leaf category – show assets
-                $assets = $this->assetModel->getAssetsByCategory($catId);
-                $pageTitle = 'Assets';
+                $assets = $this->assetModel->getAssetsByCategory($catId, $search);
+                $pageTitle = 'Assets' . ($search ? ' (Search: ' . htmlspecialchars($search) . ')' : '');
                 $currentPage = 'assets';
                 $viewFile = __DIR__ . '/../Views/assets/list.php';
                 require_once __DIR__ . '/../Views/layouts/main.php';
@@ -50,6 +52,41 @@ class AssetController {
             $viewFile = __DIR__ . '/../Views/assets/categories.php';
             require_once __DIR__ . '/../Views/layouts/main.php';
         }
+    }
+
+    /**
+     * List all assets (with search) – used when viewing "All Assets".
+     */
+    public function listAll() {
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        $assets = $this->assetModel->getAllAssets($search);
+        $pageTitle = 'All Assets' . ($search ? ' (Search: ' . htmlspecialchars($search) . ')' : '');
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/list.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    /**
+     * Fetch asset details (including custody & audit) as JSON.
+     * Used by the modal in asset list.
+     */
+    public function details() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Asset ID required']);
+            return;
+        }
+
+        $data = $this->assetModel->getFullDetails($id);
+        if (!$data) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Asset not found']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($data);
     }
 
     /**
@@ -158,26 +195,5 @@ class AssetController {
         }
         header('Location: index.php?page=assets&sub=browse');
         exit;
-    }
-    /**
-     * Fetch asset details (including custody & audit) as JSON.
-     */
-    public function details() {
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Asset ID required']);
-            return;
-        }
-
-        $data = $this->assetModel->getFullDetails($id);
-        if (!$data) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Asset not found']);
-            return;
-        }
-
-        header('Content-Type: application/json');
-        echo json_encode($data);
     }
 }
