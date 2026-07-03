@@ -18,6 +18,7 @@ class AssetModel {
 
     /**
      * Fetch all assets (excluding soft‑deleted ones) with account & category info
+     * @return array
      */
     public function getAll() {
         $sql = "
@@ -49,6 +50,8 @@ class AssetModel {
 
     /**
      * Get a single asset by ID
+     * @param int $id
+     * @return array|null
      */
     public function getById($id) {
         $stmt = $this->db->prepare("
@@ -72,6 +75,8 @@ class AssetModel {
 
     /**
      * Insert a new asset
+     * @param array $data
+     * @return bool
      */
     public function create($data) {
         $stmt = $this->db->prepare("
@@ -80,11 +85,9 @@ class AssetModel {
                 acquisition_cost, acquisition_date, asset_accounts_id, status, `condition`, remarks
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        // Generate a placeholder QR code reference
         $qr_code_ref = 'QR-' . strtoupper(uniqid());
-        // ✅ Fixed: 12 parameters, 12 type characters
         $stmt->bind_param(
-            'ssssssdsisss', // s s s s s s d s i s s s  (12 chars)
+            'ssssssdsisss',
             $data['asset_code'],
             $qr_code_ref,
             $data['description'],
@@ -103,6 +106,9 @@ class AssetModel {
 
     /**
      * Update an existing asset
+     * @param int $id
+     * @param array $data
+     * @return bool
      */
     public function update($id, $data) {
         $stmt = $this->db->prepare("
@@ -120,9 +126,8 @@ class AssetModel {
                 remarks = ?
             WHERE asset_id = ?
         ");
-        // ✅ Fixed: 12 parameters, 12 type characters
         $stmt->bind_param(
-            'sssssdsisssi', // s s s s s d s i s s s i  (12 chars)
+            'sssssdsisssi',
             $data['asset_code'],
             $data['description'],
             $data['brand'],
@@ -141,6 +146,8 @@ class AssetModel {
 
     /**
      * Soft delete (set status = 'inactive')
+     * @param int $id
+     * @return bool
      */
     public function delete($id) {
         $stmt = $this->db->prepare("UPDATE assets SET status = 'inactive' WHERE asset_id = ?");
@@ -150,6 +157,7 @@ class AssetModel {
 
     /**
      * Get all asset accounts for dropdown
+     * @return array
      */
     public function getAssetAccounts() {
         $result = $this->db->query("

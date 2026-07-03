@@ -9,6 +9,7 @@ if (!defined('APP_START')) {
 }
 
 class AssetController {
+    /** @var AssetModel */
     private $assetModel;
 
     public function __construct() {
