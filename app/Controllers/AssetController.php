@@ -196,4 +196,19 @@ class AssetController {
         header('Location: index.php?page=assets&sub=browse');
         exit;
     }
+
+    /**
+     * Search assets and return JSON for AJAX live search.
+     */
+    public function searchJson() {
+        $query = isset($_GET['q']) ? trim($_GET['q']) : '';
+        if (strlen($query) < 2) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Please type at least 2 characters']);
+            return;
+        }
+        $assets = $this->assetModel->searchAssets($query);
+        header('Content-Type: application/json');
+        echo json_encode($assets);
+    }
 }

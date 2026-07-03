@@ -60,6 +60,9 @@ switch ($page) {
             case 'list_all':
                 $controller->listAll();
                 break;
+            case 'search_json':
+                $controller->searchJson();
+                break;
             default:
                 $controller->browse();
         }
