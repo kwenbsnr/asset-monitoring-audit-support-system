@@ -1,13 +1,28 @@
 <?php if (!defined('APP_START')) exit; ?>
 <div class="card shadow">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0"><?= htmlspecialchars($pageTitle ?? 'Categories') ?></h4>
-        <a href="index.php?page=assets&sub=add" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Add New Asset
-        </a>
-        <a href="index.php?page=assets&sub=list_all" class="btn btn-primary">
-            <i class="bi bi-list-ul"></i> View All Assets
-        </a>
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h4 class="mb-0"><?= htmlspecialchars($pageTitle ?? 'Asset Categories') ?></h4>
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Search Form -->
+            <form method="GET" action="index.php" class="d-flex gap-2">
+                <input type="hidden" name="page" value="assets">
+                <input type="hidden" name="sub" value="list_all">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Search all assets..." 
+                           value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                    <button class="btn btn-outline-success" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+            <a href="index.php?page=assets&sub=list_all" class="btn btn-primary">
+                <i class="bi bi-list-ul"></i> View All Assets
+            </a>
+            <a href="index.php?page=assets&sub=add" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Add New Asset
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <?php if (isset($_SESSION['flash'])): ?>
