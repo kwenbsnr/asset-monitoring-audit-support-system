@@ -37,10 +37,10 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 switch ($page) {
     case 'assets':
         $controller = new AssetController();
-        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'list';
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'browse';
         switch ($sub) {
-            case 'list':
-                $controller->list();
+            case 'browse':
+                $controller->browse();
                 break;
             case 'add':
                 $controller->add();
@@ -51,11 +51,11 @@ switch ($page) {
             case 'delete':
                 $controller->delete();
                 break;
-            case 'save':          // ← add this line
+            case 'save':
                 $controller->save();
                 break;
             default:
-                $controller->list();
+                $controller->browse();
         }
         break;
     default:

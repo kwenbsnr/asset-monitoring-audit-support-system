@@ -16,8 +16,10 @@ class AssetModel {
         $this->db = Database::getInstance()->getConnection();
     }
 
+    // ========== Existing methods ==========
+
     /**
-     * Fetch all assets (excluding soft‑deleted ones) with account & category info
+     * Fetch all active assets with account and category details.
      * @return array
      */
     public function getAll() {
@@ -49,7 +51,7 @@ class AssetModel {
     }
 
     /**
-     * Get a single asset by ID
+     * Get a single asset by ID.
      * @param int $id
      * @return array|null
      */
@@ -74,7 +76,7 @@ class AssetModel {
     }
 
     /**
-     * Insert a new asset
+     * Insert a new asset.
      * @param array $data
      * @return bool
      */
@@ -105,8 +107,8 @@ class AssetModel {
     }
 
     /**
-     * Update an existing asset
-     * @param int $id
+     * Update an existing asset.
+     * @param int   $id
      * @param array $data
      * @return bool
      */
@@ -145,7 +147,7 @@ class AssetModel {
     }
 
     /**
-     * Soft delete (set status = 'inactive')
+     * Soft delete (set status = 'inactive').
      * @param int $id
      * @return bool
      */
@@ -156,7 +158,7 @@ class AssetModel {
     }
 
     /**
-     * Get all asset accounts for dropdown
+     * Get all asset accounts with category names for dropdown.
      * @return array
      */
     public function getAssetAccounts() {
@@ -166,6 +168,86 @@ class AssetModel {
             LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
             ORDER BY aa.account_code
         ");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // ========== NEW methods for hierarchical browsing ==========
+
+    /**
+     * Recursively get the category tree starting from a parent ID.
+     * Returns an array of categories, each with a 'children' key.
+     *
+     * @param int|null $parentId  Null for root categories, else a category ID
+     * @return array
+     */
+    public function getCategoryTree($parentId = null) {
+        $sql = "SELECT asset_category_id, name, code, description, parent_category_id 
+                FROM asset_categories 
+                WHERE parent_category_id " . ($parentId === null ? "IS NULL" : "= ?") . "
+                ORDER BY name";
+        $stmt = $this->db->prepare($sql);
+        if ($parentId !== null) {
+            $stmt->bind_param('i', $parentId);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $categories = $result->fetch_all(MYSQLI_ASSOC);
+        // Recursively fetch children for each category
+        foreach ($categories as &$cat) {
+            $cat['children'] = $this->getCategoryTree($cat['asset_category_id']);
+        }
+        return $categories;
+    }
+
+    /**
+     * Check if a category has any child categories.
+     *
+     * @param int $categoryId
+     * @return bool
+     */
+    public function hasChildren($categoryId) {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM asset_categories WHERE parent_category_id = ?");
+        $stmt->bind_param('i', $categoryId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        return $count > 0;
+    }
+
+    /**
+     * Get all assets that belong to a specific category (directly, not including sub‑categories).
+     *
+     * @param int $categoryId
+     * @return array
+     */
+    public function getAssetsByCategory($categoryId) {
+        $sql = "
+            SELECT 
+                a.asset_id,
+                a.asset_code,
+                a.qr_code_ref,
+                a.description,
+                a.brand,
+                a.model,
+                a.serial_number,
+                a.acquisition_cost,
+                a.acquisition_date,
+                a.status,
+                a.condition,
+                a.remarks,
+                aa.account_code,
+                aa.account_name,
+                ac.name AS category_name
+            FROM assets a
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
+            WHERE aa.asset_category_id = ? AND a.status != 'inactive'
+            ORDER BY a.asset_code
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $categoryId);
+        $stmt->execute();
+        $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 }

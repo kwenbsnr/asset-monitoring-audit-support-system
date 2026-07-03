@@ -49,7 +49,7 @@
             </li>
             <?php if (in_array($_SESSION['role'], ['supply_officer', 'admin'])): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=list">
+                    <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Registry
                     </a>
                 </li>

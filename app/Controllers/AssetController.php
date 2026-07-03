@@ -22,14 +22,34 @@ class AssetController {
     }
 
     /**
-     * List all assets
+     * Browse categories – shows root categories or sub‑categories.
      */
-    public function list() {
-        $assets = $this->assetModel->getAll();
-        $pageTitle = 'Asset Registry';
-        $currentPage = 'assets';
-        $viewFile = __DIR__ . '/../Views/assets/list.php';
-        require_once __DIR__ . '/../Views/layouts/main.php';
+    public function browse() {
+        $catId = isset($_GET['cat_id']) ? (int)$_GET['cat_id'] : null;
+        if ($catId) {
+            // If this category has children, show them; otherwise show assets
+            if ($this->assetModel->hasChildren($catId)) {
+                $categories = $this->assetModel->getCategoryTree($catId);
+                $pageTitle = 'Sub‑Categories';
+                $currentPage = 'assets';
+                $viewFile = __DIR__ . '/../Views/assets/categories.php';
+                require_once __DIR__ . '/../Views/layouts/main.php';
+            } else {
+                // Leaf category – show assets
+                $assets = $this->assetModel->getAssetsByCategory($catId);
+                $pageTitle = 'Assets';
+                $currentPage = 'assets';
+                $viewFile = __DIR__ . '/../Views/assets/list.php';
+                require_once __DIR__ . '/../Views/layouts/main.php';
+            }
+        } else {
+            // No category selected – show top‑level categories
+            $categories = $this->assetModel->getCategoryTree(null);
+            $pageTitle = 'Asset Categories';
+            $currentPage = 'assets';
+            $viewFile = __DIR__ . '/../Views/assets/categories.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        }
     }
 
     /**
@@ -51,12 +71,12 @@ class AssetController {
     public function edit() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if (!$id) {
-            header('Location: index.php?page=assets&sub=list');
+            header('Location: index.php?page=assets&sub=browse');
             exit;
         }
         $asset = $this->assetModel->getById($id);
         if (!$asset) {
-            header('Location: index.php?page=assets&sub=list');
+            header('Location: index.php?page=assets&sub=browse');
             exit;
         }
         $accounts = $this->assetModel->getAssetAccounts();
@@ -73,7 +93,7 @@ class AssetController {
      */
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: index.php?page=assets&sub=list');
+            header('Location: index.php?page=assets&sub=browse');
             exit;
         }
 
@@ -122,7 +142,7 @@ class AssetController {
             exit;
         }
 
-        header('Location: index.php?page=assets&sub=list');
+        header('Location: index.php?page=assets&sub=browse');
         exit;
     }
 
@@ -136,7 +156,7 @@ class AssetController {
             $_SESSION['flash'] = 'Asset deleted (soft delete).';
             $_SESSION['flash_type'] = 'warning';
         }
-        header('Location: index.php?page=assets&sub=list');
+        header('Location: index.php?page=assets&sub=browse');
         exit;
     }
 }
