@@ -250,4 +250,81 @@ class AssetModel {
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+   
+    /**
+     * Get full asset details including custody history and audit trail.
+     * @param int $assetId
+     * @return array|null  // null if asset not found
+     */
+    public function getFullDetails($assetId) {
+        $asset = $this->getById($assetId);
+        if (!$asset) {
+            return null;
+        }
+        $custody = $this->getCustodyHistory($assetId);
+        $audit   = $this->getAuditTrail($assetId);
+        return [
+            'asset'   => $asset,
+            'custody' => $custody,
+            'audit'   => $audit,
+        ];
+    }
+
+    /**
+     * Get custody history for an asset.
+     * @param int $assetId
+     * @return array
+     */
+    public function getCustodyHistory($assetId) {
+        $sql = "
+            SELECT 
+                ac.asset_custodies_id,
+                ac.effectivity_date,
+                ac.end_date,
+                ac.status AS custody_status,
+                p.full_name AS custodian_name,
+                p.position,
+                o.name AS office_name,
+                ac.accountability_document,
+                ac.accountability_reference
+            FROM asset_custodies ac
+            LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
+            LEFT JOIN offices o ON ac.office_id = o.office_id
+            WHERE ac.asset_id = ?
+            ORDER BY ac.effectivity_date DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $assetId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get audit trail for an asset.
+     * @param int $assetId
+     * @return array
+     */
+    public function getAuditTrail($assetId) {
+        $sql = "
+            SELECT 
+                at.audit_trail_id,
+                at.action_type,
+                at.module,
+                at.previous_values,
+                at.new_values,
+                at.performed_at,
+                u.username AS performed_by
+            FROM audit_trail at
+            LEFT JOIN users u ON at.performed_by = u.users_id
+            WHERE at.asset_id = ?
+            ORDER BY at.performed_at DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $assetId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
 }

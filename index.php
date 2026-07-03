@@ -54,6 +54,9 @@ switch ($page) {
             case 'save':
                 $controller->save();
                 break;
+            case 'details':
+                $controller->details();
+                break;
             default:
                 $controller->browse();
         }

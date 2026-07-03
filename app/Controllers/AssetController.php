@@ -159,4 +159,25 @@ class AssetController {
         header('Location: index.php?page=assets&sub=browse');
         exit;
     }
+    /**
+     * Fetch asset details (including custody & audit) as JSON.
+     */
+    public function details() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Asset ID required']);
+            return;
+        }
+
+        $data = $this->assetModel->getFullDetails($id);
+        if (!$data) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Asset not found']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    }
 }
