@@ -1,64 +1,196 @@
-<?php
-// Prevent direct access
-if (!defined('APP_START')) {
-    http_response_code(403);
-    exit('Direct access not allowed.');
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard – NIA Asset Monitoring</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="public/css/style.css">
-</head>
-<body>
-    <div class="container-fluid dashboard-wrapper">
-        <nav class="navbar navbar-dark bg-dark mb-4">
-            <div class="container-fluid">
-                <span class="navbar-brand">NIA Asset Monitoring</span>
-                <div class="d-flex">
-                    <span class="navbar-text text-white me-3">
-                        Welcome, <strong><?= htmlspecialchars($_SESSION['full_name']) ?></strong>
-                        (<?= htmlspecialchars($_SESSION['role']) ?>)
-                    </span>
-                    <a href="index.php?action=logout" class="btn btn-outline-light btn-sm">Logout</a>
-                </div>
-            </div>
-        </nav>
+<?php if (!defined('APP_START')) exit; ?>
 
-        <div class="card shadow">
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success h-100">
             <div class="card-body">
-                <h4>Dashboard</h4>
-                <p>You are logged in as <strong><?= htmlspecialchars($_SESSION['role']) ?></strong>.</p>
-                <p>Office: <?= htmlspecialchars($_SESSION['office']) ?></p>
-                <hr>
-
-                <?php if ($_SESSION['role'] === 'supply_officer' || $_SESSION['role'] === 'admin'): ?>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-box-seam" style="font-size: 2.5rem;"></i>
-                                    <h5 class="mt-2">Asset Registry</h5>
-                                    <p class="text-muted">Manage all assets (CRUD)</p>
-                                    <a href="index.php?page=assets&sub=list" class="btn btn-success">Go to Assets</a>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- More cards can be added here -->
-                    </div>
-                <?php else: ?>
-                    <p class="text-muted">You don't have access to any modules.</p>
-                <?php endif; ?>
+                <h5 class="card-title"><i class="bi bi-box-seam"></i> Total Assets</h5>
+                <h2 class="display-4"><?= number_format($totalAssets) ?></h2>
+                <p class="card-text">Active assets in the system</p>
             </div>
         </div>
     </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-check-circle"></i> Active</h5>
+                <h2 class="display-4"><?= number_format($activeInactive['active'] ?? 0) ?></h2>
+                <p class="card-text">Assets currently active</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle"></i> Other Status</h5>
+                <h2 class="display-4"><?= number_format($activeInactive['other'] ?? 0) ?></h2>
+                <p class="card-text">Disposed, missing, etc.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-secondary h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-archive"></i> Inactive</h5>
+                <h2 class="display-4"><?= number_format($activeInactive['inactive'] ?? 0) ?></h2>
+                <p class="card-text">Retired or decommissioned</p>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- Include Bootstrap Icons for dashboard -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!-- Charts -->
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Assets by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Assets by Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Recent Custody Assignments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th>Custodian</th>
+                                <th>Office</th>
+                                <th>Since</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($recentCustody)): ?>
+                                <tr><td colspan="4" class="text-center">No custody records found.</td></tr>
+                            <?php else: ?>
+                                <?php foreach ($recentCustody as $row): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($row['asset_code'] ?? 'N/A') ?></td>
+                                        <td><?= htmlspecialchars($row['custodian']) ?></td>
+                                        <td><?= htmlspecialchars($row['office']) ?></td>
+                                        <td><?= date('M d, Y', strtotime($row['effectivity_date'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Audit Logs</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Module</th>
+                                <th>User</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($recentAudit)): ?>
+                                <tr><td colspan="4" class="text-center">No audit logs found.</td></tr>
+                            <?php else: ?>
+                                <?php foreach ($recentAudit as $row): ?>
+                                    <tr>
+                                        <td><span class="badge bg-info"><?= htmlspecialchars($row['action_type']) ?></span></td>
+                                        <td><?= htmlspecialchars($row['module']) ?></td>
+                                        <td><?= htmlspecialchars($row['performed_by']) ?></td>
+                                        <td><?= date('M d, Y H:i', strtotime($row['performed_at'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js and chart initialization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category Chart (Pie)
+        const categoryData = <?= json_encode($chartCategoryLabels) ?>;
+        const categoryCounts = <?= json_encode($chartCategoryData) ?>;
+        if (categoryData.length) {
+            new Chart(document.getElementById('categoryChart'), {
+                type: 'pie',
+                data: {
+                    labels: categoryData,
+                    datasets: [{
+                        data: categoryCounts,
+                        backgroundColor: ['#345735', '#4a7a4a', '#6b9a6b', '#8cba8c', '#addbad', '#cef0ce'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Status Chart (Bar)
+        const statusLabels = <?= json_encode($chartStatusLabels) ?>;
+        const statusCounts = <?= json_encode($chartStatusData) ?>;
+        if (statusLabels.length) {
+            new Chart(document.getElementById('statusChart'), {
+                type: 'bar',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        label: 'Assets',
+                        data: statusCounts,
+                        backgroundColor: '#345735',
+                        borderColor: '#182919',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    });
+</script>
