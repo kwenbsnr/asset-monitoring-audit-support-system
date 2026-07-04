@@ -14,11 +14,18 @@
                     <button id="stopScannerBtn" class="btn btn-danger btn-sm w-100 mt-2" style="display:none;">
                         <i class="bi bi-stop-circle"></i> Stop Camera
                     </button>
+                    <button id="switchCameraBtn" class="btn btn-info btn-sm w-100 mt-2" style="display:none;">
+                        <i class="bi bi-arrow-repeat"></i> Switch Camera
+                    </button>
                 </div>
                 <p class="text-muted mt-2">
                     <i class="bi bi-info-circle"></i> 
                     Point the camera at the asset’s QR code. The system will automatically fetch its details.
                 </p>
+                <div class="alert alert-warning small">
+                    <i class="bi bi-shield-lock"></i> 
+                    <strong>For mobile:</strong> Use a secure connection (HTTPS) – e.g., <strong>ngrok</strong> – to enable camera access.
+                </div>
             </div>
             <div class="col-md-6">
                 <div id="assetResult" style="display:none;">
@@ -47,7 +54,5 @@
     </div>
 </div>
 
-<!-- Include QR library -->
 <script src="https://unpkg.com/html5-qrcode"></script>
-<!-- Include our scanner script -->
 <script src="public/js/scanner.js"></script>
