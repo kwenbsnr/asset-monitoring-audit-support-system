@@ -9,6 +9,7 @@ if (!defined('APP_START')) {
 }
 
 class AuditController {
+    /** @var AuditModel */
     private $auditModel;
 
     public function __construct() {

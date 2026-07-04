@@ -10,7 +10,9 @@ if (!defined('APP_START')) {
 }
 
 class MonitoringController {
+    /** @var LocationModel */
     private $locationModel;
+    /** @var AssetModel */
     private $assetModel;
 
     public function __construct() {

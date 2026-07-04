@@ -9,6 +9,7 @@ if (!defined('APP_START')) {
 }
 
 class CustodyController {
+    /** @var CustodyModel */
     private $custodyModel;
 
     public function __construct() {

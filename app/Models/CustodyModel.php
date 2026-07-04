@@ -17,7 +17,8 @@ class CustodyModel {
     }
 
     /**
-     * Get all custody records (including asset, personnel, office details).
+     * Get all custody records.
+     * @return array
      */
     public function getAll() {
         $sql = "
@@ -47,6 +48,8 @@ class CustodyModel {
 
     /**
      * Get a single custody record by ID.
+     * @param int $id
+     * @return array|null
      */
     public function getById($id) {
         $stmt = $this->db->prepare("SELECT * FROM asset_custodies WHERE asset_custodies_id = ?");
@@ -57,7 +60,9 @@ class CustodyModel {
     }
 
     /**
-     * Get the active custody record for a given asset.
+     * Get active custody for an asset.
+     * @param int $assetId
+     * @return array|null
      */
     public function getActiveCustody($assetId) {
         $stmt = $this->db->prepare("
@@ -73,6 +78,8 @@ class CustodyModel {
 
     /**
      * Insert a new custody record.
+     * @param array $data
+     * @return bool
      */
     public function create($data) {
         $stmt = $this->db->prepare("
@@ -95,7 +102,10 @@ class CustodyModel {
     }
 
     /**
-     * Update an existing custody record (e.g., end_date, status).
+     * Update a custody record.
+     * @param int   $id
+     * @param array $data
+     * @return bool
      */
     public function update($id, $data) {
         $stmt = $this->db->prepare("
@@ -124,7 +134,8 @@ class CustodyModel {
     }
 
     /**
-     * Get all personnel for dropdown.
+     * Get personnel for dropdown.
+     * @return array
      */
     public function getPersonnel() {
         $result = $this->db->query("SELECT personnel_id, full_name, position FROM personnel WHERE is_active = 1 ORDER BY full_name");
@@ -132,7 +143,8 @@ class CustodyModel {
     }
 
     /**
-     * Get all offices for dropdown.
+     * Get offices for dropdown.
+     * @return array
      */
     public function getOffices() {
         $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
@@ -140,7 +152,8 @@ class CustodyModel {
     }
 
     /**
-     * Get all assets for dropdown.
+     * Get assets for dropdown.
+     * @return array
      */
     public function getAssets() {
         $result = $this->db->query("SELECT asset_id, asset_code, description FROM assets WHERE status != 'inactive' ORDER BY asset_code");

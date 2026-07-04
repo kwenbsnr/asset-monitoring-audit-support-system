@@ -17,7 +17,8 @@ class LocationModel {
     }
 
     /**
-     * Get all location records with asset details.
+     * Get all location records.
+     * @return array
      */
     public function getAll() {
         $sql = "
@@ -42,6 +43,8 @@ class LocationModel {
 
     /**
      * Insert a new location record.
+     * @param array $data
+     * @return bool
      */
     public function create($data) {
         $stmt = $this->db->prepare("
@@ -62,6 +65,7 @@ class LocationModel {
 
     /**
      * Get assets for dropdown.
+     * @return array
      */
     public function getAssets() {
         $result = $this->db->query("SELECT asset_id, asset_code, description FROM assets WHERE status != 'inactive' ORDER BY asset_code");
@@ -69,7 +73,8 @@ class LocationModel {
     }
 
     /**
-     * Get users for dropdown (recorded_by).
+     * Get users for dropdown.
+     * @return array
      */
     public function getUsers() {
         $result = $this->db->query("SELECT users_id, username FROM users WHERE is_active = 1 ORDER BY username");

@@ -9,6 +9,7 @@ if (!defined('APP_START')) {
 }
 
 class ReportController {
+    /** @var ReportModel */
     private $reportModel;
 
     public function __construct() {

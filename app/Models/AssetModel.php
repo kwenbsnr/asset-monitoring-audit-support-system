@@ -464,6 +464,12 @@ class AssetModel {
         return $result->fetch_assoc();
     }
 
+    /**
+     * Update asset condition.
+     * @param int    $id
+     * @param string $condition
+     * @return bool
+     */
     public function updateCondition($id, $condition) {
         $stmt = $this->db->prepare("UPDATE assets SET `condition` = ? WHERE asset_id = ?");
         $stmt->bind_param('si', $condition, $id);

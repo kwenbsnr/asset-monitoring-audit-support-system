@@ -18,6 +18,8 @@ class AuditModel {
 
     /**
      * Get audit logs with optional filters.
+     * @param array $filters
+     * @return array
      */
     public function getLogs($filters = []) {
         $sql = "
@@ -83,7 +85,8 @@ class AuditModel {
     }
 
     /**
-     * Get distinct action types for filter dropdown.
+     * Get distinct action types.
+     * @return array
      */
     public function getActionTypes() {
         $result = $this->db->query("SELECT DISTINCT action_type FROM audit_trail ORDER BY action_type");
@@ -91,7 +94,8 @@ class AuditModel {
     }
 
     /**
-     * Get distinct modules for filter dropdown.
+     * Get distinct modules.
+     * @return array
      */
     public function getModules() {
         $result = $this->db->query("SELECT DISTINCT module FROM audit_trail ORDER BY module");
@@ -100,6 +104,7 @@ class AuditModel {
 
     /**
      * Get users for filter dropdown.
+     * @return array
      */
     public function getUsers() {
         $result = $this->db->query("SELECT users_id, username FROM users WHERE is_active = 1 ORDER BY username");
@@ -108,6 +113,7 @@ class AuditModel {
 
     /**
      * Get assets for filter dropdown.
+     * @return array
      */
     public function getAssets() {
         $result = $this->db->query("SELECT asset_id, asset_code FROM assets WHERE status != 'inactive' ORDER BY asset_code");
