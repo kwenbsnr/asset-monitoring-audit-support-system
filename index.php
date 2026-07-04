@@ -2,6 +2,10 @@
 use App\Controllers\LoginController;
 use App\Controllers\DashboardController;
 use App\Controllers\AssetController;
+use App\Controllers\CustodyController;
+use App\Controllers\MonitoringController;
+use App\Controllers\AuditController;
+use App\Controllers\ReportController;
 
 define('APP_START', true);
 require_once __DIR__ . '/app/bootstrap.php';
@@ -71,6 +75,70 @@ switch ($page) {
                 break;
             default:
                 $controller->browse();
+        }
+        break;
+     case 'custody':
+        $controller = new CustodyController();
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
+        switch ($sub) {
+            case 'index':
+            default:
+                $controller->index();
+                break;
+            case 'add':
+                $controller->add();
+                break;
+            case 'edit':
+                $controller->edit();
+                break;
+            case 'save':
+                $controller->save();
+                break;
+            case 'delete':
+                $controller->delete();
+                break;
+        }
+        break;
+    case 'monitoring':
+        $controller = new MonitoringController();
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
+        switch ($sub) {
+            case 'index':
+            default:
+                $controller->index();
+                break;
+            case 'add':
+                $controller->add();
+                break;
+            case 'save':
+                $controller->save();
+                break;
+        }
+        break;
+    case 'audit':
+        $controller = new AuditController();
+        $controller->index();
+        break;
+    case 'reports':
+        $controller = new ReportController();
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
+        switch ($sub) {
+            case 'index':
+            default:
+                $controller->index();
+                break;
+            case 'add':
+                $controller->add();
+                break;
+            case 'save':
+                $controller->save();
+                break;
+            case 'view':
+                $controller->view();
+                break;
+            case 'delete':
+                $controller->delete();
+                break;
         }
         break;
     default:

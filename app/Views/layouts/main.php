@@ -58,6 +58,26 @@
                         <i class="bi bi-qr-code-scan"></i> Scan QR
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'custody') ? 'active' : '' ?>" href="index.php?page=custody">
+                        <i class="bi bi-people"></i> Custodial Tracking
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'monitoring') ? 'active' : '' ?>" href="index.php?page=monitoring">
+                        <i class="bi bi-geo-alt"></i> Monitoring
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
+                        <i class="bi bi-clock-history"></i> Audit Trail
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'reports') ? 'active' : '' ?>" href="index.php?page=reports">
+                        <i class="bi bi-file-earmark-text"></i> Reports
+                    </a>
+                </li>
             <?php endif; ?>
             <!-- Add other role-based links here -->
              
