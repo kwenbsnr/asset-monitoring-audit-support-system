@@ -450,4 +450,17 @@ class AssetModel {
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+    /**
+     * Find an asset by its QR code reference.
+     * @param string $qrCode
+     * @return array|null
+     */
+    public function getByQrCode($qrCode) {
+        $stmt = $this->db->prepare("SELECT * FROM assets WHERE qr_code_ref = ? AND status != 'inactive'");
+        $stmt->bind_param('s', $qrCode);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
 }

@@ -66,9 +66,12 @@ switch ($page) {
             case 'qr':
                 $controller->qr();
                 break;
+            case 'scan':
+                $controller->scan();
+                break;
             default:
                 $controller->browse();
-            }
+        }
         break;
     default:
         // Dashboard

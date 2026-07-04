@@ -1,11 +1,10 @@
 {
-    "intelephense.files.maxSize": 5000000,
+    "intelephense.diagnostics.undefinedVariables": "off",
     "intelephense.diagnostics.undefinedFunctions": false,
+    "intelephense.diagnostics.undefinedClass": "off",
     "intelephense.diagnostics.undefinedConstants": false,
     "intelephense.diagnostics.undefinedClassConstants": false,
     "intelephense.diagnostics.undefinedMethods": false,
     "intelephense.diagnostics.undefinedProperties": false,
-    "intelephense.diagnostics.undefinedTypes": false,
-    "intelephense.diagnostics.undefinedVariables": "off",
-    "intelephense.diagnostics.undefinedClass": false
+    "intelephense.diagnostics.undefinedTypes": false
 }

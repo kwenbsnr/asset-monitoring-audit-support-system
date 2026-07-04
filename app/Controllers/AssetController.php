@@ -76,19 +76,26 @@ class AssetController {
         return $filters;
     }
 
-    /**
-     * Fetch asset details (including custody & audit) as JSON.
-     * Used by the modal in asset list.
-     */
     public function details() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if (!$id) {
+        $qr = isset($_GET['qr']) ? trim($_GET['qr']) : null;
+
+        if ($id) {
+            $data = $this->assetModel->getFullDetails($id);
+        } elseif ($qr) {
+            // Find asset by QR code reference
+            $asset = $this->assetModel->getByQrCode($qr);
+            if ($asset) {
+                $data = $this->assetModel->getFullDetails($asset['asset_id']);
+            } else {
+                $data = null;
+            }
+        } else {
             http_response_code(400);
-            echo json_encode(['error' => 'Asset ID required']);
+            echo json_encode(['error' => 'Asset ID or QR code required']);
             return;
         }
 
-        $data = $this->assetModel->getFullDetails($id);
         if (!$data) {
             http_response_code(404);
             echo json_encode(['error' => 'Asset not found']);
@@ -252,5 +259,15 @@ class AssetController {
         $content = $asset['qr_code_ref'];
         $download = isset($_GET['download']);
         \App\Helpers\QRGenerator::output($content, $download);
+    }
+
+    /**
+     * Show QR scanner page.
+     */
+    public function scan() {
+        $pageTitle = 'Scan QR Code';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/scan.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 }

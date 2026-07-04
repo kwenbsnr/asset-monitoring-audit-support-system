@@ -53,9 +53,14 @@
                         <i class="bi bi-box-seam"></i> Asset Registry
                     </a>
                 </li>
-                <!-- More links can be added later -->
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'scan') ? 'active' : '' ?>" href="index.php?page=assets&sub=scan">
+                        <i class="bi bi-qr-code-scan"></i> Scan QR
+                    </a>
+                </li>
             <?php endif; ?>
             <!-- Add other role-based links here -->
+             
             <li class="nav-item mt-4">
                 <a class="nav-link text-danger" href="index.php?action=logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
