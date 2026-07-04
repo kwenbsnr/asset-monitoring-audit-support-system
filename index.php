@@ -139,6 +139,12 @@ switch ($page) {
             case 'delete':
                 $controller->delete();
                 break;
+            case 'preview':
+                $controller->preview();
+                break;
+            case 'generate':          // <-- ADD THIS LINE
+                $controller->generate();
+                break;
         }
         break;
     default:
