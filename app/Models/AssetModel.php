@@ -103,8 +103,11 @@ class AssetModel {
             $data['condition'],
             $data['remarks']
         );
-        return $stmt->execute();
-    }
+        if ($stmt->execute()) {
+            return $this->db->insert_id;
+            }
+            return false;
+        }
 
     /**
      * Update an existing asset.

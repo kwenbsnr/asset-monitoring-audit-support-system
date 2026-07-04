@@ -63,9 +63,12 @@ switch ($page) {
             case 'search_json':
                 $controller->searchJson();
                 break;
+            case 'qr':
+                $controller->qr();
+                break;
             default:
                 $controller->browse();
-        }
+            }
         break;
     default:
         // Dashboard

@@ -177,22 +177,31 @@ class AssetController {
         if ($id) {
             $success = $this->assetModel->update($id, $data);
         } else {
-            $success = $this->assetModel->create($data);
+            $newId = $this->assetModel->create($data);
+            if ($newId) {
+                $success = true;
+                $id = $newId; // set id for redirect
+            } else {
+                $success = false;
+            }
         }
 
         if ($success) {
             unset($_SESSION['form_errors'], $_SESSION['form_data']);
             $_SESSION['flash'] = 'Asset saved successfully.';
             $_SESSION['flash_type'] = 'success';
+            if ($id) {
+                header('Location: index.php?page=assets&sub=edit&id=' . $id);
+            } else {
+                header('Location: index.php?page=assets&sub=browse');
+            }
+            exit;
         } else {
             $_SESSION['flash'] = 'Failed to save asset. Please try again.';
             $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
         }
-
-        header('Location: index.php?page=assets&sub=browse');
-        exit;
     }
 
 
@@ -223,5 +232,25 @@ class AssetController {
         $assets = $this->assetModel->searchAssets($query);
         header('Content-Type: application/json');
         echo json_encode($assets);
+    }
+
+    /**
+     * Generate and output QR code for an asset.
+     */
+    public function qr() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            http_response_code(400);
+            die('Asset ID required');
+        }
+        $asset = $this->assetModel->getById($id);
+        if (!$asset) {
+            http_response_code(404);
+            die('Asset not found');
+        }
+        // Use the QR code reference (unique per asset)
+        $content = $asset['qr_code_ref'];
+        $download = isset($_GET['download']);
+        \App\Helpers\QRGenerator::output($content, $download);
     }
 }
