@@ -1,7 +1,11 @@
-let html5QrCode;
+let html5QrCode = null;
 let isScanning = false;
 let currentCamera = 'environment';
-const readerElement = document.getElementById('reader');
+let isStarting = false;
+let isStopping = false;
+let scannerInitialized = false;
+
+const readerContainer = document.getElementById('reader');
 const startBtn = document.getElementById('startScannerBtn');
 const stopBtn = document.getElementById('stopScannerBtn');
 const switchBtn = document.getElementById('switchCameraBtn');
@@ -10,7 +14,6 @@ const assetDetails = document.getElementById('assetDetails');
 const loadingPlaceholder = document.getElementById('loadingPlaceholder');
 const errorPlaceholder = document.getElementById('errorPlaceholder');
 let lastScannedCode = '';
-let retryCount = 0;
 
 // Detect mobile
 function isMobile() {
@@ -18,6 +21,7 @@ function isMobile() {
         || window.innerWidth < 768;
 }
 
+// UI setup
 if (startBtn) startBtn.addEventListener('click', startScanner);
 if (stopBtn) stopBtn.addEventListener('click', stopScanner);
 if (switchBtn) {
@@ -26,40 +30,44 @@ if (switchBtn) {
 }
 
 function switchCamera() {
-    if (!isScanning) return;
+    if (!isScanning || isStarting || isStopping) return;
     currentCamera = (currentCamera === 'environment') ? 'user' : 'environment';
-    stopScanner().then(() => setTimeout(() => startScanner(), 500));
+    // Stop and restart
+    stopScanner().then(() => {
+        // Wait for cleanup
+        setTimeout(startScanner, 400);
+    });
 }
 
 function startScanner() {
-    if (isScanning) return;
-
+    if (isScanning || isStarting) return;
+    isStarting = true;
     startBtn.disabled = true;
     startBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Starting...';
     errorPlaceholder.style.display = 'none';
-    retryCount = 0;
 
     // Check secure context
     const isSecure = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (!isSecure) {
         showError('Camera access requires HTTPS. Please use ngrok or a secure URL.');
         resetButton();
+        isStarting = false;
         return;
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showError('Your browser does not support camera access. Please use Chrome, Safari, or Firefox.');
         resetButton();
+        isStarting = false;
         return;
     }
 
     // Test permissions
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
-            // Stop the test stream immediately
             stream.getTracks().forEach(track => track.stop());
-            // Proceed to initialize scanner
-            initializeScanner(currentCamera);
+            // Now initialize the scanner
+            initializeScanner();
         })
         .catch(err => {
             if (err.name === 'NotAllowedError') {
@@ -70,27 +78,26 @@ function startScanner() {
                 showError('Camera error: ' + err.message + ' (Please try again)');
             }
             resetButton();
+            isStarting = false;
         });
 }
 
-function initializeScanner(mode) {
-    // Clean up any previous instance
-    if (html5QrCode) {
-        html5QrCode.stop().catch(() => {});
-        html5QrCode = null;
-    }
+function initializeScanner() {
+    // Ensure the reader container is clean
+    recreateReaderContainer();
 
+    // Create new instance
     html5QrCode = new Html5Qrcode("reader");
     const config = {
-        fps: 8,  // Lower FPS for mobile compatibility
+        fps: 8,
         qrbox: { width: 240, height: 240 },
         formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
         aspectRatio: 1.0
     };
 
-    // Build camera modes: start with non‑exact environment, then user, then no constraint
+    // Build camera modes based on currentCamera
     let modes;
-    if (mode === 'environment') {
+    if (currentCamera === 'environment') {
         modes = [
             { facingMode: "environment" },
             { facingMode: "user" },
@@ -105,34 +112,39 @@ function initializeScanner(mode) {
     }
 
     let attempts = 0;
+    let started = false;
 
     function tryNextMode() {
         if (attempts >= modes.length) {
-            showError('Unable to access camera after all attempts. Please ensure you have a working camera and granted permission. Check browser console for details.');
+            showError('Unable to access camera after all attempts. Please ensure you have a working camera and granted permission.');
             resetButton();
+            isStarting = false;
             return;
         }
         const modeConfig = modes[attempts];
         attempts++;
         console.log(`Trying camera mode ${attempts}:`, modeConfig);
-        
+
         html5QrCode.start(modeConfig, config, onScanSuccess, onScanError)
             .then(() => {
-                console.log('Camera started successfully with mode:', modeConfig);
+                started = true;
                 isScanning = true;
+                isStarting = false;
+                scannerInitialized = true;
                 startBtn.style.display = 'none';
                 stopBtn.style.display = 'block';
                 if (isMobile() && switchBtn) {
                     switchBtn.style.display = 'block';
                     updateSwitchButton();
                 }
-                // Reset retry count on success
-                retryCount = 0;
+                lastScannedCode = '';
+                errorPlaceholder.style.display = 'none';
             })
             .catch(err => {
                 console.warn(`Camera mode ${attempts} failed:`, err);
-                // Try next mode
-                tryNextMode();
+                if (!started) {
+                    tryNextMode();
+                }
             });
     }
     tryNextMode();
@@ -140,29 +152,64 @@ function initializeScanner(mode) {
 
 function stopScanner() {
     return new Promise((resolve) => {
-        if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(() => {
-                isScanning = false;
-                startBtn.style.display = 'block';
-                startBtn.disabled = false;
-                startBtn.innerHTML = '<i class="bi bi-camera"></i> Start Camera';
-                stopBtn.style.display = 'none';
-                if (switchBtn) switchBtn.style.display = 'none';
-                readerElement.innerHTML = '';
-                const newReader = document.createElement('div');
-                newReader.id = 'reader';
-                readerElement.parentNode.replaceChild(newReader, readerElement);
-                resolve();
-            }).catch(() => resolve());
+        if (isStopping) { resolve(); return; }
+        isStopping = true;
+
+        if (html5QrCode && (isScanning || scannerInitialized)) {
+            html5QrCode.stop()
+                .then(() => {
+                    cleanupScanner();
+                    resolve();
+                })
+                .catch(() => {
+                    // Force cleanup even if stop fails
+                    cleanupScanner();
+                    resolve();
+                });
         } else {
+            cleanupScanner();
             resolve();
         }
     });
 }
 
+function cleanupScanner() {
+    isScanning = false;
+    scannerInitialized = false;
+    isStopping = false;
+    if (html5QrCode) {
+        html5QrCode = null;
+    }
+    // Reset UI
+    startBtn.style.display = 'block';
+    startBtn.disabled = false;
+    startBtn.innerHTML = '<i class="bi bi-camera"></i> Start Camera';
+    stopBtn.style.display = 'none';
+    if (switchBtn) switchBtn.style.display = 'none';
+    // Recreate reader container to remove any leftover video elements
+    recreateReaderContainer();
+}
+
+function recreateReaderContainer() {
+    const old = document.getElementById('reader');
+    if (old) {
+        // Remove all child nodes (video, canvas, etc.)
+        while (old.firstChild) {
+            old.removeChild(old.firstChild);
+        }
+        // Replace with a fresh div to reset any lingering state
+        const newDiv = document.createElement('div');
+        newDiv.id = 'reader';
+        old.parentNode.replaceChild(newDiv, old);
+        // Update the global reference (optional)
+        // We'll keep using the new one
+    }
+}
+
 function resetButton() {
     startBtn.disabled = false;
     startBtn.innerHTML = '<i class="bi bi-camera"></i> Start Camera';
+    isStarting = false;
 }
 
 function showError(msg) {
@@ -207,7 +254,7 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanError(error) {
-    // Ignore scan errors (they are normal)
+    // Ignore – scanning errors are normal
 }
 
 function resetScanner() {
@@ -215,7 +262,7 @@ function resetScanner() {
     assetResult.style.display = 'none';
     errorPlaceholder.style.display = 'none';
     if (isScanning) {
-        stopScanner().then(() => setTimeout(() => startScanner(), 500));
+        stopScanner().then(() => setTimeout(startScanner, 500));
     } else {
         startScanner();
     }
@@ -278,6 +325,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Prevent memory leaks
 window.addEventListener('beforeunload', function() {
     if (html5QrCode && isScanning) {
         html5QrCode.stop().catch(() => {});
