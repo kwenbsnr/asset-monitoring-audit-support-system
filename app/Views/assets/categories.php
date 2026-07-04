@@ -1,24 +1,96 @@
 <?php if (!defined('APP_START')) exit; ?>
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
-        <h4 class="mb-0 fw-bold text-success">
-            <i class="bi bi-folder2-open me-2"></i><?= htmlspecialchars($pageTitle ?? 'Asset Categories') ?>
-        </h4>
-        <div class="d-flex gap-2 flex-wrap">
-            <!-- Live Search -->
-            <div class="input-group" style="min-width: 280px;">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" id="liveSearchInput" class="form-control border-start-0" 
-                       placeholder="Search all assets..." aria-label="Search assets">
+<!-- Inside the card-header -->
+<div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
+    <h4 class="mb-0 fw-bold text-success"><i class="bi bi-folder2-open me-2"></i><?= $pageTitle ?? 'Asset Categories' ?></h4>
+    <div class="d-flex gap-2 flex-wrap">
+        <!-- Advanced search toggle -->
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
+            <i class="bi bi-sliders2"></i> Advanced
+        </button>
+        <!-- Basic search form -->
+        <form method="GET" action="index.php" class="d-flex gap-2" id="basicSearchForm">
+            <input type="hidden" name="page" value="assets">
+            <input type="hidden" name="sub" value="list_all">
+            <div class="input-group">
+                <input type="text" class="form-control form-control-sm" name="search" placeholder="Search all assets..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                <button class="btn btn-outline-success btn-sm" type="submit"><i class="bi bi-search"></i></button>
             </div>
-            <a href="index.php?page=assets&sub=list_all" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-list-ul"></i> All Assets
-            </a>
-            <a href="index.php?page=assets&sub=add" class="btn btn-success btn-sm">
-                <i class="bi bi-plus-circle"></i> Add Asset
-            </a>
-        </div>
+        </form>
+        <a href="index.php?page=assets&sub=list_all" class="btn btn-outline-primary btn-sm"><i class="bi bi-list-ul"></i> All Assets</a>
+        <a href="index.php?page=assets&sub=add" class="btn btn-success btn-sm"><i class="bi bi-plus-circle"></i> Add Asset</a>
     </div>
+</div>
+<!-- Advanced Search Collapse -->
+<div class="collapse" id="advancedSearch">
+    <div class="card card-body bg-light mb-3">
+        <form method="GET" action="index.php">
+            <input type="hidden" name="page" value="assets">
+            <input type="hidden" name="sub" value="list_all">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label small">Search Field</label>
+                    <select class="form-select form-select-sm" name="field">
+                        <option value="all">All Fields</option>
+                        <option value="asset_code">Asset Code</option>
+                        <option value="description">Description</option>
+                        <option value="brand">Brand</option>
+                        <option value="model">Model</option>
+                        <option value="serial_number">Serial Number</option>
+                        <option value="account_code">Account Code</option>
+                        <option value="custodian">Custodian</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Keyword</label>
+                    <input type="text" class="form-control form-control-sm" name="search" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>" placeholder="Enter keyword">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Status</label>
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="">All</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="disposed">Disposed</option>
+                        <option value="missing">Missing</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Condition</label>
+                    <select class="form-select form-select-sm" name="condition">
+                        <option value="">All</option>
+                        <option value="good">Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="poor">Poor</option>
+                        <option value="damaged">Damaged</option>
+                        <option value="obsolete">Obsolete</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Date From</label>
+                    <input type="date" class="form-control form-control-sm" name="date_from" value="<?= htmlspecialchars($_GET['date_from'] ?? '') ?>">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Date To</label>
+                    <input type="date" class="form-control form-control-sm" name="date_to" value="<?= htmlspecialchars($_GET['date_to'] ?? '') ?>">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Min Cost</label>
+                    <input type="number" step="0.01" class="form-control form-control-sm" name="cost_from" value="<?= htmlspecialchars($_GET['cost_from'] ?? '') ?>" placeholder="0.00">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Max Cost</label>
+                    <input type="number" step="0.01" class="form-control form-control-sm" name="cost_to" value="<?= htmlspecialchars($_GET['cost_to'] ?? '') ?>" placeholder="0.00">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-funnel"></i> Apply Filters</button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="index.php?page=assets&sub=list_all" class="btn btn-secondary btn-sm w-100"><i class="bi bi-arrow-counterclockwise"></i> Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
     <div class="card-body">
         <?php if (isset($_SESSION['flash'])): ?>
             <div class="alert alert-<?= $_SESSION['flash_type'] ?? 'success' ?> alert-dismissible fade show">
@@ -27,7 +99,21 @@
             </div>
             <?php unset($_SESSION['flash'], $_SESSION['flash_type']); ?>
         <?php endif; ?>
-
+        
+        <?php if (isset($currentCategory) && $currentCategory['parent_category_id'] !== null): ?>
+            <div class="mb-3">
+                <a href="index.php?page=assets&sub=browse&cat_id=<?= $currentCategory['parent_category_id'] ?>" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Parent Category
+                </a>
+            </div>
+        <?php elseif (isset($currentCategory)): ?>
+            <div class="mb-3">
+                <a href="index.php?page=assets&sub=browse" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Root Categories
+                </a>
+            </div>
+        <?php endif; ?>
+        
         <!-- Categories Grid -->
         <div id="categoriesGrid" class="row row-cols-1 row-cols-md-3 g-4">
             <?php if (empty($categories)): ?>

@@ -171,13 +171,11 @@ class AssetModel {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    // ========== NEW methods for hierarchical browsing ==========
+    // ========== Methods for hierarchical browsing ==========
 
     /**
      * Recursively get the category tree starting from a parent ID.
-     * Returns an array of categories, each with a 'children' key.
-     *
-     * @param int|null $parentId  Null for root categories, else a category ID
+     * @param int|null $parentId
      * @return array
      */
     public function getCategoryTree($parentId = null) {
@@ -192,7 +190,6 @@ class AssetModel {
         $stmt->execute();
         $result = $stmt->get_result();
         $categories = $result->fetch_all(MYSQLI_ASSOC);
-        // Recursively fetch children for each category
         foreach ($categories as &$cat) {
             $cat['children'] = $this->getCategoryTree($cat['asset_category_id']);
         }
@@ -201,7 +198,6 @@ class AssetModel {
 
     /**
      * Check if a category has any child categories.
-     *
      * @param int $categoryId
      * @return bool
      */
@@ -215,16 +211,27 @@ class AssetModel {
     }
 
     /**
-     * Search assets across multiple fields.
-     * If categoryId is provided, only search within that category.
-     *
-     * @param string      $search     The search term
-     * @param int|null    $categoryId Optional category to filter
+     * Get a single category by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getCategory($id) {
+        $stmt = $this->db->prepare("SELECT * FROM asset_categories WHERE asset_category_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    // ========== Advanced search ==========
+
+    /**
+     * Search assets with advanced filters.
+     * @param string|null $searchTerm
+     * @param array       $filters (category_id, field, status, condition, date_from, date_to, cost_from, cost_to)
      * @return array
      */
-    public function searchAssets($search, $categoryId = null) {
-        $search = '%' . $search . '%';
-        
+    public function searchAssets($searchTerm = null, $filters = []) {
         $sql = "
             SELECT 
                 a.asset_id,
@@ -251,111 +258,136 @@ class AssetModel {
             WHERE a.status != 'inactive'
         ";
 
-        if ($categoryId) {
+        $params = [];
+        $types = '';
+
+        // Category filter
+        if (!empty($filters['category_id'])) {
             $sql .= " AND aa.asset_category_id = ?";
+            $params[] = $filters['category_id'];
+            $types .= 'i';
         }
 
-        $sql .= " AND (
-            a.asset_code LIKE ?
-            OR a.description LIKE ?
-            OR a.brand LIKE ?
-            OR a.model LIKE ?
-            OR a.serial_number LIKE ?
-            OR aa.account_code LIKE ?
-            OR aa.account_name LIKE ?
-            OR p.full_name LIKE ?
-        )
-        GROUP BY a.asset_id
-        ORDER BY a.asset_code";
+        // Search term
+        if (!empty($searchTerm)) {
+            $field = $filters['field'] ?? 'all';
+            $like = '%' . $searchTerm . '%';
+            if ($field === 'all') {
+                $sql .= " AND (
+                    a.asset_code LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? 
+                    OR a.serial_number LIKE ? OR aa.account_code LIKE ? OR aa.account_name LIKE ? 
+                    OR p.full_name LIKE ?
+                )";
+                for ($i = 0; $i < 8; $i++) {
+                    $params[] = $like;
+                    $types .= 's';
+                }
+            } else {
+                $fieldMap = [
+                    'asset_code'   => 'a.asset_code',
+                    'description'  => 'a.description',
+                    'brand'        => 'a.brand',
+                    'model'        => 'a.model',
+                    'serial_number'=> 'a.serial_number',
+                    'account_code' => 'aa.account_code',
+                    'account_name' => 'aa.account_name',
+                    'custodian'    => 'p.full_name'
+                ];
+                if (isset($fieldMap[$field])) {
+                    $sql .= " AND " . $fieldMap[$field] . " LIKE ?";
+                    $params[] = $like;
+                    $types .= 's';
+                }
+            }
+        }
+
+        // Status
+        if (!empty($filters['status'])) {
+            $sql .= " AND a.status = ?";
+            $params[] = $filters['status'];
+            $types .= 's';
+        }
+
+        // Condition
+        if (!empty($filters['condition'])) {
+            $sql .= " AND a.condition = ?";
+            $params[] = $filters['condition'];
+            $types .= 's';
+        }
+
+        // Date range
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND a.acquisition_date >= ?";
+            $params[] = $filters['date_from'];
+            $types .= 's';
+        }
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND a.acquisition_date <= ?";
+            $params[] = $filters['date_to'];
+            $types .= 's';
+        }
+
+        // Cost range
+        if (!empty($filters['cost_from']) && $filters['cost_from'] !== '') {
+            $sql .= " AND a.acquisition_cost >= ?";
+            $params[] = (float)$filters['cost_from'];
+            $types .= 'd';
+        }
+        if (!empty($filters['cost_to']) && $filters['cost_to'] !== '') {
+            $sql .= " AND a.acquisition_cost <= ?";
+            $params[] = (float)$filters['cost_to'];
+            $types .= 'd';
+        }
+
+        $sql .= " GROUP BY a.asset_id ORDER BY a.asset_code";
 
         $stmt = $this->db->prepare($sql);
-        
-        if ($categoryId) {
-            $stmt->bind_param('issssssss', $categoryId, $search, $search, $search, $search, $search, $search, $search, $search);
-        } else {
-            $stmt->bind_param('ssssssss', $search, $search, $search, $search, $search, $search, $search, $search);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
         }
-        
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
     /**
-     * Get assets by category with optional search.
-     *
+     * Get assets by category (with optional search/filters).
      * @param int         $categoryId
-     * @param string|null $search     Optional search term
+     * @param string|null $search
+     * @param array       $filters
      * @return array
      */
-    public function getAssetsByCategory($categoryId, $search = null) {
-        if ($search) {
-            return $this->searchAssets($search, $categoryId);
-        }
-        
-        $sql = "
-            SELECT 
-                a.asset_id,
-                a.asset_code,
-                a.qr_code_ref,
-                a.description,
-                a.brand,
-                a.model,
-                a.serial_number,
-                a.acquisition_cost,
-                a.acquisition_date,
-                a.status,
-                a.condition,
-                a.remarks,
-                aa.account_code,
-                aa.account_name,
-                ac.name AS category_name,
-                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians
-            FROM assets a
-            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
-            LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
-            LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
-            WHERE aa.asset_category_id = ? AND a.status != 'inactive'
-            GROUP BY a.asset_id
-            ORDER BY a.asset_code
-        ";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $categoryId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_all(MYSQLI_ASSOC);
+    public function getAssetsByCategory($categoryId, $search = null, $filters = []) {
+        $filters['category_id'] = $categoryId;
+        return $this->searchAssets($search, $filters);
     }
-   
+
     /**
-     * Get all assets with optional search (for the "all assets" view).
-     *
-     * @param string|null $search Optional search term
+     * Get all assets (with optional search/filters).
+     * @param string|null $search
+     * @param array       $filters
      * @return array
      */
-    public function getAllAssets($search = null) {
-        if ($search) {
-            return $this->searchAssets($search);
-        }
-        return $this->getAll();
+    public function getAllAssets($search = null, $filters = []) {
+        return $this->searchAssets($search, $filters);
     }
-    
+
+    // ========== Details, custody, audit ==========
+
     /**
-     * Get full asset details including custody history and audit trail.
+     * Get full asset details including custody and audit.
      * @param int $assetId
-     * @return array|null  // null if asset not found
+     * @return array|null
      */
     public function getFullDetails($assetId) {
         $asset = $this->getById($assetId);
         if (!$asset) {
             return null;
         }
-        $custody = $this->getCustodyHistory($assetId);
-        $audit   = $this->getAuditTrail($assetId);
         return [
             'asset'   => $asset,
-            'custody' => $custody,
-            'audit'   => $audit,
+            'custody' => $this->getCustodyHistory($assetId),
+            'audit'   => $this->getAuditTrail($assetId),
         ];
     }
 
@@ -415,5 +447,4 @@ class AssetModel {
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
-    
 }
