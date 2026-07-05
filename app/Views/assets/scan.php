@@ -31,13 +31,13 @@
                 <div id="assetResult" style="display:none;">
                     <div class="card border-success">
                         <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Asset Found</h5>
+                            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Asset Profile</h5>
                         </div>
-                        <div class="card-body" id="assetDetails"></div>
-                        <div class="card-footer">
-                            <a href="#" id="viewFullDetails" class="btn btn-primary btn-sm">
-                                <i class="bi bi-eye"></i> View Full Details
-                            </a>
+                        <div class="card-body" id="assetDetails" style="max-height: 500px; overflow-y: auto;"></div>
+                        <div class="card-footer d-flex justify-content-between align-items-center">
+                            <div id="actionButtonContainer">
+                                <!-- Dynamic button injected by JavaScript -->
+                            </div>
                             <button class="btn btn-secondary btn-sm" onclick="resetScanner()">
                                 <i class="bi bi-arrow-counterclockwise"></i> Scan Again
                             </button>
