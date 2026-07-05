@@ -377,8 +377,9 @@ class AssetModel {
 
     // ========== Details, custody, audit ==========
 
+
     /**
-     * Get full asset details including custody and audit.
+     * Get full asset details including custody, audit, and transfers.
      * @param int $assetId
      * @return array|null
      */
@@ -388,9 +389,10 @@ class AssetModel {
             return null;
         }
         return [
-            'asset'   => $asset,
-            'custody' => $this->getCustodyHistory($assetId),
-            'audit'   => $this->getAuditTrail($assetId),
+            'asset'    => $asset,
+            'custody'  => $this->getCustodyHistory($assetId),
+            'audit'    => $this->getAuditTrail($assetId),
+            'transfers'=> $this->getTransferHistory($assetId),
         ];
     }
 
@@ -451,7 +453,36 @@ class AssetModel {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    
+    /**
+     * Get transfer history for an asset.
+     * @param int $assetId
+     * @return array
+     */
+    public function getTransferHistory($assetId) {
+        $sql = "
+            SELECT 
+                atr.transfer_number,
+                atr.transfer_date,
+                atr.status,
+                atr.remarks,
+                p_from.full_name AS from_custodian,
+                p_to.full_name AS to_custodian,
+                o_from.name AS from_office,
+                o_to.name AS to_office
+            FROM asset_transfers atr
+            LEFT JOIN personnel p_from ON atr.from_custodian_id = p_from.personnel_id
+            LEFT JOIN personnel p_to ON atr.to_custodian_id = p_to.personnel_id
+            LEFT JOIN offices o_from ON atr.from_office_id = o_from.office_id
+            LEFT JOIN offices o_to ON atr.to_office_id = o_to.office_id
+            WHERE atr.asset_id = ?
+            ORDER BY atr.transfer_date DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $assetId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 
     /**
      * Find an asset by its QR code reference.

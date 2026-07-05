@@ -172,6 +172,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const asset = data.asset;
         const custody = data.custody || [];
         const audit = data.audit || [];
+        const transfers = data.transfers || [];
+
+        // QR Code image URL
+        const qrImg = `index.php?page=assets&sub=qr&id=${asset.asset_id}`;
 
         let html = `
             <h6 class="border-bottom pb-2">Asset Information</h6>
@@ -188,7 +192,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-md-6"><strong>Category:</strong> ${escapeHtml(asset.category_name)}</div>
                 <div class="col-md-4"><strong>Status:</strong> <span class="badge bg-${asset.status === 'active' ? 'success' : 'secondary'}">${asset.status}</span></div>
                 <div class="col-md-4"><strong>Condition:</strong> <span class="badge bg-${asset.condition === 'good' ? 'success' : 'warning'}">${asset.condition}</span></div>
+                <div class="col-md-4"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
                 <div class="col-md-12"><strong>Remarks:</strong> ${escapeHtml(asset.remarks || 'N/A')}</div>
+            </div>
+        `;
+
+        // QR Code image
+        html += `
+            <div class="text-center mb-3">
+                <img src="${qrImg}" alt="QR Code" style="max-width:150px; border:1px solid #ddd; padding:5px; border-radius:8px;">
+                <p class="small text-muted mt-1">QR Code: ${escapeHtml(asset.qr_code_ref)}</p>
             </div>
         `;
 
@@ -207,6 +220,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>${escapeHtml(c.office_name)}</td>
                     <td><span class="badge bg-${c.custody_status === 'active' ? 'success' : 'secondary'}">${c.custody_status}</span></td>
                     <td>${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><small>Ref: ' + escapeHtml(c.accountability_reference) + '</small>' : ''}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+        }
+
+        // Transfer History
+        html += `<h6 class="border-bottom pb-2 mt-3">Transfer History</h6>`;
+        if (transfers.length === 0) {
+            html += `<p class="text-muted">No transfer records found.</p>`;
+        } else {
+            html += `<div class="table-responsive"><table class="table table-sm table-bordered">
+                <thead><tr><th>Transfer #</th><th>Date</th><th>From</th><th>To</th><th>Status</th><th>Remarks</th></tr></thead><tbody>`;
+            transfers.forEach(t => {
+                html += `<tr>
+                    <td>${escapeHtml(t.transfer_number)}</td>
+                    <td>${escapeHtml(t.transfer_date)}</td>
+                    <td>${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
+                    <td>${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
+                    <td><span class="badge bg-${t.status === 'approved' ? 'success' : 'warning'}">${escapeHtml(t.status)}</span></td>
+                    <td>${escapeHtml(t.remarks || '')}</td>
                 </tr>`;
             });
             html += `</tbody></table></div>`;
