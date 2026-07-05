@@ -3,7 +3,6 @@ use App\Controllers\LoginController;
 use App\Controllers\DashboardController;
 use App\Controllers\AssetController;
 use App\Controllers\CustodyController;
-use App\Controllers\MonitoringController;
 use App\Controllers\AuditController;
 use App\Controllers\ReportController;
 
@@ -96,22 +95,6 @@ switch ($page) {
                 break;
             case 'delete':
                 $controller->delete();
-                break;
-        }
-        break;
-    case 'monitoring':
-        $controller = new MonitoringController();
-        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
-        switch ($sub) {
-            case 'index':
-            default:
-                $controller->index();
-                break;
-            case 'add':
-                $controller->add();
-                break;
-            case 'save':
-                $controller->save();
                 break;
         }
         break;
