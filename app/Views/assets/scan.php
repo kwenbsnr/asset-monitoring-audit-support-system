@@ -6,7 +6,7 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-6">
-                <div id="reader" style="width:100%; max-width:180px; margin:0 auto;"></div>
+                <div id="reader" style="width:100%; max-width:220px; margin:0 auto;"></div>
                 <div class="mt-3">
                     <button id="startScannerBtn" class="btn btn-success btn-lg w-100">
                         <i class="bi bi-camera"></i> Start Camera

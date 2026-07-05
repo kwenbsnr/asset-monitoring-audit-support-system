@@ -90,7 +90,7 @@ function initializeScanner() {
     html5QrCode = new Html5Qrcode("reader");
     const config = {
         fps: 6,
-        qrbox: { width: 150, height: 150 },
+        qrbox: { width: 170, height: 170 },
         formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
         aspectRatio: 1.0
     };

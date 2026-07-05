@@ -299,13 +299,13 @@ body.login-page {
 
 /* Force the scanner video to fit within the container */
 #reader {
-    max-width: 180px;
+    max-width: 220px;
     margin: 0 auto;
 }
 #reader video,
 #reader div {
     max-width: 100% !important;
-    max-height: 200px !important;
+    max-height: 250px !important;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
