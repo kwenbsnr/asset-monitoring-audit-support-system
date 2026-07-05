@@ -451,6 +451,8 @@ class AssetModel {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
+    
+
     /**
      * Find an asset by its QR code reference.
      * @param string $qrCode

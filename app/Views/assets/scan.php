@@ -1,128 +1,130 @@
 <?php if (!defined('APP_START')) exit; ?>
-<div class="card shadow">
-    <div class="card-header">
-        <h4><i class="bi bi-qr-code-scan"></i> Scan Asset QR Code</h4>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <!-- Scanner Column (Left) -->
-            <div class="col-md-6">
-                <!-- Scanner Preview -->
-                <div id="reader" style="width:100%; max-width:336px; margin:0 auto;"></div>
-                <!-- Scanner Buttons -->
-                <div class="mt-3" style="max-width:336px; margin:0 auto;">
-                    <button id="startScannerBtn" class="btn btn-success w-100">
-                        <i class="bi bi-camera"></i> Start Camera
-                    </button>
-                    <button id="stopScannerBtn" class="btn btn-danger w-100 mt-2" style="display:none;">
-                        <i class="bi bi-stop-circle"></i> Stop Camera
-                    </button>
-                    <button id="switchCameraBtn" class="btn btn-info w-100 mt-2" style="display:none;">
-                        <i class="bi bi-arrow-repeat"></i> Switch Camera
-                    </button>
+<div class="container-fluid">
+    <div class="row g-4">
+        <!-- LEFT: QR Code Scanner (35%) -->
+        <div class="col-lg-4 col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-qr-code-scan me-2"></i>QR Code Scanner</h5>
                 </div>
-
-                <!-- Divider -->
-                <div class="text-muted text-center my-3" style="max-width:336px; margin:0 auto;">
-                    <span>— or search manually —</span>
-                </div>
-
-                <!-- Manual Search -->
-                <div style="max-width:336px; margin:0 auto;">
-                    <div class="input-group">
-                        <input type="text" id="manualSearchInput" class="form-control" placeholder="Asset code, serial number, or description...">
-                        <button id="manualSearchBtn" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                    </div>
-                    <div id="manualSearchError" class="text-danger small mt-1" style="display:none;"></div>
-                </div>
-
-                <p class="text-muted mt-3 text-center">
-                    <i class="bi bi-info-circle"></i> 
-                    Point the camera or enter a search term to retrieve asset details.
-                </p>
-            </div>
-
-            <!-- Results Column (Right) -->
-            <div class="col-md-6">
-                <div id="assetResult" style="display:none;">
-                    <div class="card border-success">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="bi bi-check-circle"></i> Asset Profile</h5>
+                <div class="card-body d-flex flex-column align-items-center">
+                    <!-- Scanner Preview (1:1 aspect ratio) -->
+                    <div id="reader-wrapper" class="position-relative" style="max-width:350px; width:100%; aspect-ratio:1/1;">
+                        <div id="reader" style="width:100%; height:100%;"></div>
+                        <!-- Frame overlay -->
+                        <div id="scanner-frame" class="position-absolute top-0 start-0 w-100 h-100 pointer-events-none scanner-frame-idle">
+                            <div id="scanner-line" class="scanner-line"></div>
+                            <div id="scanner-checkmark" class="scanner-checkmark d-none">✓</div>
                         </div>
-                        <div class="card-body" id="assetDetails" style="max-height: 500px; overflow-y: auto;"></div>
-                        <div class="card-footer d-flex justify-content-between align-items-center">
-                            <div id="actionButtonContainer">
-                                <!-- Dynamic button injected by JavaScript -->
-                            </div>
-                            <button class="btn btn-secondary btn-sm" onclick="resetScanner()">
-                                <i class="bi bi-arrow-counterclockwise"></i> Scan Again
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="mt-3 text-center" style="max-width:350px; width:100%;">
+                        <button id="startScannerBtn" class="btn btn-success w-100" style="display:none;">
+                            <i class="bi bi-camera"></i> Tap to scan QR code
+                        </button>
+                        <button id="stopScannerBtn" class="btn btn-danger w-100 mt-2" style="display:none;">
+                            <i class="bi bi-stop-circle"></i> Stop Camera
+                        </button>
+                        <button id="switchCameraBtn" class="btn btn-info w-100 mt-2" style="display:none;">
+                            <i class="bi bi-arrow-repeat"></i> Switch Camera
+                        </button>
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="bi bi-info-circle"></i> Point the camera at an asset QR label.
+                        </p>
+                    </div>
+
+                    <!-- Divider -->
+                    <hr class="my-3" style="max-width:350px; width:100%;">
+
+                    <!-- Manual Search -->
+                    <div style="max-width:350px; width:100%;">
+                        <div class="text-muted text-center small mb-2">— or search manually —</div>
+                        <div class="input-group">
+                            <input type="text" id="manualSearchInput" class="form-control" placeholder="Asset code, serial number, or description...">
+                            <button id="manualSearchBtn" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Search
                             </button>
                         </div>
+                        <div id="manualSearchError" class="text-danger small mt-1" style="display:none;"></div>
                     </div>
                 </div>
-                <div id="loadingPlaceholder" style="display:none;" class="text-center py-4">
-                    <div class="spinner-border text-success" role="status"></div>
-                    <p>Fetching asset details...</p>
+            </div>
+        </div>
+
+        <!-- RIGHT: Asset Profile (65%) -->
+        <div class="col-lg-8 col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Retrieved Asset Profile</h5>
+                    <button id="scanAnotherBtn" class="btn btn-outline-secondary btn-sm" style="display:none;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Scan Another Asset
+                    </button>
                 </div>
-                <div id="errorPlaceholder" style="display:none;" class="alert alert-danger"></div>
+                <div class="card-body" id="profileBody">
+                    <!-- Placeholder -->
+                    <div id="profilePlaceholder" class="text-center text-muted py-5">
+                        <i class="bi bi-box-seam" style="font-size: 4rem;"></i>
+                        <p class="mt-3">No asset selected.</p>
+                        <p class="small">Scan a QR code or search manually to display asset information.</p>
+                    </div>
+                    <!-- Asset Profile -->
+                    <div id="profileContent" style="display:none;"></div>
+                </div>
+                <div id="profileFooter" class="card-footer bg-white border-top" style="display:none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div id="actionButtonContainer"><!-- Dynamic button --></div>
+                        <span id="scanSuccessMsg" class="text-success small"><i class="bi bi-check-circle"></i> Asset retrieved successfully.</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Include the scanner library and our custom JS -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="public/js/scanner.js"></script>
-
-<!-- Manual search script -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('manualSearchInput');
-    const searchBtn = document.getElementById('manualSearchBtn');
-    const errorContainer = document.getElementById('manualSearchError');
+    // Auto‑start scanner on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+            if (typeof startScanner === 'function') {
+                startScanner();
+            }
+        }, 500);
 
-    function performSearch() {
-        const query = searchInput.value.trim();
-        if (query.length < 2) {
-            errorContainer.textContent = 'Please enter at least 2 characters.';
-            errorContainer.style.display = 'block';
-            return;
+        // Manual search handler
+        const searchInput = document.getElementById('manualSearchInput');
+        const searchBtn = document.getElementById('manualSearchBtn');
+        const errorContainer = document.getElementById('manualSearchError');
+
+        function performManualSearch() {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                errorContainer.textContent = 'Please enter at least 2 characters.';
+                errorContainer.style.display = 'block';
+                return;
+            }
+            errorContainer.style.display = 'none';
+            document.getElementById('profilePlaceholder').style.display = 'none';
+            document.getElementById('profileContent').style.display = 'none';
+            document.getElementById('profileFooter').style.display = 'none';
+            fetch(`index.php?page=assets&sub=details&q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    showAssetProfile(data);
+                })
+                .catch(err => alert('Failed to fetch asset: ' + err.message));
         }
-        errorContainer.style.display = 'none';
 
-        // Show loading
-        document.getElementById('loadingPlaceholder').style.display = 'block';
-        document.getElementById('assetResult').style.display = 'none';
-        document.getElementById('errorPlaceholder').style.display = 'none';
-
-        fetch(`index.php?page=assets&sub=details&q=${encodeURIComponent(query)}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                document.getElementById('loadingPlaceholder').style.display = 'none';
-                if (data.error) {
-                    document.getElementById('errorPlaceholder').innerHTML = data.error;
-                    document.getElementById('errorPlaceholder').style.display = 'block';
-                    return;
-                }
-                // Display the same way as QR scan
-                document.getElementById('assetDetails').innerHTML = buildAssetDetailsHTML(data);
-                document.getElementById('assetResult').style.display = 'block';
-            })
-            .catch(error => {
-                document.getElementById('loadingPlaceholder').style.display = 'none';
-                document.getElementById('errorPlaceholder').innerHTML = 'Failed to fetch asset details: ' + error.message;
-                document.getElementById('errorPlaceholder').style.display = 'block';
-            });
-    }
-
-    searchBtn.addEventListener('click', performSearch);
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') performSearch();
+        searchBtn.addEventListener('click', performManualSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') performManualSearch();
+        });
     });
-});
 </script>
