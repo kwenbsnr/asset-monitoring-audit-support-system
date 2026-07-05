@@ -285,4 +285,27 @@ body.login-page {
 .stats-card.border-secondary {
     border-left-color: #6c757d;
 }
+
+/* Scanner preview – keep it compact and centered */
+#reader {
+    max-width: 240px;
+    margin: 0 auto;
+}
+#reader video {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+}
+
+/* Force the scanner video to fit within the container */
+#reader {
+    max-width: 180px;
+    margin: 0 auto;
+}
+#reader video,
+#reader div {
+    max-width: 100% !important;
+    max-height: 200px !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
