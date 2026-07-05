@@ -226,4 +226,63 @@ body.login-page {
     .sidebar.active {
         margin-left: 0;
     }
+
+/* Stats cards with left border accent */
+.stats-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 5px solid #345735;
+    height: 100%;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+}
+
+.stats-card .stats-icon {
+    font-size: 2rem;
+    opacity: 0.3;
+    float: right;
+}
+
+.stats-card .stats-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.stats-card .stats-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+/* Color variants for left border */
+.stats-card.border-success {
+    border-left-color: #28a745;
+}
+.stats-card.border-primary {
+    border-left-color: #0d6efd;
+}
+.stats-card.border-warning {
+    border-left-color: #ffc107;
+}
+.stats-card.border-danger {
+    border-left-color: #dc3545;
+}
+.stats-card.border-info {
+    border-left-color: #0dcaf0;
+}
+.stats-card.border-dark {
+    border-left-color: #212529;
+}
+.stats-card.border-secondary {
+    border-left-color: #6c757d;
+}
 }
