@@ -79,12 +79,20 @@ class AssetController {
     public function details() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         $qr = isset($_GET['qr']) ? trim($_GET['qr']) : null;
+        $query = isset($_GET['q']) ? trim($_GET['q']) : null;
 
         if ($id) {
             $data = $this->assetModel->getFullDetails($id);
         } elseif ($qr) {
-            // Find asset by QR code reference
             $asset = $this->assetModel->getByQrCode($qr);
+            if ($asset) {
+                $data = $this->assetModel->getFullDetails($asset['asset_id']);
+            } else {
+                $data = null;
+            }
+        } elseif ($query) {
+            // Search by asset_code, description, or serial_number (return first match)
+            $asset = $this->assetModel->searchAssetByText($query);
             if ($asset) {
                 $data = $this->assetModel->getFullDetails($asset['asset_id']);
             } else {
@@ -92,7 +100,7 @@ class AssetController {
             }
         } else {
             http_response_code(400);
-            echo json_encode(['error' => 'Asset ID or QR code required']);
+            echo json_encode(['error' => 'Asset ID, QR code, or search term required']);
             return;
         }
 

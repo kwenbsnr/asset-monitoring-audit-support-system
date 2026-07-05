@@ -309,3 +309,11 @@ body.login-page {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
+/* Scanner and search: full-width on mobile, fixed on desktop */
+.scanner-wrapper .btn,
+.scanner-wrapper .input-group {
+    max-width: 336px;
+    margin-left: auto;
+    margin-right: auto;
+}

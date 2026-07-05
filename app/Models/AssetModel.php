@@ -475,4 +475,24 @@ class AssetModel {
         $stmt->bind_param('si', $condition, $id);
         return $stmt->execute();
     }
+
+    /**
+     * Find an asset by text search (asset_code, description, or serial_number).
+     * Returns the first matching asset.
+     * @param string $query
+     * @return array|null
+     */
+    public function searchAssetByText($query) {
+        $like = '%' . $query . '%';
+        $stmt = $this->db->prepare("
+            SELECT * FROM assets 
+            WHERE (asset_code LIKE ? OR description LIKE ? OR serial_number LIKE ?)
+            AND status != 'inactive'
+            LIMIT 1
+        ");
+        $stmt->bind_param('sss', $like, $like, $like);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
 }
