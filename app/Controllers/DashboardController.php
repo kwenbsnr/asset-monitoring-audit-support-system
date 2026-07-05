@@ -23,26 +23,51 @@ class DashboardController {
     public function index() {
         // Fetch all data
         $totalAssets = $this->dashboardModel->getTotalAssets();
+        $activeInactive = $this->dashboardModel->getActiveInactiveCounts();
         $statusCounts = $this->dashboardModel->getAssetStatusCounts();
         $categoryCounts = $this->dashboardModel->getAssetCategoryCounts();
-        $activeInactive = $this->dashboardModel->getActiveInactiveCounts();
-        $recentCustody = $this->dashboardModel->getRecentCustody();
-        $recentAudit = $this->dashboardModel->getRecentAudit();
+        $conditionCounts = $this->dashboardModel->getConditionCounts();
+        $assetsByOffice = $this->dashboardModel->getAssetsByOffice();
+        $recentAssets = $this->dashboardModel->getRecentAssets();
+        $recentActivity = $this->dashboardModel->getRecentActivity(10);
+        $alerts = $this->dashboardModel->getAlerts();
 
-        // Prepare data for charts
-        $chartStatusLabels = [];
-        $chartStatusData = [];
+        // KPI summary
+        $totalCategories = $this->dashboardModel->getTotalCategories();
+        $totalOffices = $this->dashboardModel->getTotalOffices();
+        $assetsUnderCustody = $this->dashboardModel->getAssetsUnderCustody();
+        $missingAssets = $this->dashboardModel->getMissingAssets();
+        $assetsForDisposal = $this->dashboardModel->getAssetsForDisposal();
+        $recentTransfers = $this->dashboardModel->getRecentTransfersCount();
+
+        // Prepare chart data
+        $statusLabels = [];
+        $statusData = [];
         foreach ($statusCounts as $row) {
-            $chartStatusLabels[] = ucfirst($row['status']);
-            $chartStatusData[] = (int)$row['count'];
+            $statusLabels[] = ucfirst($row['status']);
+            $statusData[] = (int)$row['count'];
         }
 
-        $chartCategoryLabels = [];
-        $chartCategoryData = [];
+        $categoryLabels = [];
+        $categoryData = [];
         foreach ($categoryCounts as $row) {
             if ($row['category'] === null) continue;
-            $chartCategoryLabels[] = $row['category'];
-            $chartCategoryData[] = (int)$row['count'];
+            $categoryLabels[] = $row['category'];
+            $categoryData[] = (int)$row['count'];
+        }
+
+        $conditionLabels = [];
+        $conditionData = [];
+        foreach ($conditionCounts as $row) {
+            $conditionLabels[] = ucfirst($row['condition']);
+            $conditionData[] = (int)$row['count'];
+        }
+
+        $officeLabels = [];
+        $officeData = [];
+        foreach ($assetsByOffice as $row) {
+            $officeLabels[] = $row['office'];
+            $officeData[] = (int)$row['count'];
         }
 
         $pageTitle = 'Dashboard';

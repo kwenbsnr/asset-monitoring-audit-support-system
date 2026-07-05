@@ -106,5 +106,191 @@ class DashboardModel {
         return $result->fetch_assoc();
     }
 
-    
+    /**
+     * Get total number of asset categories.
+     */
+    public function getTotalCategories() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM asset_categories");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get total offices.
+     */
+    public function getTotalOffices() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM offices");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get count of assets under custody (active custody assignments).
+     */
+    public function getAssetsUnderCustody() {
+        $result = $this->db->query("SELECT COUNT(DISTINCT asset_id) AS total FROM asset_custodies WHERE status = 'active'");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get count of missing assets.
+     */
+    public function getMissingAssets() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM assets WHERE status = 'missing'");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get count of assets for disposal.
+     */
+    public function getAssetsForDisposal() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM assets WHERE status = 'disposed'");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get transfers made this month.
+     */
+    public function getRecentTransfersCount() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM asset_transfers WHERE MONTH(transfer_date) = MONTH(CURDATE()) AND YEAR(transfer_date) = YEAR(CURDATE())");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get asset condition distribution.
+     */
+    public function getConditionCounts() {
+        $result = $this->db->query("SELECT `condition`, COUNT(*) AS count FROM assets GROUP BY `condition`");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get asset counts by office.
+     */
+    public function getAssetsByOffice() {
+        $sql = "
+            SELECT o.name AS office, COUNT(a.asset_id) AS count
+            FROM offices o
+            LEFT JOIN asset_custodies ac ON o.office_id = ac.office_id AND ac.status = 'active'
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id AND a.status != 'inactive'
+            GROUP BY o.office_id
+            ORDER BY count DESC
+            LIMIT 5
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get recent assets added (last 10).
+     */
+    public function getRecentAssets() {
+        $sql = "
+            SELECT 
+                a.asset_id,
+                a.asset_code,
+                a.description,
+                a.status,
+                a.condition,
+                a.created_at,
+                ac.name AS category_name,
+                p.full_name AS custodian,
+                o.name AS office_name
+            FROM assets a
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
+            LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
+            LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
+            LEFT JOIN offices o ON acust.office_id = o.office_id
+            WHERE a.status != 'inactive'
+            ORDER BY a.created_at DESC
+            LIMIT 10
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get recent activities from various tables.
+     * @param int $limit
+     * @return array
+     */
+    public function getRecentActivity($limit = 10) {
+        $sql = "
+            (SELECT 
+                'asset_registered' AS type,
+                CONCAT('Asset ', a.asset_code, ' registered') AS description,
+                'System' AS performed_by,
+                a.created_at AS created_at
+            FROM assets a
+            WHERE a.created_at IS NOT NULL
+            ORDER BY a.created_at DESC
+            LIMIT 3)
+            UNION
+            (SELECT 
+                'custody_assigned' AS type,
+                CONCAT('Asset ', a.asset_code, ' assigned to ', p.full_name) AS description,
+                'System' AS performed_by,
+                ac.created_at AS created_at
+            FROM asset_custodies ac
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id
+            LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
+            ORDER BY ac.created_at DESC
+            LIMIT 3)
+            UNION
+            (SELECT 
+                'asset_transferred' AS type,
+                CONCAT('Asset ', a.asset_code, ' transferred to ', p_to.full_name) AS description,
+                COALESCE(u.username, 'System') AS performed_by,
+                atr.transfer_date AS created_at
+            FROM asset_transfers atr
+            LEFT JOIN assets a ON atr.asset_id = a.asset_id
+            LEFT JOIN personnel p_to ON atr.to_custodian_id = p_to.personnel_id
+            LEFT JOIN users u ON atr.approved_by = u.users_id
+            WHERE atr.transfer_date IS NOT NULL
+            ORDER BY atr.transfer_date DESC
+            LIMIT 2)
+            UNION
+            (SELECT 
+                'report_generated' AS type,
+                CONCAT('Report ', ar.report_number, ' generated') AS description,
+                COALESCE(u.username, 'System') AS performed_by,
+                ar.created_at AS created_at
+            FROM asset_reports ar
+            LEFT JOIN users u ON ar.prepared_by = u.users_id
+            ORDER BY ar.created_at DESC
+            LIMIT 2)
+            ORDER BY created_at DESC
+            LIMIT ?
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get alerts: missing assets, damaged assets, pending reports, unverified custody.
+     */
+    public function getAlerts() {
+        $alerts = [];
+
+        // Missing assets
+        $missing = $this->db->query("SELECT COUNT(*) AS count FROM assets WHERE status = 'missing'")->fetch_assoc();
+        if ($missing['count'] > 0) $alerts[] = ['type' => 'missing', 'label' => 'Missing Assets', 'count' => $missing['count'], 'icon' => 'bi bi-exclamation-triangle', 'color' => 'danger'];
+
+        // Damaged condition
+        $damaged = $this->db->query("SELECT COUNT(*) AS count FROM assets WHERE `condition` = 'damaged'")->fetch_assoc();
+        if ($damaged['count'] > 0) $alerts[] = ['type' => 'damaged', 'label' => 'Assets with Damaged Condition', 'count' => $damaged['count'], 'icon' => 'bi bi-tools', 'color' => 'warning'];
+
+        // Pending reports (draft)
+        $pendingReports = $this->db->query("SELECT COUNT(*) AS count FROM asset_reports WHERE status = 'draft'")->fetch_assoc();
+        if ($pendingReports['count'] > 0) $alerts[] = ['type' => 'pending_reports', 'label' => 'Pending Reports', 'count' => $pendingReports['count'], 'icon' => 'bi bi-file-earmark-text', 'color' => 'info'];
+
+        // Unverified custody assignments (asset_custodies with status 'pending' or no end_date? Actually we don't have a verification status in custody; we'll skip or use pending transfers)
+        // Instead, we can check pending transfers
+        $pendingTransfers = $this->db->query("SELECT COUNT(*) AS count FROM asset_transfers WHERE status = 'pending'")->fetch_assoc();
+        if ($pendingTransfers['count'] > 0) $alerts[] = ['type' => 'pending_transfers', 'label' => 'Pending Transfers', 'count' => $pendingTransfers['count'], 'icon' => 'bi bi-arrow-left-right', 'color' => 'warning'];
+
+        return $alerts;
+    }
 }
