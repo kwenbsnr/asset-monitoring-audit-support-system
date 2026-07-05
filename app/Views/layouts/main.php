@@ -63,11 +63,13 @@
                         <i class="bi bi-people"></i> Custodial Tracking
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
-                        <i class="bi bi-clock-history"></i> Audit Trail
-                    </a>
-                </li>
+                <?php if ($_SESSION['role'] === 'admin'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
+                            <i class="bi bi-clock-history"></i> Audit Trail
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'reports') ? 'active' : '' ?>" href="index.php?page=reports">
                         <i class="bi bi-file-earmark-text"></i> Reports

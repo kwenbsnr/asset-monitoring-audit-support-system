@@ -101,41 +101,43 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6 mb-3">
-        <div class="card shadow">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Audit Logs</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Action</th>
-                                <th>Module</th>
-                                <th>User</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($recentAudit)): ?>
-                                <tr><td colspan="4" class="text-center">No audit logs found.</td></tr>
-                            <?php else: ?>
-                                <?php foreach ($recentAudit as $row): ?>
-                                    <tr>
-                                        <td><span class="badge bg-info"><?= htmlspecialchars($row['action_type']) ?></span></td>
-                                        <td><?= htmlspecialchars($row['module']) ?></td>
-                                        <td><?= htmlspecialchars($row['performed_by']) ?></td>
-                                        <td><?= date('M d, Y H:i', strtotime($row['performed_at'])) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+    <?php if ($_SESSION['role'] === 'admin'): ?>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Audit Logs</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Module</th>
+                                    <th>User</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($recentAudit)): ?>
+                                    <tr><td colspan="4" class="text-center">No audit logs found.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach ($recentAudit as $row): ?>
+                                        <tr>
+                                            <td><span class="badge bg-info"><?= htmlspecialchars($row['action_type']) ?></span></td>
+                                            <td><?= htmlspecialchars($row['module']) ?></td>
+                                            <td><?= htmlspecialchars($row['performed_by']) ?></td>
+                                            <td><?= date('M d, Y H:i', strtotime($row['performed_at'])) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Chart.js and chart initialization -->

@@ -105,4 +105,6 @@ class DashboardModel {
         ");
         return $result->fetch_assoc();
     }
+
+    
 }
