@@ -201,4 +201,136 @@ class CustodyModel {
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+    
+    /**
+     * Get offices with active custody assignments.
+     * @return array
+     */
+    public function getOfficesWithCustody() {
+        $sql = "
+            SELECT DISTINCT o.office_id, o.name, o.location,
+                (SELECT COUNT(DISTINCT ac.custodian_id) FROM asset_custodies ac WHERE ac.office_id = o.office_id AND ac.status = 'active') AS custodian_count,
+                (SELECT COUNT(DISTINCT ac.asset_id) FROM asset_custodies ac WHERE ac.office_id = o.office_id AND ac.status = 'active') AS asset_count
+            FROM offices o
+            INNER JOIN asset_custodies ac ON o.office_id = ac.office_id
+            WHERE ac.status = 'active'
+            ORDER BY o.name
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get custodians (personnel) for a specific office.
+     * @param int $officeId
+     * @return array
+     */
+    public function getCustodiansByOffice($officeId) {
+        $sql = "
+            SELECT DISTINCT p.personnel_id, p.full_name, p.position,
+                (SELECT COUNT(DISTINCT ac.asset_id) FROM asset_custodies ac WHERE ac.custodian_id = p.personnel_id AND ac.status = 'active') AS asset_count
+            FROM personnel p
+            INNER JOIN asset_custodies ac ON p.personnel_id = ac.custodian_id
+            WHERE ac.office_id = ? AND ac.status = 'active'
+            ORDER BY p.full_name
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $officeId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets under a custodian with pagination.
+     * @param int $custodianId
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function getAssetsByCustodian($custodianId, $limit, $offset) {
+        $sql = "
+            SELECT 
+                a.asset_id, a.asset_code, a.description, a.brand, a.model,
+                a.serial_number, a.status, a.condition,
+                ac.effectivity_date, ac.accountability_document, ac.accountability_reference
+            FROM assets a
+            INNER JOIN asset_custodies ac ON a.asset_id = ac.asset_id
+            WHERE ac.custodian_id = ? AND ac.status = 'active'
+            ORDER BY a.asset_code
+            LIMIT ? OFFSET ?
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('iii', $custodianId, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Count assets under a custodian.
+     * @param int $custodianId
+     * @return int
+     */
+    public function countAssetsByCustodian($custodianId) {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) FROM asset_custodies ac
+            WHERE ac.custodian_id = ? AND ac.status = 'active'
+        ");
+        $stmt->bind_param('i', $custodianId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        return $count;
+    }
+
+    /**
+     * Search custodians by name across all offices.
+     * @param string $searchTerm
+     * @return array
+     */
+    public function searchCustodians($searchTerm) {
+        $like = '%' . $searchTerm . '%';
+        $sql = "
+            SELECT DISTINCT p.personnel_id, p.full_name, p.position,
+                (SELECT COUNT(DISTINCT ac.asset_id) FROM asset_custodies ac WHERE ac.custodian_id = p.personnel_id AND ac.status = 'active') AS asset_count,
+                (SELECT o.name FROM offices o INNER JOIN asset_custodies ac2 ON o.office_id = ac2.office_id WHERE ac2.custodian_id = p.personnel_id AND ac2.status = 'active' LIMIT 1) AS office_name
+            FROM personnel p
+            INNER JOIN asset_custodies ac ON p.personnel_id = ac.custodian_id
+            WHERE ac.status = 'active' AND (p.full_name LIKE ? OR p.position LIKE ?)
+            ORDER BY p.full_name
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('ss', $like, $like);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get office by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getOfficeById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM offices WHERE office_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    /**
+     * Get personnel by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getPersonnelById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM personnel WHERE personnel_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
 }

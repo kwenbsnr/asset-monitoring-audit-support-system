@@ -97,6 +97,15 @@ switch ($page) {
             case 'delete':
                 $controller->delete();
                 break;
+            case 'office':
+                $controller->office();
+                break;
+            case 'custodian':
+                $controller->custodian();
+                break;
+            case 'search_custodians':
+                $controller->searchCustodians();
+                break;
         }
         break;
     case 'audit':

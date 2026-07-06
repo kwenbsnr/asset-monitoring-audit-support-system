@@ -21,18 +21,60 @@ class CustodyController {
     }
 
     public function index() {
-        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
-        if ($search) {
-            $records = $this->custodyModel->search($search);
-        } else {
-            $records = $this->custodyModel->getAll();
-        }
-        $pageTitle = 'Custody Records';
+        $offices = $this->custodyModel->getOfficesWithCustody();
+        $pageTitle = 'Custodial Tracking - Offices';
         $currentPage = 'custody';
-        $viewFile = __DIR__ . '/../Views/custody/index.php';
+        $viewFile = __DIR__ . '/../Views/custody/offices.php';
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
+    public function office() {
+        $officeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$officeId) {
+            header('Location: index.php?page=custody');
+            exit;
+        }
+        $custodians = $this->custodyModel->getCustodiansByOffice($officeId);
+        $office = $this->custodyModel->getOfficeById($officeId);
+        $pageTitle = 'Custodians - ' . ($office ? $office['name'] : '');
+        $currentPage = 'custody';
+        $viewFile = __DIR__ . '/../Views/custody/custodians.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    public function custodian() {
+        $custodianId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$custodianId) {
+            header('Location: index.php?page=custody');
+            exit;
+        }
+        $page = isset($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
+        $limit = 15;
+        $offset = ($page - 1) * $limit;
+        $assets = $this->custodyModel->getAssetsByCustodian($custodianId, $limit, $offset);
+        $total = $this->custodyModel->countAssetsByCustodian($custodianId);
+        $totalPages = ceil($total / $limit);
+        $custodian = $this->custodyModel->getPersonnelById($custodianId);
+        $pageTitle = 'Assets under ' . ($custodian ? $custodian['full_name'] : '');
+        $currentPage = 'custody';
+        $viewFile = __DIR__ . '/../Views/custody/assets.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    public function searchCustodians() {
+        $search = isset($_GET['q']) ? trim($_GET['q']) : '';
+        if (strlen($search) < 2) {
+            header('Location: index.php?page=custody');
+            exit;
+        }
+        $custodians = $this->custodyModel->searchCustodians($search);
+        $pageTitle = 'Search Results';
+        $currentPage = 'custody';
+        $viewFile = __DIR__ . '/../Views/custody/search.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    // ===== Existing methods (add, edit, save, delete) remain unchanged =====
     public function add() {
         $personnel = $this->custodyModel->getPersonnel();
         $offices = $this->custodyModel->getOffices();
@@ -82,7 +124,6 @@ class CustodyController {
             'status' => $_POST['status'],
         ];
 
-        // For update, include end_date if provided
         if ($id) {
             $data['end_date'] = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
         }
@@ -123,7 +164,6 @@ class CustodyController {
     public function delete() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id) {
-            // Soft delete: set status to 'inactive' or remove? We'll just set end_date and status.
             $record = $this->custodyModel->getById($id);
             if ($record) {
                 $data = [
