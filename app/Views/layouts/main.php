@@ -36,7 +36,7 @@
 
 <div class="wrapper">
     <!-- Sidebar -->
-    <nav id="sidebar" class="sidebar">
+    <nav id="sidebar" class="sidebar <?= ($_SESSION['role'] === 'admin') ? 'sidebar-admin' : 'sidebar-supply' ?>">
         <div class="sidebar-header">
             <img src="public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
@@ -47,7 +47,8 @@
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
-            <?php if (in_array($_SESSION['role'], ['supply_officer', 'admin'])): ?>
+
+            <?php if ($_SESSION['role'] === 'supply_officer'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Registry
@@ -63,21 +64,26 @@
                         <i class="bi bi-people"></i> Custodial Tracking
                     </a>
                 </li>
-                <?php if ($_SESSION['role'] === 'admin'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
-                            <i class="bi bi-clock-history"></i> Audit Trail
-                        </a>
-                    </li>
-                <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'reports') ? 'active' : '' ?>" href="index.php?page=reports">
                         <i class="bi bi-file-earmark-text"></i> Reports
                     </a>
                 </li>
             <?php endif; ?>
-            <!-- Add other role-based links here -->
-             
+
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
+                        <i class="bi bi-clock-history"></i> Audit Trail
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'users') ? 'active' : '' ?>" href="index.php?page=users">
+                        <i class="bi bi-people"></i> User Management
+                    </a>
+                </li>
+            <?php endif; ?>
+
             <li class="nav-item mt-4">
                 <a class="nav-link text-danger" href="index.php?action=logout">
                     <i class="bi bi-box-arrow-right"></i> Logout

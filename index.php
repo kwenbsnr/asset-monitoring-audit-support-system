@@ -5,6 +5,7 @@ use App\Controllers\AssetController;
 use App\Controllers\CustodyController;
 use App\Controllers\AuditController;
 use App\Controllers\ReportController;
+use App\Controllers\UserController;
 
 define('APP_START', true);
 require_once __DIR__ . '/app/bootstrap.php';
@@ -125,8 +126,30 @@ switch ($page) {
             case 'preview':
                 $controller->preview();
                 break;
-            case 'generate':          // <-- ADD THIS LINE
+            case 'generate':          
                 $controller->generate();
+                break;
+        }
+        break;
+    case 'users':
+        $controller = new UserController();
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
+        switch ($sub) {
+            case 'index':
+            default:
+                $controller->index();
+                break;
+            case 'add':
+                $controller->add();
+                break;
+            case 'edit':
+                $controller->edit();
+                break;
+            case 'save':
+                $controller->save();
+                break;
+            case 'delete':
+                $controller->delete();
                 break;
         }
         break;

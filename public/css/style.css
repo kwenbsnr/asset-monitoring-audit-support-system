@@ -397,3 +397,44 @@ body.login-page {
     border-radius: 12px;
     /* already defined */
 }
+
+
+/* Keep supply sidebar as green */
+.sidebar-supply {
+    background: linear-gradient(180deg, #182919 0%, #243C25 50%, #345635 100%);
+}
+.sidebar-supply .sidebar-header h5 {
+    color: #FBBF24;
+}
+.sidebar-supply .nav-link {
+    color: #d1eec8;
+}
+.sidebar-supply .nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.sidebar-supply .nav-link.active {
+    background: rgba(251, 191, 36, 0.2);
+    color: #FBBF24;
+    border-right: 4px solid #FBBF24;
+}
+
+/* Admin sidebar (blue/navy) – applied via .sidebar-admin in main.php */
+.sidebar-admin {
+    background: linear-gradient(180deg, #1a2a6c 0%, #2a3f8f 50%, #3b5aaa 100%) !important;
+}
+.sidebar-admin .sidebar-header h5 {
+    color: #93c5fd;
+}
+.sidebar-admin .nav-link {
+    color: #c7d9f7;
+}
+.sidebar-admin .nav-link:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+.sidebar-admin .nav-link.active {
+    background: rgba(147, 197, 253, 0.2);
+    color: #93c5fd;
+    border-right: 4px solid #93c5fd;
+}
