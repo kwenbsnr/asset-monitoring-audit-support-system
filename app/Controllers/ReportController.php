@@ -124,14 +124,17 @@ class ReportController {
                 exit;
         }
 
-        // If export requested
         $format = $_POST['format'] ?? '';
         if ($format === 'pdf') {
             $this->exportPdf($data, $reportType, $title);
         } elseif ($format === 'excel') {
             $this->exportExcel($data, $reportType, $title);
+        } elseif ($format === 'docx') {
+            $_SESSION['report_data'] = $data;
+            $_SESSION['report_type'] = $reportType;
+            $_SESSION['report_title'] = $title;
+            $this->exportDocx();
         } else {
-            // Preview – store in session
             $_SESSION['report_data'] = $data;
             $_SESSION['report_type'] = $reportType;
             $_SESSION['report_title'] = $title;

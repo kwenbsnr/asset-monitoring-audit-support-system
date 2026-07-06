@@ -70,12 +70,17 @@
                         <button type="button" class="btn btn-primary" id="previewBtn">
                             <i class="bi bi-eye"></i> Preview
                         </button>
-                        <!-- PDF and Excel – submit form -->
+                        <!-- PDF – submit form -->
                         <button type="submit" name="format" value="pdf" class="btn btn-success">
                             <i class="bi bi-file-earmark-pdf"></i> Generate PDF
                         </button>
+                        <!-- Excel – submit form -->
                         <button type="submit" name="format" value="excel" class="btn btn-info">
                             <i class="bi bi-file-earmark-excel"></i> Export Excel
+                        </button>
+                        <!-- DOCX – submit form -->
+                        <button type="submit" name="format" value="docx" class="btn btn-secondary">
+                            <i class="bi bi-file-earmark-word"></i> Export DOCX
                         </button>
                     </div>
                 </form>
@@ -93,11 +98,7 @@
                 <div id="previewContainer" style="display:none;">
                     <div class="alert alert-info" id="previewTitle"></div>
                     <div id="previewContent" class="table-responsive"></div>
-                    <div class="mt-2">
-                        <button class="btn btn-success btn-sm" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
-                        <button class="btn btn-info btn-sm" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-                        <button class="btn btn-secondary btn-sm" id="exportDocxBtn"><i class="bi bi-file-earmark-word"></i> DOCX</button>
-                    </div>
+                    <!-- Removed duplicate export buttons – they are on the left -->
                 </div>
                 <div id="previewPlaceholder" class="text-center text-muted py-5">
                     <i class="bi bi-file-earmark" style="font-size: 3rem;"></i>
@@ -127,7 +128,6 @@
         document.getElementById('previewBtn').addEventListener('click', function() {
             const form = document.getElementById('reportForm');
             const formData = new FormData(form);
-            // Remove format parameter (since we're not submitting the whole form)
             formData.delete('format');
 
             fetch('index.php?page=reports&sub=preview_ajax', {
@@ -144,59 +144,6 @@
                 document.getElementById('previewContent').innerHTML = data.html;
                 document.getElementById('previewContainer').style.display = 'block';
                 document.getElementById('previewPlaceholder').style.display = 'none';
-
-                // Export buttons – open in new tab
-                document.getElementById('exportPdfBtn').onclick = function() {
-                    // Submit form with pdf format
-                    const pdfForm = document.createElement('form');
-                    pdfForm.method = 'POST';
-                    pdfForm.action = 'index.php?page=reports&sub=generate';
-                    for (const [key, value] of formData.entries()) {
-                        if (key !== 'format') {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = key;
-                            input.value = value;
-                            pdfForm.appendChild(input);
-                        }
-                    }
-                    const formatInput = document.createElement('input');
-                    formatInput.type = 'hidden';
-                    formatInput.name = 'format';
-                    formatInput.value = 'pdf';
-                    pdfForm.appendChild(formatInput);
-                    pdfForm.target = '_blank';
-                    document.body.appendChild(pdfForm);
-                    pdfForm.submit();
-                    document.body.removeChild(pdfForm);
-                };
-                document.getElementById('exportExcelBtn').onclick = function() {
-                    const excelForm = document.createElement('form');
-                    excelForm.method = 'POST';
-                    excelForm.action = 'index.php?page=reports&sub=generate';
-                    for (const [key, value] of formData.entries()) {
-                        if (key !== 'format') {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = key;
-                            input.value = value;
-                            excelForm.appendChild(input);
-                        }
-                    }
-                    const formatInput = document.createElement('input');
-                    formatInput.type = 'hidden';
-                    formatInput.name = 'format';
-                    formatInput.value = 'excel';
-                    excelForm.appendChild(formatInput);
-                    excelForm.target = '_blank';
-                    document.body.appendChild(excelForm);
-                    excelForm.submit();
-                    document.body.removeChild(excelForm);
-                };
-                document.getElementById('exportDocxBtn').onclick = function() {
-                    // DOCX uses the session data from preview_ajax, so we just call export_docx
-                    window.open('index.php?page=reports&sub=export_docx', '_blank');
-                };
             })
             .catch(error => {
                 alert('Error: ' + error.message);
