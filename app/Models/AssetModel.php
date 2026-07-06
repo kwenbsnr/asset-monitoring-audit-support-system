@@ -528,4 +528,22 @@ class AssetModel {
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
+
+    /**
+     * Get all active personnel for dropdown.
+     * @return array
+     */
+    public function getPersonnel() {
+        $result = $this->db->query("SELECT personnel_id, full_name, position FROM personnel WHERE is_active = 1 ORDER BY full_name");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get all offices for dropdown.
+     * @return array
+     */
+    public function getOffices() {
+        $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }

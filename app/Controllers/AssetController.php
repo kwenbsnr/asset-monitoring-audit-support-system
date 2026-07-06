@@ -1,6 +1,6 @@
 <?php
 namespace App\Controllers;
-
+use App\Models\CustodyModel;
 
 use App\Models\AssetModel;
 
@@ -120,12 +120,14 @@ class AssetController {
      */
     public function add() {
         $accounts = $this->assetModel->getAssetAccounts();
+        $personnel = $this->assetModel->getPersonnel(); // we'll add this method
+        $offices = $this->assetModel->getOffices();     // we'll add this method
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
         $pageTitle = 'Add Asset';
         $currentPage = 'assets';
         $viewFile = __DIR__ . '/../Views/assets/form.php';
-        $isEdit = false; // new asset
+        $isEdit = false;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -143,13 +145,18 @@ class AssetController {
             header('Location: index.php?page=assets&sub=browse');
             exit;
         }
+        // Fetch active custodian if any
+        $custodyModel = new CustodyModel();
+        $currentCustody = $custodyModel->getActiveCustody($id);
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
         $accounts = $this->assetModel->getAssetAccounts();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
         $pageTitle = 'Edit Asset';
         $currentPage = 'assets';
         $viewFile = __DIR__ . '/../Views/assets/form.php';
-        $isEdit = true; // editing existing asset
+        $isEdit = true;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -196,28 +203,60 @@ class AssetController {
             $newId = $this->assetModel->create($data);
             if ($newId) {
                 $success = true;
-                $id = $newId; // set id for redirect
+                $id = $newId;
             } else {
                 $success = false;
             }
         }
 
-        if ($success) {
-            unset($_SESSION['form_errors'], $_SESSION['form_data']);
-            $_SESSION['flash'] = 'Asset saved successfully.';
-            $_SESSION['flash_type'] = 'success';
-            if ($id) {
-                header('Location: index.php?page=assets&sub=edit&id=' . $id);
-            } else {
-                header('Location: index.php?page=assets&sub=browse');
-            }
-            exit;
-        } else {
+        if (!$success) {
             $_SESSION['flash'] = 'Failed to save asset. Please try again.';
             $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
         }
+
+        // Asset saved successfully – clear errors and set flash
+        unset($_SESSION['form_errors'], $_SESSION['form_data']);
+        $_SESSION['flash'] = 'Asset saved successfully.';
+        $_SESSION['flash_type'] = 'success';
+
+        // Optional custody assignment (only if checkbox is checked and asset ID exists)
+        if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1' && $id) {
+            $custodyData = [
+                'asset_id' => $id,
+                'custodian_id' => (int)$_POST['custodian_id'],
+                'office_id' => (int)$_POST['office_id'],
+                'accountability_document' => trim($_POST['accountability_document'] ?? ''),
+                'accountability_reference' => trim($_POST['accountability_reference'] ?? ''),
+                'effectivity_date' => $_POST['effectivity_date'] ?? date('Y-m-d'),
+                'status' => 'active'
+            ];
+
+            $custodyModel = new CustodyModel();
+            // End any existing active custody for this asset
+            $existing = $custodyModel->getActiveCustody($id);
+            if ($existing) {
+                $custodyModel->update($existing['asset_custodies_id'], [
+                    'custodian_id' => $existing['custodian_id'],
+                    'office_id' => $existing['office_id'],
+                    'accountability_document' => $existing['accountability_document'],
+                    'accountability_reference' => $existing['accountability_reference'],
+                    'effectivity_date' => $existing['effectivity_date'],
+                    'end_date' => date('Y-m-d'),
+                    'status' => 'inactive'
+                ]);
+            }
+            $custodyModel->create($custodyData);
+        }
+
+        // Redirect to edit page (so QR code appears) or browse
+        if ($id) {
+            header('Location: index.php?page=assets&sub=edit&id=' . $id);
+        } else {
+            header('Location: index.php?page=assets&sub=browse');
+        }
+        exit;
     }
 
 

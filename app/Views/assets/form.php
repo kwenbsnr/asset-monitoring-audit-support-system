@@ -48,7 +48,7 @@ $assetId = $asset['asset_id'] ?? 0;
                     </div>
 
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description *</label>
+                        <label for="description" class="form-label">Asset Name *</label>
                         <input type="text" class="form-control" id="description" name="description"
                                value="<?= htmlspecialchars($data['description'] ?? '') ?>" required>
                     </div>
@@ -116,6 +116,60 @@ $assetId = $asset['asset_id'] ?? 0;
                         <textarea class="form-control" id="remarks" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
                     </div>
 
+                    <!-- Optional Custodian Assignment -->
+                    <div class="mt-4">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="assignCustodianToggle" name="assign_custodian" value="1" 
+                                <?= (isset($data['assign_custodian']) && $data['assign_custodian'] == '1') ? 'checked' : '' ?>>
+                            <label class="form-check-label fw-semibold" for="assignCustodianToggle">
+                                <i class="bi bi-person-check"></i> Assign Custodian (Optional)
+                            </label>
+                        </div>
+                        <div id="custodianSection" style="<?= (isset($data['assign_custodian']) && $data['assign_custodian'] == '1') ? 'display:block;' : 'display:none;' ?>">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="custodian_id" class="form-label">Custodian</label>
+                                    <select class="form-select" id="custodian_id" name="custodian_id">
+                                        <option value="">Select Custodian</option>
+                                        <?php foreach ($personnel as $p): ?>
+                                            <option value="<?= $p['personnel_id'] ?>" 
+                                                <?= (isset($data['custodian_id']) && $data['custodian_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($p['full_name']) ?> (<?= htmlspecialchars($p['position']) ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="office_id" class="form-label">Office</label>
+                                    <select class="form-select" id="office_id" name="office_id">
+                                        <option value="">Select Office</option>
+                                        <?php foreach ($offices as $o): ?>
+                                            <option value="<?= $o['office_id'] ?>" 
+                                                <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($o['name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="effectivity_date" class="form-label">Effectivity Date</label>
+                                    <input type="date" class="form-control" id="effectivity_date" name="effectivity_date" 
+                                        value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="accountability_document" class="form-label">Accountability Document</label>
+                                    <input type="text" class="form-control" id="accountability_document" name="accountability_document" 
+                                        value="<?= htmlspecialchars($data['accountability_document'] ?? '') ?>" placeholder="e.g., PAR, ICS">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="accountability_reference" class="form-label">Reference Number</label>
+                                    <input type="text" class="form-control" id="accountability_reference" name="accountability_reference" 
+                                        value="<?= htmlspecialchars($data['accountability_reference'] ?? '') ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between">
                         <a href="index.php?page=assets&sub=browse" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary"><?= $isEdit ? 'Update' : 'Create' ?> Asset</button>
@@ -174,4 +228,14 @@ $assetId = $asset['asset_id'] ?? 0;
         win.document.close();
         win.onload = function() { win.print(); };
     }
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggle = document.getElementById('assignCustodianToggle');
+        const section = document.getElementById('custodianSection');
+        toggle.addEventListener('change', function() {
+            section.style.display = this.checked ? 'block' : 'none';
+        });
+    });
 </script>
