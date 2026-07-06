@@ -1,7 +1,7 @@
 {
     "intelephense.diagnostics.undefinedVariables": "off",
     "intelephense.diagnostics.undefinedFunctions": false,
-    "intelephense.diagnostics.undefinedClass": "off",
+    "intelephense.diagnostics.undefinedClass": false,
     "intelephense.diagnostics.undefinedConstants": false,
     "intelephense.diagnostics.undefinedClassConstants": false,
     "intelephense.diagnostics.undefinedMethods": false,
