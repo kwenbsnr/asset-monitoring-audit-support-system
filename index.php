@@ -117,7 +117,6 @@ switch ($page) {
         $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
         switch ($sub) {
             case 'index':
-            default:
                 $controller->index();
                 break;
             case 'add':
@@ -135,8 +134,17 @@ switch ($page) {
             case 'preview':
                 $controller->preview();
                 break;
-            case 'generate':          
+            case 'generate':
                 $controller->generate();
+                break;
+            case 'preview_ajax':
+                $controller->previewAjax();
+                break;
+            case 'export_docx':
+                $controller->exportDocx();
+                break;
+            default:
+                $controller->index();
                 break;
         }
         break;

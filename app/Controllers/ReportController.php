@@ -361,6 +361,119 @@ class ReportController {
         exit;
     }
 
+    /**
+     * AJAX preview – returns report HTML for inline display.
+     */
+    public function previewAjax() {
+        $reportType = $_POST['report_type'] ?? $_GET['report_type'] ?? '';
+        $categoryId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : (isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0);
+        $officeId = isset($_POST['office_id']) ? (int)$_POST['office_id'] : (isset($_GET['office_id']) ? (int)$_GET['office_id'] : 0);
+        $status = $_POST['status'] ?? $_GET['status'] ?? '';
+        $condition = $_POST['condition'] ?? $_GET['condition'] ?? '';
+        $dateFrom = $_POST['date_from'] ?? $_GET['date_from'] ?? '';
+        $dateTo = $_POST['date_to'] ?? $_GET['date_to'] ?? '';
+
+        $data = [];
+        $title = '';
+        switch ($reportType) {
+            case 'by_category':
+                if (!$categoryId) { echo json_encode(['error' => 'Category required']); return; }
+                $data = $this->reportModel->getAssetsByCategory($categoryId);
+                $title = 'Assets by Category';
+                break;
+            case 'by_office':
+                if (!$officeId) { echo json_encode(['error' => 'Office required']); return; }
+                $data = $this->reportModel->getAssetsByOffice($officeId);
+                $title = 'Assets by Office';
+                break;
+            case 'for_disposal':
+                $data = $this->assetModel->searchAssets(null, ['status' => 'disposed']);
+                $title = 'Assets for Disposal';
+                break;
+            case 'unverified':
+                $data = $this->reportModel->getUnverifiedAssets();
+                $title = 'Unverified Assets';
+                break;
+            case 'missing':
+                $data = $this->assetModel->searchAssets(null, ['status' => 'missing']);
+                $title = 'Missing Assets';
+                break;
+            case 'transfer_history':
+                $data = $this->reportModel->getTransferHistory($dateFrom, $dateTo);
+                $title = 'Transfer History';
+                break;
+            case 'custodian_assignment':
+                $data = $this->custodyModel->getAll();
+                $title = 'Custodian Assignment';
+                break;
+            case 'complete':
+            default:
+                $data = $this->assetModel->getAll();
+                $title = 'Complete Asset List';
+                break;
+        }
+
+        // Store in session for export
+        $_SESSION['report_data'] = $data;
+        $_SESSION['report_type'] = $reportType;
+        $_SESSION['report_title'] = $title;
+
+        $html = $this->buildReportHtml($data, $reportType, $title);
+        echo json_encode(['html' => $html, 'title' => $title]);
+        exit;
+    }
+
+    /**
+     * Export as DOCX (using PhpWord).
+     */
+    public function exportDocx() {
+        $data = $_SESSION['report_data'] ?? [];
+        $reportType = $_SESSION['report_type'] ?? 'complete';
+        $title = $_SESSION['report_title'] ?? 'Report';
+
+        if (empty($data)) {
+            $_SESSION['flash'] = 'No report data. Generate a preview first.';
+            $_SESSION['flash_type'] = 'warning';
+            header('Location: index.php?page=reports');
+            exit;
+        }
+
+        if (!class_exists('PhpOffice\PhpWord\IOFactory')) {
+            // Fallback: output HTML
+            header('Content-Type: text/html');
+            echo $this->buildReportHtml($data, $reportType, $title);
+            echo '<p><strong>PhpWord not installed.</strong> Please run: composer require phpoffice/phpword</p>';
+            exit;
+        }
+
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+        $section->addTitle($title, 1);
+        $section->addText('Generated: ' . date('Y-m-d H:i'));
+
+        $headers = $this->getReportHeaders($reportType);
+        $table = $section->addTable(['borderSize' => 6, 'cellMargin' => 80]);
+        // Header row
+        $table->addRow();
+        foreach ($headers as $header) {
+            $table->addCell()->addText($header, ['bold' => true]);
+        }
+        // Data rows
+        foreach ($data as $row) {
+            $table->addRow();
+            foreach (array_keys($headers) as $key) {
+                $value = $row[$key] ?? '';
+                $table->addCell()->addText($value);
+            }
+        }
+
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="report.docx"');
+        $writer->save('php://output');
+        exit;
+    }
+
     // ========== Existing methods (add, save, view, delete) ==========
 
     public function add() {
