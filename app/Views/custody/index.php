@@ -15,6 +15,35 @@
             <?php unset($_SESSION['flash'], $_SESSION['flash_type']); ?>
         <?php endif; ?>
 
+        <!-- Search Form – always visible -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <form method="GET" action="index.php" class="d-flex gap-2">
+                    <input type="hidden" name="page" value="custody">
+                    <input type="hidden" name="sub" value="index">
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-sm" name="search" 
+                               placeholder="Search by custodian, asset code, description, office, or document..." 
+                               value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                        <button class="btn btn-outline-success btn-sm" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <?php if (!empty($_GET['search'])): ?>
+                            <a href="index.php?page=custody" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6 text-end">
+                <!-- The "Assign Custody" button is already in the header, but we can keep it here too -->
+                <a href="index.php?page=custody&sub=add" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle"></i> Assign Custody
+                </a>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="table table-hover table-striped">
                 <thead>

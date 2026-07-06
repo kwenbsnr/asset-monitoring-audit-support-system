@@ -21,7 +21,12 @@ class CustodyController {
     }
 
     public function index() {
-        $records = $this->custodyModel->getAll();
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        if ($search) {
+            $records = $this->custodyModel->search($search);
+        } else {
+            $records = $this->custodyModel->getAll();
+        }
         $pageTitle = 'Custody Records';
         $currentPage = 'custody';
         $viewFile = __DIR__ . '/../Views/custody/index.php';

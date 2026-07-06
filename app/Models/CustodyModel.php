@@ -159,4 +159,46 @@ class CustodyModel {
         $result = $this->db->query("SELECT asset_id, asset_code, description FROM assets WHERE status != 'inactive' ORDER BY asset_code");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+    /**
+     * Search custody records by custodian name, asset code, description, office, or document reference.
+     * @param string $searchTerm
+     * @return array
+     */
+    public function search($searchTerm) {
+        $like = '%' . $searchTerm . '%';
+        $sql = "
+            SELECT 
+                ac.asset_custodies_id,
+                ac.asset_id,
+                a.asset_code,
+                a.description AS asset_description,
+                ac.custodian_id,
+                p.full_name AS custodian_name,
+                ac.office_id,
+                o.name AS office_name,
+                ac.effectivity_date,
+                ac.end_date,
+                ac.status,
+                ac.accountability_document,
+                ac.accountability_reference
+            FROM asset_custodies ac
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id
+            LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
+            LEFT JOIN offices o ON ac.office_id = o.office_id
+            WHERE 
+                p.full_name LIKE ? OR
+                a.asset_code LIKE ? OR
+                a.description LIKE ? OR
+                o.name LIKE ? OR
+                ac.accountability_document LIKE ? OR
+                ac.accountability_reference LIKE ?
+            ORDER BY ac.effectivity_date DESC
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('ssssss', $like, $like, $like, $like, $like, $like);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }
