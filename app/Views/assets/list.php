@@ -53,7 +53,7 @@
                 <thead>
                     <tr>
                         <th>Asset Code</th>
-                        <th>Description</th>
+                        <th>Asset Name</th>
                         <th>Brand / Model</th>
                         <th>Serial #</th>
                         <th>Account</th>
@@ -77,7 +77,7 @@
                         <?php foreach ($assets as $asset): ?>
                             <tr>
                                 <td><strong><?= htmlspecialchars($asset['asset_code']) ?></strong></td>
-                                <td><?= htmlspecialchars($asset['description']) ?></td>
+                                <td><?= htmlspecialchars($asset['asset_name']) ?></td>
                                 <td><?= htmlspecialchars($asset['brand'] ?? '') ?> <?= htmlspecialchars($asset['model'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($asset['serial_number'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($asset['account_code'] ?? '') ?></td>
@@ -107,6 +107,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Modal for Asset Details -->
 <div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-labelledby="assetDetailsModalLabel" aria-hidden="true">

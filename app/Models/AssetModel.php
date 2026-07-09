@@ -69,6 +69,7 @@ class AssetModel {
             SELECT 
                 a.asset_id,
                 a.asset_code,
+                a.asset_name,
                 a.qr_code_ref,
                 a.description,
                 a.brand,
@@ -114,19 +115,20 @@ class AssetModel {
     /**
      * Insert a new asset.
      * @param array $data
-     * @return int|false  The new asset ID on success, false on failure.
+     * @return int|false
      */
     public function create($data) {
         $stmt = $this->db->prepare("
             INSERT INTO assets (
-                asset_code, qr_code_ref, description, brand, model, serial_number,
+                asset_code, asset_name, qr_code_ref, description, brand, model, serial_number,
                 acquisition_cost, acquisition_date, asset_accounts_id, status, `condition`, remarks
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $qr_code_ref = 'QR-' . strtoupper(uniqid());
         $stmt->bind_param(
-            'ssssssdsisss',
+            'sssssssdsisss',
             $data['asset_code'],
+            $data['asset_name'],
             $qr_code_ref,
             $data['description'],
             $data['brand'],
@@ -155,6 +157,7 @@ class AssetModel {
         $stmt = $this->db->prepare("
             UPDATE assets SET
                 asset_code = ?,
+                asset_name = ?,
                 description = ?,
                 brand = ?,
                 model = ?,
@@ -168,8 +171,9 @@ class AssetModel {
             WHERE asset_id = ?
         ");
         $stmt->bind_param(
-            'sssssdsisssi',
+            'ssssssdsisssi',
             $data['asset_code'],
+            $data['asset_name'],
             $data['description'],
             $data['brand'],
             $data['model'],
@@ -209,6 +213,7 @@ class AssetModel {
             SELECT 
                 a.asset_id,
                 a.asset_code,
+                a.asset_name,
                 a.qr_code_ref,
                 a.description,
                 a.brand,
@@ -245,17 +250,18 @@ class AssetModel {
             $like = '%' . $searchTerm . '%';
             if ($field === 'all') {
                 $sql .= " AND (
-                    a.asset_code LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? 
+                    a.asset_code LIKE ? OR a.asset_name LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? 
                     OR a.serial_number LIKE ? OR aa.account_code LIKE ? OR aa.account_name LIKE ? 
                     OR p.full_name LIKE ?
                 )";
-                for ($i = 0; $i < 8; $i++) {
+                for ($i = 0; $i < 9; $i++) {
                     $params[] = $like;
                     $types .= 's';
                 }
             } else {
                 $fieldMap = [
                     'asset_code'   => 'a.asset_code',
+                    'asset_name'   => 'a.asset_name',
                     'description'  => 'a.description',
                     'brand'        => 'a.brand',
                     'model'        => 'a.model',
@@ -491,7 +497,7 @@ class AssetModel {
     }
 
     /**
-     * Find an asset by text search (asset_code, description, or serial_number).
+     * Find an asset by text search (asset_code, asset_name, description, or serial_number).
      * Returns the first matching asset.
      * @param string $query
      * @return array|null
@@ -500,11 +506,11 @@ class AssetModel {
         $like = '%' . $query . '%';
         $stmt = $this->db->prepare("
             SELECT * FROM assets 
-            WHERE (asset_code LIKE ? OR description LIKE ? OR serial_number LIKE ?)
+            WHERE (asset_code LIKE ? OR asset_name LIKE ? OR description LIKE ? OR serial_number LIKE ?)
             AND status != 'inactive'
             LIMIT 1
         ");
-        $stmt->bind_param('sss', $like, $like, $like);
+        $stmt->bind_param('ssss', $like, $like, $like, $like);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();

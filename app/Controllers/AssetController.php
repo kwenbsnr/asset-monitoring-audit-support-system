@@ -149,7 +149,8 @@ class AssetController {
         $id = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
         $data = [
             'asset_code' => trim($_POST['asset_code']),
-            'description' => trim($_POST['description']),
+            'asset_name' => trim($_POST['asset_name']),
+            'description' => trim($_POST['description'] ?? ''),
             'brand' => trim($_POST['brand'] ?? ''),
             'model' => trim($_POST['model'] ?? ''),
             'serial_number' => trim($_POST['serial_number'] ?? ''),
@@ -163,7 +164,7 @@ class AssetController {
 
         $errors = [];
         if (empty($data['asset_code'])) $errors[] = 'Asset code is required.';
-        if (empty($data['description'])) $errors[] = 'Description is required.';
+        if (empty($data['asset_name'])) $errors[] = 'Asset name is required.';
         if (empty($data['asset_accounts_id'])) $errors[] = 'Account is required.';
 
         if (!empty($errors)) {

@@ -48,9 +48,14 @@ $assetId = $asset['asset_id'] ?? 0;
                     </div>
 
                     <div class="mb-3">
-                        <label for="description" class="form-label">Asset Name *</label>
-                        <input type="text" class="form-control" id="description" name="description"
-                               value="<?= htmlspecialchars($data['description'] ?? '') ?>" required>
+                        <label for="asset_name" class="form-label">Asset Name *</label>
+                        <input type="text" class="form-control" id="asset_name" name="asset_name"
+                               value="<?= htmlspecialchars($data['asset_name'] ?? '') ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Additional Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
                     </div>
 
                     <div class="row">
