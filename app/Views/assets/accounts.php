@@ -40,7 +40,6 @@
                             <div class="card-body p-3 d-flex flex-column">
                                 <h6 class="card-title fw-semibold mb-1"><?= htmlspecialchars($acc['account_code']) ?></h6>
                                 <div class="small text-muted"><?= htmlspecialchars($acc['account_name']) ?></div>
-                                <div class="small text-secondary"><?= htmlspecialchars($acc['category_name'] ?? 'No Category') ?></div>
                                 <div class="mt-2">
                                     <span class="badge bg-primary"><?= $acc['asset_count'] ?> Assets</span>
                                 </div>
@@ -60,7 +59,6 @@
 </div>
 
 <style>
-/* Reuse category card styles */
 .account-card {
     transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
     border-width: 1px !important;
@@ -81,10 +79,6 @@
 }
 .account-card .text-muted {
     font-size: 0.75rem;
-}
-.account-card .text-secondary {
-    font-size: 0.8rem;
-    line-height: 1.2;
 }
 .account-card .btn {
     font-size: 0.75rem;

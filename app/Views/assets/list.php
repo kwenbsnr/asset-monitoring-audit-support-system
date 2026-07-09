@@ -1,6 +1,6 @@
 <?php if (!defined('APP_START')) exit; ?>
-    <div class="card shadow">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
+<div class="card shadow">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
         <h4 class="mb-0 fw-bold text-success"><i class="bi bi-box-seam me-2"></i><?= $pageTitle ?? 'Assets' ?></h4>
         <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
@@ -69,7 +69,7 @@
                                 <?php if (!empty($_GET['search'])): ?>
                                     No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
                                 <?php else: ?>
-                                    No assets found in this category.
+                                    No assets found in this account.
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -188,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-md-6"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
                 <div class="col-md-6"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
                 <div class="col-md-6"><strong>Account:</strong> ${escapeHtml(asset.account_code + ' - ' + asset.account_name)}</div>
-                <div class="col-md-6"><strong>Category:</strong> ${escapeHtml(asset.category_name)}</div>
                 <div class="col-md-4"><strong>Status:</strong> <span class="badge bg-${asset.status === 'active' ? 'success' : 'secondary'}">${asset.status}</span></div>
                 <div class="col-md-4"><strong>Condition:</strong> <span class="badge bg-${asset.condition === 'good' ? 'success' : 'warning'}">${asset.condition}</span></div>
                 <div class="col-md-4"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>

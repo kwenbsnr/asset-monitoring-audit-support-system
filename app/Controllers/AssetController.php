@@ -1,7 +1,6 @@
 <?php
 namespace App\Controllers;
 use App\Models\CustodyModel;
-
 use App\Models\AssetModel;
 
 if (!defined('APP_START')) {
@@ -21,6 +20,7 @@ class AssetController {
         $this->assetModel = new AssetModel();
     }
 
+    // ===== Account list (top level) =====
     public function browse() {
         $accountId = isset($_GET['account_id']) ? (int)$_GET['account_id'] : null;
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
@@ -43,6 +43,7 @@ class AssetController {
             require_once __DIR__ . '/../Views/layouts/main.php';
         }
     }
+
     public function listAll() {
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
         $filters = $this->getFiltersFromGet();
@@ -80,7 +81,6 @@ class AssetController {
                 $data = null;
             }
         } elseif ($query) {
-            // Search by asset_code, description, or serial_number (return first match)
             $asset = $this->assetModel->searchAssetByText($query);
             if ($asset) {
                 $data = $this->assetModel->getFullDetails($asset['asset_id']);
@@ -92,24 +92,20 @@ class AssetController {
             echo json_encode(['error' => 'Asset ID, QR code, or search term required']);
             return;
         }
-
         if (!$data) {
             http_response_code(404);
             echo json_encode(['error' => 'Asset not found']);
             return;
         }
-
         header('Content-Type: application/json');
         echo json_encode($data);
     }
 
-    /**
-     * Show add form – status & condition are hidden (defaults applied).
-     */
+    // ===== Add / Edit / Save / Delete =====
     public function add() {
         $accounts = $this->assetModel->getAssetAccounts();
-        $personnel = $this->assetModel->getPersonnel(); // we'll add this method
-        $offices = $this->assetModel->getOffices();     // we'll add this method
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
         $pageTitle = 'Add Asset';
@@ -119,9 +115,6 @@ class AssetController {
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-    /**
-     * Show edit form – status & condition are displayed.
-     */
     public function edit() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if (!$id) {
@@ -133,7 +126,6 @@ class AssetController {
             header('Location: index.php?page=assets&sub=browse');
             exit;
         }
-        // Fetch active custodian if any
         $custodyModel = new CustodyModel();
         $currentCustody = $custodyModel->getActiveCustody($id);
         $personnel = $this->assetModel->getPersonnel();
@@ -148,9 +140,6 @@ class AssetController {
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-    /**
-     * Save (create or update) – defaults status/condition for new assets.
-     */
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: index.php?page=assets&sub=browse');
@@ -167,7 +156,6 @@ class AssetController {
             'acquisition_cost' => $_POST['acquisition_cost'] ? (float)$_POST['acquisition_cost'] : null,
             'acquisition_date' => $_POST['acquisition_date'] ?: null,
             'asset_accounts_id' => (int)$_POST['asset_accounts_id'],
-            // For new assets, force default status/condition
             'status' => $id ? $_POST['status'] : 'active',
             'condition' => $id ? $_POST['condition'] : 'good',
             'remarks' => trim($_POST['remarks'] ?? ''),
@@ -204,12 +192,10 @@ class AssetController {
             exit;
         }
 
-        // Asset saved successfully – clear errors and set flash
         unset($_SESSION['form_errors'], $_SESSION['form_data']);
         $_SESSION['flash'] = 'Asset saved successfully.';
         $_SESSION['flash_type'] = 'success';
 
-        // Optional custody assignment (only if checkbox is checked and asset ID exists)
         if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1' && $id) {
             $custodyData = [
                 'asset_id' => $id,
@@ -220,9 +206,7 @@ class AssetController {
                 'effectivity_date' => $_POST['effectivity_date'] ?? date('Y-m-d'),
                 'status' => 'active'
             ];
-
             $custodyModel = new CustodyModel();
-            // End any existing active custody for this asset
             $existing = $custodyModel->getActiveCustody($id);
             if ($existing) {
                 $custodyModel->update($existing['asset_custodies_id'], [
@@ -238,7 +222,6 @@ class AssetController {
             $custodyModel->create($custodyData);
         }
 
-        // Redirect to edit page (so QR code appears) or browse
         if ($id) {
             header('Location: index.php?page=assets&sub=edit&id=' . $id);
         } else {
@@ -247,10 +230,6 @@ class AssetController {
         exit;
     }
 
-
-    /**
-     * Delete (soft delete)
-     */
     public function delete() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id) {
@@ -262,9 +241,6 @@ class AssetController {
         exit;
     }
 
-    /**
-     * Search assets and return JSON for AJAX live search.
-     */
     public function searchJson() {
         $query = isset($_GET['q']) ? trim($_GET['q']) : '';
         if (strlen($query) < 2) {
@@ -277,9 +253,6 @@ class AssetController {
         echo json_encode($assets);
     }
 
-    /**
-     * Generate and output QR code for an asset.
-     */
     public function qr() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if (!$id) {
@@ -291,15 +264,11 @@ class AssetController {
             http_response_code(404);
             die('Asset not found');
         }
-        // Use the QR code reference (unique per asset)
         $content = $asset['qr_code_ref'];
         $download = isset($_GET['download']);
         \App\Helpers\QRGenerator::output($content, $download);
     }
 
-    /**
-     * Show QR scanner page.
-     */
     public function scan() {
         $pageTitle = 'Scan QR Code';
         $currentPage = 'assets';
