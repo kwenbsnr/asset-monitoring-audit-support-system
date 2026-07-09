@@ -1,6 +1,6 @@
 <?php if (!defined('APP_START')) exit; ?>
-<div class="card shadow">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
+    <div class="card shadow">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
         <h4 class="mb-0 fw-bold text-success"><i class="bi bi-box-seam me-2"></i><?= $pageTitle ?? 'Assets' ?></h4>
         <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
@@ -8,22 +8,21 @@
             </button>
             <form method="GET" action="index.php" class="d-flex gap-2" id="basicSearchForm">
                 <input type="hidden" name="page" value="assets">
-                <input type="hidden" name="sub" value="<?= isset($_GET['cat_id']) ? 'browse' : 'list_all' ?>">
-                <?php if (isset($_GET['cat_id'])): ?>
-                    <input type="hidden" name="cat_id" value="<?= (int)$_GET['cat_id'] ?>">
+                <input type="hidden" name="sub" value="<?= isset($_GET['account_id']) ? 'browse' : 'list_all' ?>">
+                <?php if (isset($_GET['account_id'])): ?>
+                    <input type="hidden" name="account_id" value="<?= (int)$_GET['account_id'] ?>">
                 <?php endif; ?>
                 <div class="input-group">
                     <input type="text" class="form-control form-control-sm" name="search" placeholder="Search..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                     <button class="btn btn-outline-success btn-sm" type="submit"><i class="bi bi-search"></i></button>
                     <?php if (!empty($_GET['search'])): ?>
-                        <a href="?page=assets&sub=<?= isset($_GET['cat_id']) ? 'browse&cat_id=' . (int)$_GET['cat_id'] : 'list_all' ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i></a>
+                        <a href="?page=assets&sub=<?= isset($_GET['account_id']) ? 'browse&account_id=' . (int)$_GET['account_id'] : 'list_all' ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i></a>
                     <?php endif; ?>
                 </div>
             </form>
-            <?php if (isset($currentCategory)): ?>
-                <a href="index.php?page=assets&sub=browse<?= $currentCategory['parent_category_id'] ? '&cat_id=' . $currentCategory['parent_category_id'] : '' ?>" 
-                   class="btn btn-secondary btn-sm">
-                    <i class="bi bi-arrow-left"></i> Back
+            <?php if (isset($account) && $account): ?>
+                <a href="index.php?page=assets&sub=browse" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Accounts
                 </a>
             <?php endif; ?>
             <a href="index.php?page=assets&sub=add" class="btn btn-success btn-sm"><i class="bi bi-plus-circle"></i> Add</a>

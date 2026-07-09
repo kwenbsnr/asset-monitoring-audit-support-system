@@ -234,6 +234,13 @@ class AssetModel {
      * @param array       $filters (category_id, field, status, condition, date_from, date_to, cost_from, cost_to)
      * @return array
      */
+    
+    /**
+     * Search assets with advanced filters.
+     * @param string|null $searchTerm
+     * @param array       $filters (category_id, field, status, condition, date_from, date_to, cost_from, cost_to, account_id)
+     * @return array
+     */
     public function searchAssets($searchTerm = null, $filters = []) {
         $sql = "
             SELECT 
@@ -264,14 +271,21 @@ class AssetModel {
         $params = [];
         $types = '';
 
-        // Category filter
+        // --- Category filter ---
         if (!empty($filters['category_id'])) {
             $sql .= " AND aa.asset_category_id = ?";
             $params[] = $filters['category_id'];
             $types .= 'i';
         }
 
-        // Search term
+        // --- Account filter (MOVED HERE) ---
+        if (!empty($filters['account_id'])) {
+            $sql .= " AND a.asset_accounts_id = ?";
+            $params[] = $filters['account_id'];
+            $types .= 'i';
+        }
+
+        // --- Search term ---
         if (!empty($searchTerm)) {
             $field = $filters['field'] ?? 'all';
             $like = '%' . $searchTerm . '%';
@@ -304,21 +318,21 @@ class AssetModel {
             }
         }
 
-        // Status
+        // --- Status ---
         if (!empty($filters['status'])) {
             $sql .= " AND a.status = ?";
             $params[] = $filters['status'];
             $types .= 's';
         }
 
-        // Condition
+        // --- Condition ---
         if (!empty($filters['condition'])) {
             $sql .= " AND a.condition = ?";
             $params[] = $filters['condition'];
             $types .= 's';
         }
 
-        // Date range
+        // --- Date range ---
         if (!empty($filters['date_from'])) {
             $sql .= " AND a.acquisition_date >= ?";
             $params[] = $filters['date_from'];
@@ -330,7 +344,7 @@ class AssetModel {
             $types .= 's';
         }
 
-        // Cost range
+        // --- Cost range ---
         if (!empty($filters['cost_from']) && $filters['cost_from'] !== '') {
             $sql .= " AND a.acquisition_cost >= ?";
             $params[] = (float)$filters['cost_from'];
@@ -545,5 +559,50 @@ class AssetModel {
     public function getOffices() {
         $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
         return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get all asset accounts with category names (for top‑level browsing).
+     * @return array
+     */
+    public function getAssetAccountsList() {
+        $sql = "
+            SELECT 
+                aa.asset_accounts_id,
+                aa.account_code,
+                aa.account_name,
+                ac.name AS category_name,
+                (SELECT COUNT(*) FROM assets WHERE asset_accounts_id = aa.asset_accounts_id AND status != 'inactive') AS asset_count
+            FROM asset_accounts aa
+            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
+            ORDER BY aa.account_code
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets belonging to a specific account.
+     * @param int $accountId
+     * @param string|null $search
+     * @param array $filters
+     * @return array
+     */
+    public function getAssetsByAccountId($accountId, $search = null, $filters = []) {
+        $filters['account_id'] = $accountId;
+        return $this->searchAssets($search, $filters);
+    }
+
+    /**
+     * Get a single asset account by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getAccountById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM asset_accounts WHERE asset_accounts_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
     }
 }

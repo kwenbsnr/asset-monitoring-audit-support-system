@@ -22,39 +22,27 @@ class AssetController {
     }
 
     public function browse() {
-        $catId = isset($_GET['cat_id']) ? (int)$_GET['cat_id'] : null;
+        $accountId = isset($_GET['account_id']) ? (int)$_GET['account_id'] : null;
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
         $filters = $this->getFiltersFromGet();
-        $currentCategory = null;
 
-        if ($catId) {
-            $currentCategory = $this->assetModel->getCategory($catId);
-            if (!$currentCategory) {
-                header('Location: index.php?page=assets&sub=browse');
-                exit;
-            }
-            if ($this->assetModel->hasChildren($catId)) {
-                $categories = $this->assetModel->getCategoryTree($catId);
-                $pageTitle = 'Sub‑Categories';
-                $currentPage = 'assets';
-                $viewFile = __DIR__ . '/../Views/assets/categories.php';
-                require_once __DIR__ . '/../Views/layouts/main.php';
-            } else {
-                $assets = $this->assetModel->getAssetsByCategory($catId, $search, $filters);
-                $pageTitle = 'Assets' . ($search ? ' (Search: ' . htmlspecialchars($search) . ')' : '');
-                $currentPage = 'assets';
-                $viewFile = __DIR__ . '/../Views/assets/list.php';
-                require_once __DIR__ . '/../Views/layouts/main.php';
-            }
-        } else {
-            $categories = $this->assetModel->getCategoryTree(null);
-            $pageTitle = 'Asset Categories';
+        if ($accountId) {
+            // Show assets under this account
+            $assets = $this->assetModel->getAssetsByAccountId($accountId, $search, $filters);
+            $account = $this->assetModel->getAccountById($accountId);
+            $pageTitle = 'Assets' . ($account ? ' - ' . $account['account_code'] : '');
             $currentPage = 'assets';
-            $viewFile = __DIR__ . '/../Views/assets/categories.php';
+            $viewFile = __DIR__ . '/../Views/assets/list.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        } else {
+            // Show list of asset accounts
+            $accounts = $this->assetModel->getAssetAccountsList();
+            $pageTitle = 'Asset Accounts';
+            $currentPage = 'assets';
+            $viewFile = __DIR__ . '/../Views/assets/accounts.php';
             require_once __DIR__ . '/../Views/layouts/main.php';
         }
     }
-
     public function listAll() {
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
         $filters = $this->getFiltersFromGet();
