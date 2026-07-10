@@ -41,7 +41,7 @@ class ReportController {
      * Main page: generate report form + list of saved reports.
      */
     public function index() {
-        $categories = $this->reportModel->getCategories();
+        $accounts = $this->reportModel->getAccounts();
         $offices = $this->custodyModel->getOffices();
         $reportTypes = $this->getReportTypes();
         $savedReports = $this->reportModel->getAll();
@@ -62,7 +62,7 @@ class ReportController {
         }
 
         $reportType = $_POST['report_type'] ?? '';
-        $categoryId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : 0;
+        $accountId = isset($_POST['account_id']) ? (int)$_POST['account_id'] : 0;
         $officeId = isset($_POST['office_id']) ? (int)$_POST['office_id'] : 0;
         $status = $_POST['status'] ?? '';
         $condition = $_POST['condition'] ?? '';
@@ -73,15 +73,15 @@ class ReportController {
         $title = '';
 
         switch ($reportType) {
-            case 'by_category':
-                if (!$categoryId) {
-                    $_SESSION['flash'] = 'Please select a category.';
+            case 'by_account':
+                if (!$accountId) {
+                    $_SESSION['flash'] = 'Please select an account.';
                     $_SESSION['flash_type'] = 'danger';
                     header('Location: index.php?page=reports');
                     exit;
                 }
-                $data = $this->reportModel->getAssetsByCategory($categoryId);
-                $title = 'Assets by Category';
+                $data = $this->reportModel->getAssetsByAccount($accountId);
+                $title = 'Assets by Account';
                 break;
             case 'by_office':
                 if (!$officeId) {
@@ -160,7 +160,6 @@ class ReportController {
             exit;
         }
 
-        // Output HTML report
         echo $this->buildReportHtml($data, $reportType, $title);
         exit;
     }
@@ -172,7 +171,7 @@ class ReportController {
     public function getReportTypes() {
         return [
             ['value' => 'complete', 'label' => 'Complete Asset List'],
-            ['value' => 'by_category', 'label' => 'Assets by Category'],
+            ['value' => 'by_account', 'label' => 'Assets by Account'],
             ['value' => 'by_office', 'label' => 'Assets by Office/Location'],
             ['value' => 'unverified', 'label' => 'Unverified Assets'],
             ['value' => 'missing', 'label' => 'Missing Assets'],
@@ -225,10 +224,10 @@ class ReportController {
     public function getReportHeaders($reportType) {
         switch ($reportType) {
             case 'complete':
-            case 'by_category':
+            case 'by_account':
                 return [
                     'asset_code' => 'Asset Code',
-                    'description' => 'Description',
+                    'asset_name' => 'Asset Name',
                     'brand' => 'Brand',
                     'model' => 'Model',
                     'serial_number' => 'Serial #',
@@ -240,7 +239,7 @@ class ReportController {
             case 'by_office':
                 return [
                     'asset_code' => 'Asset Code',
-                    'description' => 'Description',
+                    'asset_name' => 'Asset Name',
                     'custodian' => 'Custodian',
                     'office_name' => 'Office',
                     'status' => 'Status'
@@ -248,20 +247,20 @@ class ReportController {
             case 'unverified':
                 return [
                     'asset_code' => 'Asset Code',
-                    'description' => 'Description',
+                    'asset_name' => 'Asset Name',
                     'verification_status' => 'Verification',
                     'remarks' => 'Remarks'
                 ];
             case 'missing':
                 return [
                     'asset_code' => 'Asset Code',
-                    'description' => 'Description',
+                    'asset_name' => 'Asset Name',
                     'status' => 'Status'
                 ];
             case 'for_disposal':
                 return [
                     'asset_code' => 'Asset Code',
-                    'description' => 'Description',
+                    'asset_name' => 'Asset Name',
                     'status' => 'Status',
                     'remarks' => 'Remarks'
                 ];
@@ -277,13 +276,13 @@ class ReportController {
             case 'custodian_assignment':
                 return [
                     'asset_code' => 'Asset Code',
-                    'asset_description' => 'Description',
+                    'asset_name' => 'Asset Name',
                     'custodian_name' => 'Custodian',
                     'office_name' => 'Office',
                     'effectivity_date' => 'Effectivity'
                 ];
             default:
-                return ['asset_code' => 'Asset Code', 'description' => 'Description', 'status' => 'Status'];
+                return ['asset_code' => 'Asset Code', 'asset_name' => 'Asset Name', 'status' => 'Status'];
         }
     }
 
@@ -305,7 +304,6 @@ class ReportController {
             $dompdf->render();
             $dompdf->stream('report.pdf', ['Attachment' => true]);
         } else {
-            // Fallback: output HTML and let user print to PDF
             header('Content-Type: text/html');
             echo $html;
             echo '<p class="text-center"><strong>PDF library not installed.</strong> Please run: <code>composer require dompdf/dompdf</code></p>';
@@ -346,7 +344,6 @@ class ReportController {
             header('Content-Disposition: attachment; filename="report.xlsx"');
             $writer->save('php://output');
         } else {
-            // Fallback: output CSV
             header('Content-Type: text/csv');
             header('Content-Disposition: attachment; filename="report.csv"');
             $output = fopen('php://output', 'w');
@@ -369,7 +366,7 @@ class ReportController {
      */
     public function previewAjax() {
         $reportType = $_POST['report_type'] ?? $_GET['report_type'] ?? '';
-        $categoryId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : (isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0);
+        $accountId = isset($_POST['account_id']) ? (int)$_POST['account_id'] : (isset($_GET['account_id']) ? (int)$_GET['account_id'] : 0);
         $officeId = isset($_POST['office_id']) ? (int)$_POST['office_id'] : (isset($_GET['office_id']) ? (int)$_GET['office_id'] : 0);
         $status = $_POST['status'] ?? $_GET['status'] ?? '';
         $condition = $_POST['condition'] ?? $_GET['condition'] ?? '';
@@ -379,10 +376,10 @@ class ReportController {
         $data = [];
         $title = '';
         switch ($reportType) {
-            case 'by_category':
-                if (!$categoryId) { echo json_encode(['error' => 'Category required']); return; }
-                $data = $this->reportModel->getAssetsByCategory($categoryId);
-                $title = 'Assets by Category';
+            case 'by_account':
+                if (!$accountId) { echo json_encode(['error' => 'Account required']); return; }
+                $data = $this->reportModel->getAssetsByAccount($accountId);
+                $title = 'Assets by Account';
                 break;
             case 'by_office':
                 if (!$officeId) { echo json_encode(['error' => 'Office required']); return; }
@@ -416,7 +413,6 @@ class ReportController {
                 break;
         }
 
-        // Store in session for export
         $_SESSION['report_data'] = $data;
         $_SESSION['report_type'] = $reportType;
         $_SESSION['report_title'] = $title;
@@ -442,7 +438,6 @@ class ReportController {
         }
 
         if (!class_exists('PhpOffice\PhpWord\IOFactory')) {
-            // Fallback: output HTML
             header('Content-Type: text/html');
             echo $this->buildReportHtml($data, $reportType, $title);
             echo '<p><strong>PhpWord not installed.</strong> Please run: composer require phpoffice/phpword</p>';
@@ -456,12 +451,10 @@ class ReportController {
 
         $headers = $this->getReportHeaders($reportType);
         $table = $section->addTable(['borderSize' => 6, 'cellMargin' => 80]);
-        // Header row
         $table->addRow();
         foreach ($headers as $header) {
             $table->addCell()->addText($header, ['bold' => true]);
         }
-        // Data rows
         foreach ($data as $row) {
             $table->addRow();
             foreach (array_keys($headers) as $key) {
@@ -529,7 +522,6 @@ class ReportController {
                             'verified_by' => (int)$item['verified_by'] ?? 0,
                             'remarks' => trim($item['remarks'] ?? ''),
                         ];
-                        // addItem now handles duplicate check
                         $this->reportModel->addItem($itemData);
                     }
                 }

@@ -8,7 +8,6 @@
             </div>
             <div class="card-body">
                 <form id="reportForm" method="POST" action="index.php?page=reports&sub=generate">
-                    <!-- Report Type -->
                     <div class="mb-3">
                         <label class="form-label">Report Type *</label>
                         <select class="form-select" name="report_type" id="reportType" required>
@@ -18,13 +17,13 @@
                         </select>
                     </div>
 
-                    <!-- Category (hidden by default) -->
-                    <div class="mb-3" id="categoryDiv" style="display:none;">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" name="category_id">
-                            <option value="">Select Category</option>
-                            <?php foreach ($categories as $c): ?>
-                                <option value="<?= $c['asset_category_id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+                    <!-- Account (hidden by default) -->
+                    <div class="mb-3" id="accountDiv" style="display:none;">
+                        <label class="form-label">Account</label>
+                        <select class="form-select" name="account_id">
+                            <option value="">Select Account</option>
+                            <?php foreach ($accounts as $a): ?>
+                                <option value="<?= $a['asset_accounts_id'] ?>"><?= htmlspecialchars($a['account_code'] . ' - ' . $a['account_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -40,7 +39,6 @@
                         </select>
                     </div>
 
-                    <!-- Date range -->
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label class="form-label">Date From</label>
@@ -52,7 +50,6 @@
                         </div>
                     </div>
 
-                    <!-- Status -->
                     <div class="mb-3">
                         <label class="form-label">Status (Optional)</label>
                         <select class="form-select" name="status">
@@ -64,21 +61,16 @@
                         </select>
                     </div>
 
-                    <!-- Buttons -->
                     <div class="d-grid gap-2">
-                        <!-- Preview button – AJAX -->
                         <button type="button" class="btn btn-primary" id="previewBtn">
                             <i class="bi bi-eye"></i> Preview
                         </button>
-                        <!-- PDF – submit form -->
                         <button type="submit" name="format" value="pdf" class="btn btn-success">
                             <i class="bi bi-file-earmark-pdf"></i> Generate PDF
                         </button>
-                        <!-- Excel – submit form -->
                         <button type="submit" name="format" value="excel" class="btn btn-info">
                             <i class="bi bi-file-earmark-excel"></i> Export Excel
                         </button>
-                        <!-- DOCX – submit form -->
                         <button type="submit" name="format" value="docx" class="btn btn-secondary">
                             <i class="bi bi-file-earmark-word"></i> Export DOCX
                         </button>
@@ -98,7 +90,6 @@
                 <div id="previewContainer" style="display:none;">
                     <div class="alert alert-info" id="previewTitle"></div>
                     <div id="previewContent" class="table-responsive"></div>
-                    <!-- Removed duplicate export buttons – they are on the left -->
                 </div>
                 <div id="previewPlaceholder" class="text-center text-muted py-5">
                     <i class="bi bi-file-earmark" style="font-size: 3rem;"></i>
@@ -109,22 +100,19 @@
     </div>
 </div>
 
-<!-- JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Toggle category/office fields
         const reportTypeSelect = document.getElementById('reportType');
-        const categoryDiv = document.getElementById('categoryDiv');
+        const accountDiv = document.getElementById('accountDiv');
         const officeDiv = document.getElementById('officeDiv');
 
         reportTypeSelect.addEventListener('change', function() {
             const type = this.value;
-            categoryDiv.style.display = type === 'by_category' ? 'block' : 'none';
+            accountDiv.style.display = type === 'by_account' ? 'block' : 'none';
             officeDiv.style.display = type === 'by_office' ? 'block' : 'none';
         });
         reportTypeSelect.dispatchEvent(new Event('change'));
 
-        // Preview button – AJAX
         document.getElementById('previewBtn').addEventListener('click', function() {
             const form = document.getElementById('reportForm');
             const formData = new FormData(form);
