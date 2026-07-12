@@ -1,11 +1,5 @@
 <?php
 // This is the main layout – use it by including it at the top of every authenticated view
-// The content of the page must be passed in the variable $content (we'll include it later)
-// We'll use a capture technique: we'll start output buffering in the controller, 
-// but to keep it simple we'll just include the layout and then include the specific view inside.
-
-// Instead of complex output buffering, we'll just include the sidebar and header in each view.
-// We'll create a partial for sidebar and header.
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,18 +36,24 @@
             <h5>NIA RO IX</h5>
         </div>
         <ul class="nav flex-column">
+            <!-- Dashboard – visible to both -->
             <li class="nav-item">
                 <a class="nav-link <?= ($currentPage === 'dashboard') ? 'active' : '' ?>" href="index.php">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
 
+            <!-- Asset Registry – visible only to Supply Officer -->
             <?php if ($_SESSION['role'] === 'supply_officer'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Registry
                     </a>
                 </li>
+            <?php endif; ?>
+
+            <!-- Common modules – visible to both Supply Officer and Admin -->
+            <?php if (in_array($_SESSION['role'], ['supply_officer', 'admin'])): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'scan') ? 'active' : '' ?>" href="index.php?page=assets&sub=scan">
                         <i class="bi bi-qr-code-scan"></i> Scan QR
@@ -71,6 +71,7 @@
                 </li>
             <?php endif; ?>
 
+            <!-- Admin‑only modules -->
             <?php if ($_SESSION['role'] === 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
@@ -84,6 +85,7 @@
                 </li>
             <?php endif; ?>
 
+            <!-- Logout – visible to all -->
             <li class="nav-item mt-4">
                 <a class="nav-link text-danger" href="index.php?action=logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
@@ -111,7 +113,6 @@
         </nav>
 
         <div class="container-fluid mt-3">
-            <!-- The main content of each page will be included here -->
             <?php require_once $viewFile; ?>
         </div>
     </div>
@@ -121,7 +122,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="public/js/script.js"></script>
 <script>
-    // Toggle sidebar on small screens
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.getElementById('sidebar').classList.toggle('active');
     });
