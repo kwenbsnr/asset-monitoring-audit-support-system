@@ -172,10 +172,9 @@ function cleanupScanner() {
     isStopping = false;
     isPaused = false;
     if (html5QrCode) {
-        html5QrCode.clear(); // Release camera stream
+        html5QrCode.clear();
         html5QrCode = null;
     }
-    // Reset UI
     startBtn.style.display = 'block';
     startBtn.disabled = false;
     startBtn.innerHTML = '<i class="bi bi-camera"></i> Tap to scan QR code';
@@ -285,13 +284,21 @@ function showAssetProfile(data) {
                         </a>`;
     }
 
+    // -------- Disposal Button (only for active assets) --------
+    let disposalLink = '';
+    if (asset.status === 'active') {
+        disposalLink = `<a href="index.php?page=disposal&sub=request&asset_id=${asset.asset_id}" class="btn btn-danger btn-sm ms-2">
+                            <i class="bi bi-trash"></i> Request Disposal
+                        </a>`;
+    }
+
+    // -------- Asset Information (using asset_name) --------
     let html = `
         <h6 class="border-bottom pb-2">Asset Information</h6>
         <div class="row mb-2">
             <div class="col-6"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
             <div class="col-6"><strong>QR Ref:</strong> ${escapeHtml(asset.qr_code_ref)}</div>
-            <div class="col-12"><strong>Description:</strong> ${escapeHtml(asset.description)}</div>
-            <div class="col-6"><strong>Category:</strong> ${escapeHtml(asset.category_name || 'N/A')}</div>
+            <div class="col-12"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
             <div class="col-6"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
             <div class="col-6"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
             <div class="col-6"><strong>Serial #:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
@@ -341,11 +348,16 @@ function showAssetProfile(data) {
         html += `</tbody></table></div>`;
     }
 
+    // -------- Inject Action Button and Disposal Link --------
+    const actionContainer = document.getElementById('actionButtonContainer');
+    if (actionContainer) {
+        actionContainer.innerHTML = actionButton + ' ' + disposalLink;
+    }
+
     profilePlaceholder.style.display = 'none';
     profileContent.style.display = 'block';
     profileContent.innerHTML = html;
     profileFooter.style.display = 'flex';
-    actionContainer.innerHTML = actionButton;
     scanAnotherBtn.style.display = 'inline-block';
     if (scanSuccessMsg) scanSuccessMsg.style.display = 'inline';
 }
@@ -380,7 +392,6 @@ function resetAndScanAgain() {
     }
 }
 
-// Expose functions globally for the view
 window.startScanner = startScanner;
 window.showAssetProfile = showAssetProfile;
 window.resetAndScanAgain = resetAndScanAgain;

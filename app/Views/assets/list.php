@@ -88,7 +88,18 @@
                                         <span class="text-muted">Not assigned</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><span class="badge bg-<?= $asset['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $asset['status'] ?></span></td>
+                                <td>
+                                    <?php 
+                                        $statusClass = match($asset['status']) {
+                                            'active' => 'success',
+                                            'pending_disposal' => 'warning',
+                                            'disposed' => 'secondary',
+                                            'missing' => 'danger',
+                                            default => 'secondary'
+                                        };
+                                    ?>
+                                    <span class="badge bg-<?= $statusClass ?>"><?= $asset['status'] ?></span>
+                                </td>
                                 <td>
                                     <button class="btn btn-sm btn-info view-details" 
                                             data-id="<?= $asset['asset_id'] ?>" 
@@ -97,7 +108,11 @@
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                                    <a href="index.php?page=assets&sub=delete&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this asset?')"><i class="bi bi-trash"></i></a>
+                                    <?php if ($asset['status'] === 'active'): ?>
+                                        <a href="index.php?page=disposal&sub=request&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-danger" title="Request Disposal">
+                                            <i class="bi bi-trash"></i> Disposal
+                                        </a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -107,7 +122,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- Modal for Asset Details -->
 <div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-labelledby="assetDetailsModalLabel" aria-hidden="true">
@@ -174,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const audit = data.audit || [];
         const transfers = data.transfers || [];
 
-        // QR Code image URL
         const qrImg = `index.php?page=assets&sub=qr&id=${asset.asset_id}`;
 
         let html = `
@@ -182,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row mb-3">
                 <div class="col-md-6"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
                 <div class="col-md-6"><strong>QR Code:</strong> ${escapeHtml(asset.qr_code_ref)}</div>
-                <div class="col-md-12"><strong>Description:</strong> ${escapeHtml(asset.description)}</div>
+                <div class="col-md-12"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
                 <div class="col-md-4"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
                 <div class="col-md-4"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
                 <div class="col-md-4"><strong>Serial #:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
@@ -196,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // QR Code image
         html += `
             <div class="text-center mb-3">
                 <img src="${qrImg}" alt="QR Code" style="max-width:150px; border:1px solid #ddd; padding:5px; border-radius:8px;">

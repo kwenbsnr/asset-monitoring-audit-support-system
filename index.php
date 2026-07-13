@@ -6,6 +6,7 @@ use App\Controllers\CustodyController;
 use App\Controllers\AuditController;
 use App\Controllers\ReportController;
 use App\Controllers\UserController;
+use App\Controllers\DisposalController;
 
 define('APP_START', true);
 require_once __DIR__ . '/app/bootstrap.php';
@@ -167,6 +168,28 @@ switch ($page) {
                 break;
             case 'delete':
                 $controller->delete();
+                break;
+        }
+        break;
+    case 'disposal':
+        $controller = new DisposalController();
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
+        switch ($sub) {
+            case 'index':
+            default:
+                $controller->index();
+                break;
+            case 'request':
+                $controller->request();
+                break;
+            case 'store':
+                $controller->store();
+                break;
+            case 'review':
+                $controller->review();
+                break;
+            case 'process':
+                $controller->process();
                 break;
         }
         break;

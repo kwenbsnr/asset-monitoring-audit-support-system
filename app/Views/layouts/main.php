@@ -69,6 +69,12 @@
                         <i class="bi bi-file-earmark-text"></i> Reports
                     </a>
                 </li>
+                <!-- NEW: Disposal Requests – visible to both -->
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'disposal') ? 'active' : '' ?>" href="index.php?page=disposal">
+                        <i class="bi bi-trash"></i> Disposal Requests
+                    </a>
+                </li>
             <?php endif; ?>
 
             <!-- Admin‑only modules -->
