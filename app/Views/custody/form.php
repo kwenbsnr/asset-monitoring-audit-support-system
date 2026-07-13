@@ -23,7 +23,9 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                     <select class="form-select" name="asset_id" required>
                         <option value="">Select Asset</option>
                         <?php foreach ($assets as $a): ?>
-                            <option value="<?= $a['asset_id'] ?>" <?= (isset($data['asset_id']) && $data['asset_id'] == $a['asset_id']) ? 'selected' : '' ?>>
+                            <option value="<?= $a['asset_id'] ?>" 
+                                <?= (isset($data['asset_id']) && $data['asset_id'] == $a['asset_id']) ? 'selected' : '' ?>
+                                <?= (isset($preSelectedAsset) && $preSelectedAsset == $a['asset_id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($a['asset_code'] . ' - ' . $a['description']) ?>
                             </option>
                         <?php endforeach; ?>

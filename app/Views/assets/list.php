@@ -109,6 +109,17 @@
                                     </button>
                                     <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
                                     <?php if ($asset['status'] === 'active'): ?>
+                                        <?php if (empty($asset['active_custody_id'])): ?>
+                                            <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-primary" title="Assign Custodian">
+                                                <i class="bi bi-person-plus"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning" title="Transfer Custodian">
+                                                <i class="bi bi-arrow-left-right"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if ($asset['status'] === 'active'): ?>
                                         <a href="index.php?page=disposal&sub=request&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-danger" title="Request Disposal">
                                             <i class="bi bi-trash"></i> Disposal
                                         </a>

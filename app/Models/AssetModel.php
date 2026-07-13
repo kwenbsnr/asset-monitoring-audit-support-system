@@ -208,6 +208,13 @@ class AssetModel {
      * @param array       $filters (account_id, field, status, condition, date_from, date_to, cost_from, cost_to)
      * @return array
      */
+    
+    /**
+     * Search assets with advanced filters.
+     * @param string|null $searchTerm
+     * @param array       $filters (account_id, field, status, condition, date_from, date_to, cost_from, cost_to)
+     * @return array
+     */
     public function searchAssets($searchTerm = null, $filters = []) {
         $sql = "
             SELECT 
@@ -226,7 +233,10 @@ class AssetModel {
                 a.remarks,
                 aa.account_code,
                 aa.account_name,
-                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians
+                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians,
+                (SELECT ac.asset_custodies_id FROM asset_custodies ac 
+                WHERE ac.asset_id = a.asset_id AND ac.status = 'active' 
+                ORDER BY ac.effectivity_date DESC LIMIT 1) AS active_custody_id
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
             LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
