@@ -284,12 +284,18 @@ function showAssetProfile(data) {
                         </a>`;
     }
 
-    // -------- Disposal Button (only for active assets) --------
-    let disposalLink = '';
-    if (asset.status === 'active') {
-        disposalLink = `<a href="index.php?page=disposal&sub=request&asset_id=${asset.asset_id}" class="btn btn-danger btn-sm ms-2">
-                            <i class="bi bi-trash"></i> Request Disposal
-                        </a>`;
+    // -------- Dispose Button (only for active assets and asset_inspector/admin) --------
+    let disposeForm = '';
+    if (asset.status === 'active' && (window.userRole === 'asset_inspector' || window.userRole === 'admin')) {
+        disposeForm = `
+            <form method="POST" action="index.php?page=assets&sub=dispose" class="d-inline" id="disposeFormScan_${asset.asset_id}">
+                <input type="hidden" name="asset_id" value="${asset.asset_id}">
+                <input type="hidden" name="disposal_reason" id="disposal_reason_scan_${asset.asset_id}">
+                <button type="button" class="btn btn-danger btn-sm ms-2" onclick="const reason = prompt('Reason for disposal:'); if(reason && reason.trim() !== '') { document.getElementById('disposal_reason_scan_${asset.asset_id}').value = reason.trim(); document.getElementById('disposeFormScan_${asset.asset_id}').submit(); } else if(reason !== null) { alert('Reason is required.'); }">
+                    <i class="bi bi-trash"></i> Dispose
+                </button>
+            </form>
+        `;
     }
 
     // -------- Asset Information (using asset_name) --------
@@ -348,10 +354,10 @@ function showAssetProfile(data) {
         html += `</tbody></table></div>`;
     }
 
-    // -------- Inject Action Button and Disposal Link --------
+    // -------- Inject Action Button and Dispose Form --------
     const actionContainer = document.getElementById('actionButtonContainer');
     if (actionContainer) {
-        actionContainer.innerHTML = actionButton + ' ' + disposalLink;
+        actionContainer.innerHTML = actionButton + ' ' + disposeForm;
     }
 
     profilePlaceholder.style.display = 'none';

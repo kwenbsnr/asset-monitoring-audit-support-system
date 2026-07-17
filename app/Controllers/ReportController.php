@@ -28,7 +28,8 @@ class ReportController {
     private $custodyModel;
 
     public function __construct() {
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['supply_officer', 'admin'])) {
+        // Only admin can access reports
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
             header('Location: index.php');
             exit;
         }

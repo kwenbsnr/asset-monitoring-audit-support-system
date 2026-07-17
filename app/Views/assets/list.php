@@ -119,10 +119,14 @@
                                             </a>
                                         <?php endif; ?>
                                     <?php endif; ?>
-                                    <?php if ($asset['status'] === 'active'): ?>
-                                        <a href="index.php?page=disposal&sub=request&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-danger" title="Request Disposal">
-                                            <i class="bi bi-trash"></i> Disposal
-                                        </a>
+                                    <?php if (in_array($_SESSION['role'], ['asset_inspector', 'admin']) && $asset['status'] === 'active'): ?>
+                                        <button class="btn btn-sm btn-danger dispose-btn" 
+                                                data-id="<?= $asset['asset_id'] ?>" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#disposeModal"
+                                                title="Dispose Asset">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -156,6 +160,18 @@
         </div>
     </div>
 </div>
+
+<?php include __DIR__ . '/dispose_modal.php'; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.dispose-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('disposeAssetId').value = this.dataset.id;
+        });
+    });
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

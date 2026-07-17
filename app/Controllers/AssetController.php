@@ -13,21 +13,21 @@ class AssetController {
     private $assetModel;
 
     public function __construct() {
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['supply_officer', 'admin'])) {
+        // Allow all three roles for browsing, listing, scanning, and viewing details
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'asset_inspector', 'admin'])) {
             header('Location: index.php');
             exit;
         }
         $this->assetModel = new AssetModel();
     }
 
-    // ===== Account list (top level) =====
+    // ===== Account list (top level) – all roles =====
     public function browse() {
         $accountId = isset($_GET['account_id']) ? (int)$_GET['account_id'] : null;
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
         $filters = $this->getFiltersFromGet();
 
         if ($accountId) {
-            // Show assets under this account
             $assets = $this->assetModel->getAssetsByAccountId($accountId, $search, $filters);
             $account = $this->assetModel->getAccountById($accountId);
             $pageTitle = 'Assets' . ($account ? ' - ' . $account['account_code'] : '');
@@ -35,7 +35,6 @@ class AssetController {
             $viewFile = __DIR__ . '/../Views/assets/list.php';
             require_once __DIR__ . '/../Views/layouts/main.php';
         } else {
-            // Show list of asset accounts
             $accounts = $this->assetModel->getAssetAccountsList();
             $pageTitle = 'Asset Accounts';
             $currentPage = 'assets';
@@ -102,7 +101,12 @@ class AssetController {
     }
 
     // ===== Add / Edit / Save / Delete =====
+    // Only encoder and admin can add assets
     public function add() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
         $accounts = $this->assetModel->getAssetAccounts();
         $personnel = $this->assetModel->getPersonnel();
         $offices = $this->assetModel->getOffices();
@@ -115,7 +119,12 @@ class AssetController {
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
+    // Edit and delete are admin-only
     public function edit() {
+        if ($_SESSION['role'] !== 'admin') {
+            header('Location: index.php');
+            exit;
+        }
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if (!$id) {
             header('Location: index.php?page=assets&sub=browse');
@@ -141,6 +150,10 @@ class AssetController {
     }
 
     public function save() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: index.php?page=assets&sub=browse');
             exit;
@@ -232,6 +245,10 @@ class AssetController {
     }
 
     public function delete() {
+        if ($_SESSION['role'] !== 'admin') {
+            header('Location: index.php');
+            exit;
+        }
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id) {
             $this->assetModel->delete($id);
@@ -274,6 +291,82 @@ class AssetController {
         $pageTitle = 'Scan QR Code';
         $currentPage = 'assets';
         $viewFile = __DIR__ . '/../Views/assets/scan.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+     /**
+     * Dispose an asset (mark as disposed) – only for asset_inspector and admin.
+     */
+    public function dispose() {
+        // Only asset_inspector and admin can dispose
+        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $assetId = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
+            $reason = trim($_POST['disposal_reason'] ?? '');
+
+            if (!$assetId) {
+                $_SESSION['flash'] = 'Invalid asset.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            if (empty($reason)) {
+                $_SESSION['flash'] = 'Please provide a reason for disposal.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            $asset = $this->assetModel->getById($assetId);
+            if (!$asset) {
+                $_SESSION['flash'] = 'Asset not found.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            if ($asset['status'] !== 'active') {
+                $_SESSION['flash'] = 'Only active assets can be disposed.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            // Update asset status and reason
+            $updated = $this->assetModel->disposeAsset($assetId, $reason, $_SESSION['user_id']);
+            if ($updated) {
+                $_SESSION['flash'] = 'Asset marked as disposed successfully.';
+                $_SESSION['flash_type'] = 'success';
+            } else {
+                $_SESSION['flash'] = 'Failed to dispose asset.';
+                $_SESSION['flash_type'] = 'danger';
+            }
+            header('Location: index.php?page=assets&sub=browse');
+            exit;
+        }
+
+        // GET request – redirect to browse (the modal handles the action)
+        header('Location: index.php?page=assets&sub=browse');
+        exit;
+    }
+
+    /**
+     * View assets by office (for encoder).
+     */
+    public function byOffice() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+        $officeData = $this->assetModel->getAssetsByOffice();
+        $pageTitle = 'Assets by Office';
+        $currentPage = 'assets_by_office';
+        $viewFile = __DIR__ . '/../Views/assets/by_office.php';
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 }

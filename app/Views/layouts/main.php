@@ -29,34 +29,57 @@
 </div>
 
 <div class="wrapper">
-    <!-- Sidebar -->
     <nav id="sidebar" class="sidebar <?= ($_SESSION['role'] === 'admin') ? 'sidebar-admin' : 'sidebar-supply' ?>">
         <div class="sidebar-header">
             <img src="public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
         </div>
         <ul class="nav flex-column">
-            <!-- Dashboard – visible to both -->
+            <!-- Dashboard – visible to all -->
             <li class="nav-item">
                 <a class="nav-link <?= ($currentPage === 'dashboard') ? 'active' : '' ?>" href="index.php">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
 
-            <!-- Asset Registry – visible only to Supply Officer -->
-            <?php if ($_SESSION['role'] === 'supply_officer'): ?>
+            <!-- Encoder modules -->
+            <?php if ($_SESSION['role'] === 'encoder'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
-                        <i class="bi bi-box-seam"></i> Asset Registry
+                        <i class="bi bi-box-seam"></i> Asset Records
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'assets_by_office') ? 'active' : '' ?>" href="index.php?page=assets&sub=by_office">
+                        <i class="bi bi-building"></i> Assets by Office
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
+                        <i class="bi bi-plus-circle"></i> Register Asset
                     </a>
                 </li>
             <?php endif; ?>
 
-            <!-- Common modules – visible to both Supply Officer and Admin -->
-            <?php if (in_array($_SESSION['role'], ['supply_officer', 'admin'])): ?>
+            <!-- Asset Inspector modules -->
+            <?php if ($_SESSION['role'] === 'asset_inspector'): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
+                        <i class="bi bi-box-seam"></i> Asset Records
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'scan') ? 'active' : '' ?>" href="index.php?page=assets&sub=scan">
                         <i class="bi bi-qr-code-scan"></i> Scan QR
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <!-- Admin modules -->
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
+                        <i class="bi bi-box-seam"></i> Asset Registry
                     </a>
                 </li>
                 <li class="nav-item">
@@ -69,16 +92,6 @@
                         <i class="bi bi-file-earmark-text"></i> Reports
                     </a>
                 </li>
-                <!-- NEW: Disposal Requests – visible to both -->
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage === 'disposal') ? 'active' : '' ?>" href="index.php?page=disposal">
-                        <i class="bi bi-trash"></i> Disposal Requests
-                    </a>
-                </li>
-            <?php endif; ?>
-
-            <!-- Admin‑only modules -->
-            <?php if ($_SESSION['role'] === 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
                         <i class="bi bi-clock-history"></i> Audit Trail
@@ -91,7 +104,6 @@
                 </li>
             <?php endif; ?>
 
-            <!-- Logout – visible to all -->
             <li class="nav-item mt-4">
                 <a class="nav-link text-danger" href="index.php?action=logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
@@ -99,24 +111,6 @@
             </li>
         </ul>
     </nav>
-
-    <!-- Page content -->
-    <div id="content">
-        <!-- Top navbar (optional) -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-            <div class="container-fluid">
-                <button class="btn btn-sm btn-outline-secondary" id="sidebarToggle">
-                    <i class="bi bi-list"></i>
-                </button>
-                <span class="navbar-brand mb-0 h5"><?= $pageTitle ?? 'Dashboard' ?></span>
-                <div class="d-flex align-items-center">
-                    <span class="me-3 text-muted">
-                        <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['full_name']) ?>
-                        <small class="text-secondary">(<?= $_SESSION['role'] ?>)</small>
-                    </span>
-                </div>
-            </div>
-        </nav>
 
         <div class="container-fluid mt-3">
             <?php require_once $viewFile; ?>

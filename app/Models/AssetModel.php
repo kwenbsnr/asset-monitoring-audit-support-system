@@ -525,4 +525,85 @@ class AssetModel {
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
+
+    /**
+     * Dispose an asset (update status, reason, and log audit).
+     * @param int    $assetId
+     * @param string $reason
+     * @param int    $userId
+     * @return bool
+     */
+    public function disposeAsset($assetId, $reason, $userId) {
+        // Update asset
+        $stmt = $this->db->prepare("UPDATE assets SET status = 'disposed', disposal_reason = ?, updated_at = NOW() WHERE asset_id = ?");
+        $stmt->bind_param('si', $reason, $assetId);
+        $success = $stmt->execute();
+
+        if ($success) {
+            // Log audit trail
+            $asset = $this->getById($assetId);
+            $oldValues = json_encode(['status' => $asset['status']]);
+            $newValues = json_encode(['status' => 'disposed', 'disposal_reason' => $reason]);
+            $this->logAudit($assetId, $userId, 'DISPOSE', 'ASSET', $oldValues, $newValues);
+        }
+        return $success;
+    }
+
+    /**
+     * Log an audit entry.
+     * @param int    $assetId
+     * @param int    $userId
+     * @param string $actionType
+     * @param string $module
+     * @param string $previousValues
+     * @param string $newValues
+     */
+    private function logAudit($assetId, $userId, $actionType, $module, $previousValues, $newValues) {
+        $stmt = $this->db->prepare("
+            INSERT INTO audit_trail (asset_id, performed_by, action_type, module, previous_values, new_values)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param('iissss', $assetId, $userId, $actionType, $module, $previousValues, $newValues);
+        $stmt->execute();
+    }
+
+    /**
+     * Get assets grouped by office (for the by_office view).
+     * @return array
+     */
+    public function getAssetsByOffice() {
+        $sql = "
+            SELECT 
+                o.office_id,
+                o.name AS office_name,
+                a.asset_id,
+                a.asset_code,
+                a.asset_name,
+                a.status,
+                aa.account_code
+            FROM offices o
+            LEFT JOIN asset_custodies ac ON o.office_id = ac.office_id AND ac.status = 'active'
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id AND a.status != 'inactive'
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            WHERE o.office_id IS NOT NULL
+            ORDER BY o.name, a.asset_code
+        ";
+        $result = $this->db->query($sql);
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        // Group by office
+        $grouped = [];
+        foreach ($rows as $row) {
+            $officeId = $row['office_id'];
+            if (!isset($grouped[$officeId])) {
+                $grouped[$officeId] = [
+                    'office_name' => $row['office_name'],
+                    'assets' => []
+                ];
+            }
+            if ($row['asset_id']) {
+                $grouped[$officeId]['assets'][] = $row;
+            }
+        }
+        return array_values($grouped);
+    }
 }
