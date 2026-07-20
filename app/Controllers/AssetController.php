@@ -294,7 +294,7 @@ class AssetController {
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-     /**
+    /**
      * Dispose an asset (mark as disposed) – only for asset_inspector and admin.
      */
     public function dispose() {
@@ -356,17 +356,60 @@ class AssetController {
     }
 
     /**
-     * View assets by office (for encoder).
+     * View assets by office – shows office cards, then custodians, then assets.
      */
     public function byOffice() {
         if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
             header('Location: index.php');
             exit;
         }
-        $officeData = $this->assetModel->getAssetsByOffice();
-        $pageTitle = 'Assets by Office';
-        $currentPage = 'assets_by_office';
-        $viewFile = __DIR__ . '/../Views/assets/by_office.php';
-        require_once __DIR__ . '/../Views/layouts/main.php';
+
+        $officeId = isset($_GET['office_id']) ? (int)$_GET['office_id'] : null;
+        $custodianId = isset($_GET['custodian_id']) ? (int)$_GET['custodian_id'] : null;
+
+        if ($custodianId) {
+            // Show assets for a specific custodian (popover or modal)
+            $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
+            $custodian = $this->assetModel->getPersonnelById($custodianId);
+            $pageTitle = 'Assets of ' . ($custodian ? $custodian['full_name'] : '');
+            $currentPage = 'assets_by_office';
+            $viewFile = __DIR__ . '/../Views/assets/custodian_assets.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        } elseif ($officeId) {
+            // Show custodians in this office
+            $custodians = $this->assetModel->getCustodiansByOfficeForEncoder($officeId);
+            $office = $this->assetModel->getOfficeById($officeId);
+            $pageTitle = 'Custodians - ' . ($office ? $office['name'] : '');
+            $currentPage = 'assets_by_office';
+            $viewFile = __DIR__ . '/../Views/assets/office_custodians.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        } else {
+            // Show office cards
+            $offices = $this->assetModel->getOfficesWithData();
+            $pageTitle = 'Assets by Office';
+            $currentPage = 'assets_by_office';
+            $viewFile = __DIR__ . '/../Views/assets/offices.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        }
+    }
+
+    /**
+     * Return assets for a custodian as JSON (for popover).
+     */
+    public function custodianAssetsJson() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+        $custodianId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$custodianId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Custodian ID required']);
+            return;
+        }
+        $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
+        header('Content-Type: application/json');
+        echo json_encode($assets);
     }
 }

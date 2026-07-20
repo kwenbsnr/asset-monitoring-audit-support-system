@@ -208,13 +208,6 @@ class AssetModel {
      * @param array       $filters (account_id, field, status, condition, date_from, date_to, cost_from, cost_to)
      * @return array
      */
-    
-    /**
-     * Search assets with advanced filters.
-     * @param string|null $searchTerm
-     * @param array       $filters (account_id, field, status, condition, date_from, date_to, cost_from, cost_to)
-     * @return array
-     */
     public function searchAssets($searchTerm = null, $filters = []) {
         $sql = "
             SELECT 
@@ -365,11 +358,113 @@ class AssetModel {
     }
 
     /**
+     * Get a single personnel by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getPersonnelById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM personnel WHERE personnel_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    /**
      * Get all offices for dropdown.
      * @return array
      */
     public function getOffices() {
         $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get a single office by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getOfficeById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM offices WHERE office_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    // ===== New methods for Assets by Office (Encoder) =====
+
+    /**
+     * Get offices with asset and custodian counts (for Encoder).
+     * @return array
+     */
+    public function getOfficesWithData() {
+        $sql = "
+            SELECT 
+                o.office_id,
+                o.name,
+                o.location,
+                COUNT(DISTINCT ac.custodian_id) AS custodian_count,
+                COUNT(DISTINCT a.asset_id) AS asset_count
+            FROM offices o
+            LEFT JOIN asset_custodies ac ON o.office_id = ac.office_id AND ac.status = 'active'
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id AND a.status != 'inactive'
+            WHERE o.office_id IS NOT NULL
+            GROUP BY o.office_id
+            ORDER BY o.name
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get custodians (personnel) for a specific office (for Encoder).
+     * @param int $officeId
+     * @return array
+     */
+    public function getCustodiansByOfficeForEncoder($officeId) {
+        $sql = "
+            SELECT DISTINCT 
+                p.personnel_id,
+                p.full_name,
+                p.position,
+                (SELECT COUNT(DISTINCT ac.asset_id) FROM asset_custodies ac WHERE ac.custodian_id = p.personnel_id AND ac.status = 'active') AS asset_count
+            FROM personnel p
+            INNER JOIN asset_custodies ac ON p.personnel_id = ac.custodian_id
+            WHERE ac.office_id = ? AND ac.status = 'active'
+            ORDER BY p.full_name
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $officeId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets for a custodian (for Encoder).
+     * @param int $custodianId
+     * @return array
+     */
+    public function getAssetsByCustodianForEncoder($custodianId) {
+        $sql = "
+            SELECT 
+                a.asset_id,
+                a.asset_code,
+                a.asset_name,
+                a.status,
+                a.condition,
+                aa.account_code
+            FROM assets a
+            INNER JOIN asset_custodies ac ON a.asset_id = ac.asset_id
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            WHERE ac.custodian_id = ? AND ac.status = 'active' AND a.status != 'inactive'
+            ORDER BY a.asset_code
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $custodianId);
+        $stmt->execute();
+        $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
