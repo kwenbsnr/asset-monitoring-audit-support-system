@@ -73,6 +73,11 @@ switch ($page) {
             case 'scan':
                 $controller->scan();
                 break;
+            // ===== ADD THE MISSING CASE =====
+            case 'by_office':
+                $controller->byOffice();
+                break;
+            // ===== END ADD =====
             default:
                 $controller->browse();
         }
@@ -169,9 +174,6 @@ switch ($page) {
                 $controller->delete();
                 break;
         }
-        break;
-    case 'by_office':
-        $controller->byOffice();
         break;
     default:
         // Dashboard

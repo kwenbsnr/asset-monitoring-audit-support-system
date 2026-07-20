@@ -569,6 +569,7 @@ class AssetModel {
 
     /**
      * Get assets grouped by office (for the by_office view).
+     * Includes custodian name if assigned.
      * @return array
      */
     public function getAssetsByOffice() {
@@ -580,11 +581,13 @@ class AssetModel {
                 a.asset_code,
                 a.asset_name,
                 a.status,
-                aa.account_code
+                aa.account_code,
+                p.full_name AS custodian_name
             FROM offices o
             LEFT JOIN asset_custodies ac ON o.office_id = ac.office_id AND ac.status = 'active'
             LEFT JOIN assets a ON ac.asset_id = a.asset_id AND a.status != 'inactive'
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
             WHERE o.office_id IS NOT NULL
             ORDER BY o.name, a.asset_code
         ";

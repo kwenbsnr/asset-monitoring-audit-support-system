@@ -19,6 +19,7 @@
                                     <th>Asset Code</th>
                                     <th>Asset Name</th>
                                     <th>Account</th>
+                                    <th>Custodian</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -28,6 +29,13 @@
                                         <td><?= htmlspecialchars($asset['asset_code']) ?></td>
                                         <td><?= htmlspecialchars($asset['asset_name']) ?></td>
                                         <td><?= htmlspecialchars($asset['account_code']) ?></td>
+                                        <td>
+                                            <?php if (!empty($asset['custodian_name'])): ?>
+                                                <?= htmlspecialchars($asset['custodian_name']) ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">Not assigned</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><span class="badge bg-<?= $asset['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $asset['status'] ?></span></td>
                                     </tr>
                                 <?php endforeach; ?>
