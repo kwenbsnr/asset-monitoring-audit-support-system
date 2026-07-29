@@ -13,7 +13,6 @@ class AssetController {
     private $assetModel;
 
     public function __construct() {
-        // Allow all three roles for browsing, listing, scanning, and viewing details
         if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'asset_inspector', 'admin'])) {
             header('Location: index.php');
             exit;
@@ -119,9 +118,11 @@ class AssetController {
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-    // Edit and delete are admin-only
+    /**
+     * Edit asset – now accessible to encoder and admin.
+     */
     public function edit() {
-        if ($_SESSION['role'] !== 'admin') {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -210,19 +211,31 @@ class AssetController {
         $_SESSION['flash'] = 'Asset saved successfully.';
         $_SESSION['flash_type'] = 'success';
 
+        // Handle custody assignment and transfer logging
         if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1' && $id) {
-            $custodyData = [
-                'asset_id' => $id,
-                'custodian_id' => (int)$_POST['custodian_id'],
-                'office_id' => (int)$_POST['office_id'],
-                'accountability_document' => trim($_POST['accountability_document'] ?? ''),
-                'accountability_reference' => trim($_POST['accountability_reference'] ?? ''),
-                'effectivity_date' => $_POST['effectivity_date'] ?? date('Y-m-d'),
-                'status' => 'active'
-            ];
             $custodyModel = new CustodyModel();
             $existing = $custodyModel->getActiveCustody($id);
+
+            $newCustodianId = (int)$_POST['custodian_id'];
+            $newOfficeId = (int)$_POST['office_id'];
+            $effectivityDate = $_POST['effectivity_date'] ?? date('Y-m-d');
+            $doc = trim($_POST['accountability_document'] ?? '');
+            $ref = trim($_POST['accountability_reference'] ?? '');
+
+            // If there is an existing active custody, end it and log transfer
             if ($existing) {
+                // Log transfer before ending
+                $this->assetModel->logTransfer(
+                    $id,
+                    $existing['custodian_id'],
+                    $newCustodianId,
+                    $existing['office_id'],
+                    $newOfficeId,
+                    $effectivityDate,
+                    'completed'
+                );
+
+                // End old custody
                 $custodyModel->update($existing['asset_custodies_id'], [
                     'custodian_id' => $existing['custodian_id'],
                     'office_id' => $existing['office_id'],
@@ -232,7 +245,30 @@ class AssetController {
                     'end_date' => date('Y-m-d'),
                     'status' => 'inactive'
                 ]);
+            } else {
+                // No previous custody – this is an initial assignment.
+                // Optionally log a transfer with from_custodian_id = NULL, from_office_id = NULL
+                $this->assetModel->logTransfer(
+                    $id,
+                    null,
+                    $newCustodianId,
+                    null,
+                    $newOfficeId,
+                    $effectivityDate,
+                    'completed'
+                );
             }
+
+            // Create new custody
+            $custodyData = [
+                'asset_id' => $id,
+                'custodian_id' => $newCustodianId,
+                'office_id' => $newOfficeId,
+                'accountability_document' => $doc,
+                'accountability_reference' => $ref,
+                'effectivity_date' => $effectivityDate,
+                'status' => 'active'
+            ];
             $custodyModel->create($custodyData);
         }
 
@@ -411,5 +447,38 @@ class AssetController {
         $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
         header('Content-Type: application/json');
         echo json_encode($assets);
+    }
+
+        /**
+     * Bulk print QR codes for selected assets.
+     */
+    public function bulkQr() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+
+        // Get asset IDs from POST (checkbox selection)
+        $assetIds = isset($_POST['asset_ids']) ? $_POST['asset_ids'] : [];
+        if (empty($assetIds)) {
+            $_SESSION['flash'] = 'No assets selected for QR printing.';
+            $_SESSION['flash_type'] = 'danger';
+            header('Location: index.php?page=assets&sub=browse');
+            exit;
+        }
+
+        // Fetch assets
+        $assets = $this->assetModel->getAssetsByIds($assetIds);
+        if (empty($assets)) {
+            $_SESSION['flash'] = 'No valid assets found.';
+            $_SESSION['flash_type'] = 'danger';
+            header('Location: index.php?page=assets&sub=browse');
+            exit;
+        }
+
+        $pageTitle = 'Bulk QR Codes';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/bulk_qr.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 }
