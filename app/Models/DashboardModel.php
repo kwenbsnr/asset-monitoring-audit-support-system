@@ -33,16 +33,15 @@ class DashboardModel {
     }
 
     /**
-     * Get counts by asset category.
+     * Get counts by asset account (replaces category counts).
      */
-    public function getAssetCategoryCounts() {
+    public function getAssetAccountCounts() {
         $sql = "
-            SELECT ac.name AS category, COUNT(a.asset_id) AS count
-            FROM asset_categories ac
-            LEFT JOIN asset_accounts aa ON ac.asset_category_id = aa.asset_category_id
+            SELECT aa.account_name AS account, COUNT(a.asset_id) AS count
+            FROM asset_accounts aa
             LEFT JOIN assets a ON aa.asset_accounts_id = a.asset_accounts_id
             WHERE a.status != 'inactive' OR a.status IS NULL
-            GROUP BY ac.asset_category_id
+            GROUP BY aa.asset_accounts_id
             ORDER BY count DESC
         ";
         $result = $this->db->query($sql);
@@ -107,10 +106,10 @@ class DashboardModel {
     }
 
     /**
-     * Get total number of asset categories.
+     * Get total number of asset accounts.
      */
-    public function getTotalCategories() {
-        $result = $this->db->query("SELECT COUNT(*) AS total FROM asset_categories");
+    public function getTotalAccounts() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM asset_accounts");
         return $result->fetch_assoc()['total'] ?? 0;
     }
 
@@ -180,23 +179,22 @@ class DashboardModel {
     }
 
     /**
-     * Get recent assets added (last 10).
+     * Get recent assets added (last 10) – uses asset_name.
      */
     public function getRecentAssets() {
         $sql = "
             SELECT 
                 a.asset_id,
                 a.asset_code,
-                a.description,
+                a.asset_name,
                 a.status,
                 a.condition,
                 a.created_at,
-                ac.name AS category_name,
+                aa.account_name AS account_name,
                 p.full_name AS custodian,
                 o.name AS office_name
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
             LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
             LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
             LEFT JOIN offices o ON acust.office_id = o.office_id
@@ -269,25 +267,20 @@ class DashboardModel {
     }
 
     /**
-     * Get alerts: missing assets, damaged assets, pending reports, unverified custody.
+     * Get alerts: missing assets, damaged assets, pending reports, pending transfers.
      */
     public function getAlerts() {
         $alerts = [];
 
-        // Missing assets
         $missing = $this->db->query("SELECT COUNT(*) AS count FROM assets WHERE status = 'missing'")->fetch_assoc();
         if ($missing['count'] > 0) $alerts[] = ['type' => 'missing', 'label' => 'Missing Assets', 'count' => $missing['count'], 'icon' => 'bi bi-exclamation-triangle', 'color' => 'danger'];
 
-        // Damaged condition
         $damaged = $this->db->query("SELECT COUNT(*) AS count FROM assets WHERE `condition` = 'damaged'")->fetch_assoc();
         if ($damaged['count'] > 0) $alerts[] = ['type' => 'damaged', 'label' => 'Assets with Damaged Condition', 'count' => $damaged['count'], 'icon' => 'bi bi-tools', 'color' => 'warning'];
 
-        // Pending reports (draft)
         $pendingReports = $this->db->query("SELECT COUNT(*) AS count FROM asset_reports WHERE status = 'draft'")->fetch_assoc();
         if ($pendingReports['count'] > 0) $alerts[] = ['type' => 'pending_reports', 'label' => 'Pending Reports', 'count' => $pendingReports['count'], 'icon' => 'bi bi-file-earmark-text', 'color' => 'info'];
 
-        // Unverified custody assignments (asset_custodies with status 'pending' or no end_date? Actually we don't have a verification status in custody; we'll skip or use pending transfers)
-        // Instead, we can check pending transfers
         $pendingTransfers = $this->db->query("SELECT COUNT(*) AS count FROM asset_transfers WHERE status = 'pending'")->fetch_assoc();
         if ($pendingTransfers['count'] > 0) $alerts[] = ['type' => 'pending_transfers', 'label' => 'Pending Transfers', 'count' => $pendingTransfers['count'], 'icon' => 'bi bi-arrow-left-right', 'color' => 'warning'];
 

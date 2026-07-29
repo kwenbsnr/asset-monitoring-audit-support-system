@@ -21,26 +21,24 @@ class DashboardController {
     }
 
     public function index() {
-        // Fetch all data
         $totalAssets = $this->dashboardModel->getTotalAssets();
         $activeInactive = $this->dashboardModel->getActiveInactiveCounts();
         $statusCounts = $this->dashboardModel->getAssetStatusCounts();
-        $categoryCounts = $this->dashboardModel->getAssetCategoryCounts();
+        $accountCounts = $this->dashboardModel->getAssetAccountCounts(); // changed from categories
         $conditionCounts = $this->dashboardModel->getConditionCounts();
         $assetsByOffice = $this->dashboardModel->getAssetsByOffice();
         $recentAssets = $this->dashboardModel->getRecentAssets();
         $recentActivity = $this->dashboardModel->getRecentActivity(10);
         $alerts = $this->dashboardModel->getAlerts();
 
-        // KPI summary
-        $totalCategories = $this->dashboardModel->getTotalCategories();
+        $totalAccounts = $this->dashboardModel->getTotalAccounts(); // changed from categories
         $totalOffices = $this->dashboardModel->getTotalOffices();
         $assetsUnderCustody = $this->dashboardModel->getAssetsUnderCustody();
         $missingAssets = $this->dashboardModel->getMissingAssets();
         $assetsForDisposal = $this->dashboardModel->getAssetsForDisposal();
         $recentTransfers = $this->dashboardModel->getRecentTransfersCount();
 
-        // Prepare chart data
+        // Chart data: status
         $statusLabels = [];
         $statusData = [];
         foreach ($statusCounts as $row) {
@@ -48,12 +46,13 @@ class DashboardController {
             $statusData[] = (int)$row['count'];
         }
 
-        $categoryLabels = [];
-        $categoryData = [];
-        foreach ($categoryCounts as $row) {
-            if ($row['category'] === null) continue;
-            $categoryLabels[] = $row['category'];
-            $categoryData[] = (int)$row['count'];
+        // Chart data: accounts (instead of categories)
+        $accountLabels = [];
+        $accountData = [];
+        foreach ($accountCounts as $row) {
+            if ($row['account'] === null) continue;
+            $accountLabels[] = $row['account'];
+            $accountData[] = (int)$row['count'];
         }
 
         $conditionLabels = [];

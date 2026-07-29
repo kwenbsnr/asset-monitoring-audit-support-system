@@ -67,12 +67,20 @@ switch ($page) {
             case 'search_json':
                 $controller->searchJson();
                 break;
+            case 'custodian_assets_json':
+                $controller->custodianAssetsJson();
+                break;
             case 'qr':
                 $controller->qr();
                 break;
             case 'scan':
                 $controller->scan();
                 break;
+            // ===== ADD THE MISSING CASE =====
+            case 'by_office':
+                $controller->byOffice();
+                break;
+            // ===== END ADD =====
             default:
                 $controller->browse();
         }

@@ -138,7 +138,7 @@ class CustodyModel {
      * @return array
      */
     public function getPersonnel() {
-        $result = $this->db->query("SELECT personnel_id, full_name, position FROM personnel WHERE is_active = 1 ORDER BY full_name");
+        $result = $this->db->query("SELECT personnel_id, full_name, position, office_id FROM personnel WHERE is_active = 1 ORDER BY full_name");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

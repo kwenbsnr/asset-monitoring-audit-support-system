@@ -172,10 +172,9 @@ function cleanupScanner() {
     isStopping = false;
     isPaused = false;
     if (html5QrCode) {
-        html5QrCode.clear(); // Release camera stream
+        html5QrCode.clear();
         html5QrCode = null;
     }
-    // Reset UI
     startBtn.style.display = 'block';
     startBtn.disabled = false;
     startBtn.innerHTML = '<i class="bi bi-camera"></i> Tap to scan QR code';
@@ -285,13 +284,27 @@ function showAssetProfile(data) {
                         </a>`;
     }
 
+    // -------- Dispose Button (only for active assets and asset_inspector/admin) --------
+    let disposeForm = '';
+    if (asset.status === 'active' && (window.userRole === 'asset_inspector' || window.userRole === 'admin')) {
+        disposeForm = `
+            <form method="POST" action="index.php?page=assets&sub=dispose" class="d-inline" id="disposeFormScan_${asset.asset_id}">
+                <input type="hidden" name="asset_id" value="${asset.asset_id}">
+                <input type="hidden" name="disposal_reason" id="disposal_reason_scan_${asset.asset_id}">
+                <button type="button" class="btn btn-danger btn-sm ms-2" onclick="const reason = prompt('Reason for disposal:'); if(reason && reason.trim() !== '') { document.getElementById('disposal_reason_scan_${asset.asset_id}').value = reason.trim(); document.getElementById('disposeFormScan_${asset.asset_id}').submit(); } else if(reason !== null) { alert('Reason is required.'); }">
+                    <i class="bi bi-trash"></i> Dispose
+                </button>
+            </form>
+        `;
+    }
+
+    // -------- Asset Information (using asset_name) --------
     let html = `
         <h6 class="border-bottom pb-2">Asset Information</h6>
         <div class="row mb-2">
             <div class="col-6"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
             <div class="col-6"><strong>QR Ref:</strong> ${escapeHtml(asset.qr_code_ref)}</div>
-            <div class="col-12"><strong>Description:</strong> ${escapeHtml(asset.description)}</div>
-            <div class="col-6"><strong>Category:</strong> ${escapeHtml(asset.category_name || 'N/A')}</div>
+            <div class="col-12"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
             <div class="col-6"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
             <div class="col-6"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
             <div class="col-6"><strong>Serial #:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
@@ -341,11 +354,16 @@ function showAssetProfile(data) {
         html += `</tbody></table></div>`;
     }
 
+    // -------- Inject Action Button and Dispose Form --------
+    const actionContainer = document.getElementById('actionButtonContainer');
+    if (actionContainer) {
+        actionContainer.innerHTML = actionButton + ' ' + disposeForm;
+    }
+
     profilePlaceholder.style.display = 'none';
     profileContent.style.display = 'block';
     profileContent.innerHTML = html;
     profileFooter.style.display = 'flex';
-    actionContainer.innerHTML = actionButton;
     scanAnotherBtn.style.display = 'inline-block';
     if (scanSuccessMsg) scanSuccessMsg.style.display = 'inline';
 }
@@ -380,7 +398,6 @@ function resetAndScanAgain() {
     }
 }
 
-// Expose functions globally for the view
 window.startScanner = startScanner;
 window.showAssetProfile = showAssetProfile;
 window.resetAndScanAgain = resetAndScanAgain;

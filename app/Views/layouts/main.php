@@ -1,11 +1,5 @@
 <?php
 // This is the main layout – use it by including it at the top of every authenticated view
-// The content of the page must be passed in the variable $content (we'll include it later)
-// We'll use a capture technique: we'll start output buffering in the controller, 
-// but to keep it simple we'll just include the layout and then include the specific view inside.
-
-// Instead of complex output buffering, we'll just include the sidebar and header in each view.
-// We'll create a partial for sidebar and header.
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,28 +29,57 @@
 </div>
 
 <div class="wrapper">
-    <!-- Sidebar -->
     <nav id="sidebar" class="sidebar <?= ($_SESSION['role'] === 'admin') ? 'sidebar-admin' : 'sidebar-supply' ?>">
         <div class="sidebar-header">
             <img src="public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
         </div>
         <ul class="nav flex-column">
+            <!-- Dashboard – visible to all -->
             <li class="nav-item">
                 <a class="nav-link <?= ($currentPage === 'dashboard') ? 'active' : '' ?>" href="index.php">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
 
-            <?php if ($_SESSION['role'] === 'supply_officer'): ?>
+            <!-- Encoder modules -->
+            <?php if ($_SESSION['role'] === 'encoder'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
-                        <i class="bi bi-box-seam"></i> Asset Registry
+                        <i class="bi bi-box-seam"></i> Asset Records
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'assets_by_office') ? 'active' : '' ?>" href="index.php?page=assets&sub=by_office">
+                        <i class="bi bi-building"></i> Assets by Office
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
+                        <i class="bi bi-plus-circle"></i> Register Asset
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <!-- Asset Inspector modules -->
+            <?php if ($_SESSION['role'] === 'asset_inspector'): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
+                        <i class="bi bi-box-seam"></i> Asset Records
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'scan') ? 'active' : '' ?>" href="index.php?page=assets&sub=scan">
                         <i class="bi bi-qr-code-scan"></i> Scan QR
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <!-- Admin modules -->
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
+                        <i class="bi bi-box-seam"></i> Asset Registry
                     </a>
                 </li>
                 <li class="nav-item">
@@ -69,9 +92,6 @@
                         <i class="bi bi-file-earmark-text"></i> Reports
                     </a>
                 </li>
-            <?php endif; ?>
-
-            <?php if ($_SESSION['role'] === 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
                         <i class="bi bi-clock-history"></i> Audit Trail
@@ -92,26 +112,7 @@
         </ul>
     </nav>
 
-    <!-- Page content -->
-    <div id="content">
-        <!-- Top navbar (optional) -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-            <div class="container-fluid">
-                <button class="btn btn-sm btn-outline-secondary" id="sidebarToggle">
-                    <i class="bi bi-list"></i>
-                </button>
-                <span class="navbar-brand mb-0 h5"><?= $pageTitle ?? 'Dashboard' ?></span>
-                <div class="d-flex align-items-center">
-                    <span class="me-3 text-muted">
-                        <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['full_name']) ?>
-                        <small class="text-secondary">(<?= $_SESSION['role'] ?>)</small>
-                    </span>
-                </div>
-            </div>
-        </nav>
-
         <div class="container-fluid mt-3">
-            <!-- The main content of each page will be included here -->
             <?php require_once $viewFile; ?>
         </div>
     </div>
@@ -121,7 +122,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="public/js/script.js"></script>
 <script>
-    // Toggle sidebar on small screens
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.getElementById('sidebar').classList.toggle('active');
     });
