@@ -730,10 +730,10 @@ class AssetModel {
      * @param int|null $fromOfficeId
      * @param int      $toOfficeId
      * @param string   $transferDate (Y-m-d)
-     * @param string   $status (default 'completed')
+     * @param string   $status (default 'approved')
      * @return bool
      */
-    public function logTransfer($assetId, $fromCustodianId, $toCustodianId, $fromOfficeId, $toOfficeId, $transferDate, $status = 'completed') {
+    public function logTransfer($assetId, $fromCustodianId, $toCustodianId, $fromOfficeId, $toOfficeId, $transferDate, $status = 'approved') {
         $transferNumber = 'TR-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
         $stmt = $this->db->prepare("
             INSERT INTO asset_transfers (

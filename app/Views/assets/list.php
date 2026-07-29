@@ -49,105 +49,108 @@
         <?php endif; ?>
 
         <form method="POST" action="index.php?page=assets&sub=bulk_qr" id="bulkQrForm">
-        <div class="mb-2 d-flex justify-content-between align-items-center">
-            <div>
-                <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Print QR codes for selected assets?')">
-                    <i class="bi bi-printer"></i> Print Selected QR
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllCheckboxes()">Select All</button>
+            <div class="mb-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Print QR codes for selected assets?')">
+                        <i class="bi bi-printer"></i> Print Selected QR
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllCheckboxes()">Select All</button>
+                </div>
+                <span class="text-muted small" id="selectedCount">0 selected</span>
             </div>
-            <span class="text-muted small" id="selectedCount">0 selected</span>
-        </div>
-        
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
-                        <th>Asset Code</th>
-                        <th>Asset Name</th>
-                        <th>Brand / Model</th>
-                        <th>Serial #</th>
-                        <th>Account</th>
-                        <th>Custodian</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($assets)): ?>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
                         <tr>
-                            <td colspan="8" class="text-center">
-                                <?php if (!empty($_GET['search'])): ?>
-                                    No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
-                                <?php else: ?>
-                                    No assets found in this account.
-                                <?php endif; ?>
-                            </td>
+                            <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
+                            <th>Asset Code</th>
+                            <th>Asset Name</th>
+                            <th>Brand / Model</th>
+                            <th>Serial #</th>
+                            <th>Account</th>
+                            <th>Custodian</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($assets as $asset): ?>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($assets)): ?>
                             <tr>
-                                <td><strong><?= htmlspecialchars($asset['asset_code']) ?></strong></td>
-                                <td><?= htmlspecialchars($asset['asset_name']) ?></td>
-                                <td><?= htmlspecialchars($asset['brand'] ?? '') ?> <?= htmlspecialchars($asset['model'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($asset['serial_number'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($asset['account_code'] ?? '') ?></td>
-                                <td>
-                                    <?php if (!empty($asset['custodians'])): ?>
-                                        <?= htmlspecialchars($asset['custodians']) ?>
+                                <td colspan="9" class="text-center">
+                                    <?php if (!empty($_GET['search'])): ?>
+                                        No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
                                     <?php else: ?>
-                                        <span class="text-muted">Not assigned</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <td><input type="checkbox" name="asset_ids[]" value="<?= $asset['asset_id'] ?>" class="asset-checkbox"></td>
-                                    <?php 
-                                        $statusClass = match($asset['status']) {
-                                            'active' => 'success',
-                                            'pending_disposal' => 'warning',
-                                            'disposed' => 'secondary',
-                                            'missing' => 'danger',
-                                            default => 'secondary'
-                                        };
-                                    ?>
-                                    <span class="badge bg-<?= $statusClass ?>"><?= $asset['status'] ?></span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-info view-details" 
-                                            data-id="<?= $asset['asset_id'] ?>" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#assetDetailsModal">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                                    <?php if ($asset['status'] === 'active'): ?>
-                                        <?php if (empty($asset['active_custody_id'])): ?>
-                                            <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-primary" title="Assign Custodian">
-                                                <i class="bi bi-person-plus"></i>
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning" title="Transfer Custodian">
-                                                <i class="bi bi-arrow-left-right"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                    <?php if (in_array($_SESSION['role'], ['asset_inspector', 'admin']) && $asset['status'] === 'active'): ?>
-                                        <button class="btn btn-sm btn-danger dispose-btn" 
-                                                data-id="<?= $asset['asset_id'] ?>" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#disposeModal"
-                                                title="Dispose Asset">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        No assets found in this account.
                                     <?php endif; ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+                        <?php else: ?>
+                            <?php foreach ($assets as $asset): ?>
+                                <tr>
+                                    <td><input type="checkbox" name="asset_ids[]" value="<?= $asset['asset_id'] ?>" class="asset-checkbox"></td>
+                                    <td><strong><?= htmlspecialchars($asset['asset_code']) ?></strong></td>
+                                    <td><?= htmlspecialchars($asset['asset_name']) ?></td>
+                                    <td><?= htmlspecialchars($asset['brand'] ?? '') ?> <?= htmlspecialchars($asset['model'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($asset['serial_number'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($asset['account_code'] ?? '') ?></td>
+                                    <td>
+                                        <?php if (!empty($asset['custodians'])): ?>
+                                            <?= htmlspecialchars($asset['custodians']) ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">Not assigned</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php 
+                                            $statusClass = match($asset['status']) {
+                                                'active' => 'success',
+                                                'pending_disposal' => 'warning',
+                                                'disposed' => 'secondary',
+                                                'missing' => 'danger',
+                                                default => 'secondary'
+                                            };
+                                        ?>
+                                        <span class="badge bg-<?= $statusClass ?>"><?= $asset['status'] ?></span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info view-details" 
+                                                data-id="<?= $asset['asset_id'] ?>" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assetDetailsModal">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <?php if (in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
+                                            <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                                        <?php endif; ?>
+                                        <?php if ($asset['status'] === 'active'): ?>
+                                            <?php if (empty($asset['active_custody_id'])): ?>
+                                                <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-primary" title="Assign Custodian">
+                                                    <i class="bi bi-person-plus"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning" title="Transfer Custodian">
+                                                    <i class="bi bi-arrow-left-right"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <?php if (in_array($_SESSION['role'], ['asset_inspector', 'admin']) && $asset['status'] === 'active'): ?>
+                                            <button class="btn btn-sm btn-danger dispose-btn" 
+                                                    data-id="<?= $asset['asset_id'] ?>" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#disposeModal"
+                                                    title="Dispose Asset">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </form>
     </div>
 </div>
 
