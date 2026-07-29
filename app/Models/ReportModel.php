@@ -78,6 +78,7 @@ class ReportModel {
             SELECT 
                 ari.*,
                 a.asset_code,
+                a.asset_name,
                 a.description AS asset_description,
                 u.username AS verified_by_username
             FROM asset_report_items ari
@@ -97,7 +98,6 @@ class ReportModel {
      * @return int|false
      */
     public function create($data) {
-        // Check if the supplied report number already exists
         $check = $this->db->prepare("SELECT COUNT(*) FROM asset_reports WHERE report_number = ?");
         $check->bind_param('s', $data['report_number']);
         $check->execute();
@@ -106,7 +106,6 @@ class ReportModel {
         $check->close();
 
         if ($count > 0) {
-            // Generate a unique number by appending a counter
             $original = $data['report_number'];
             $counter = 1;
             do {
@@ -151,7 +150,6 @@ class ReportModel {
      * @return bool
      */
     public function addItem($data) {
-        // Check if this asset is already in the report
         $check = $this->db->prepare("
             SELECT COUNT(*) FROM asset_report_items 
             WHERE asset_report_id = ? AND asset_id = ?
@@ -163,7 +161,6 @@ class ReportModel {
         $check->close();
 
         if ($count > 0) {
-            // Duplicate – skip or update? We'll skip.
             return true;
         }
 
@@ -209,11 +206,11 @@ class ReportModel {
     }
 
     /**
-     * Get assets for dropdown.
+     * Get assets for dropdown (including asset_name).
      * @return array
      */
     public function getAssets() {
-        $result = $this->db->query("SELECT asset_id, asset_code, description FROM assets WHERE status != 'inactive' ORDER BY asset_code");
+        $result = $this->db->query("SELECT asset_id, asset_code, asset_name, description FROM assets WHERE status != 'inactive' ORDER BY asset_code");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -238,36 +235,47 @@ class ReportModel {
         return $stmt->execute();
     }
 
+    // ===== Account-based methods (replacing category) =====
+
     /**
-     * Get assets by category (for report generation).
-     * @param int $categoryId
+     * Get all asset accounts for dropdown.
      * @return array
      */
-    public function getAssetsByCategory($categoryId) {
+    public function getAccounts() {
+        $result = $this->db->query("SELECT asset_accounts_id, account_code, account_name FROM asset_accounts ORDER BY account_code");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets by account (for report generation).
+     * @param int $accountId
+     * @return array
+     */
+    public function getAssetsByAccount($accountId) {
         $sql = "
-            SELECT a.asset_id, a.asset_code, a.description, a.brand, a.model, a.serial_number,
+            SELECT a.asset_id, a.asset_code, a.asset_name, a.brand, a.model, a.serial_number,
                 a.acquisition_cost, a.acquisition_date, a.status, a.condition,
                 aa.account_code, aa.account_name
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
-            WHERE aa.asset_category_id = ? AND a.status != 'inactive'
+            WHERE a.asset_accounts_id = ? AND a.status != 'inactive'
             ORDER BY a.asset_code
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $categoryId);
+        $stmt->bind_param('i', $accountId);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
     /**
-     * Get assets by office (from custody).
+     * Get assets by office (from custody) – uses asset_name.
      * @param int $officeId
      * @return array
      */
     public function getAssetsByOffice($officeId) {
         $sql = "
-            SELECT a.asset_id, a.asset_code, a.description, a.brand, a.model,
+            SELECT a.asset_id, a.asset_code, a.asset_name, a.brand, a.model,
                 a.serial_number, a.acquisition_cost, a.acquisition_date,
                 a.status, a.condition,
                 p.full_name AS custodian, o.name AS office_name
@@ -286,15 +294,6 @@ class ReportModel {
     }
 
     /**
-     * Get all categories for dropdown.
-     * @return array
-     */
-    public function getCategories() {
-        $result = $this->db->query("SELECT asset_category_id, name FROM asset_categories ORDER BY name");
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
-    /**
      * Get unverified assets (from asset_report_items with status 'pending').
      * @return array
      */
@@ -302,7 +301,7 @@ class ReportModel {
         $sql = "
             SELECT 
                 a.asset_code,
-                a.description,
+                a.asset_name,
                 ari.verification_status,
                 ari.remarks
             FROM assets a

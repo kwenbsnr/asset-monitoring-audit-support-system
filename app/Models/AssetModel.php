@@ -16,10 +16,52 @@ class AssetModel {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // ========== Existing methods ==========
+    // ===== Asset Account methods =====
 
     /**
-     * Fetch all active assets with account and category details.
+     * Get list of asset accounts with asset count.
+     * @return array
+     */
+    public function getAssetAccountsList() {
+        $sql = "
+            SELECT 
+                aa.asset_accounts_id,
+                aa.account_code,
+                aa.account_name,
+                (SELECT COUNT(*) FROM assets WHERE asset_accounts_id = aa.asset_accounts_id AND status != 'inactive') AS asset_count
+            FROM asset_accounts aa
+            ORDER BY aa.account_code
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get a single asset account by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getAccountById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM asset_accounts WHERE asset_accounts_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    /**
+     * Get all asset accounts (for dropdowns).
+     * @return array
+     */
+    public function getAssetAccounts() {
+        $result = $this->db->query("SELECT asset_accounts_id, account_code, account_name FROM asset_accounts ORDER BY account_code");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // ===== Asset methods =====
+
+    /**
+     * Fetch all active assets with account details.
      * @return array
      */
     public function getAll() {
@@ -27,6 +69,7 @@ class AssetModel {
             SELECT 
                 a.asset_id,
                 a.asset_code,
+                a.asset_name,
                 a.qr_code_ref,
                 a.description,
                 a.brand,
@@ -38,11 +81,9 @@ class AssetModel {
                 a.condition,
                 a.remarks,
                 aa.account_code,
-                aa.account_name,
-                ac.name AS category_name
+                aa.account_name
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
             WHERE a.status != 'inactive'
             ORDER BY a.asset_code
         ";
@@ -59,14 +100,10 @@ class AssetModel {
         $stmt = $this->db->prepare("
             SELECT 
                 a.*,
-                aa.asset_accounts_id,
                 aa.account_code,
-                aa.account_name,
-                ac.asset_category_id,
-                ac.name AS category_name
+                aa.account_name
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
             WHERE a.asset_id = ?
         ");
         $stmt->bind_param('i', $id);
@@ -78,19 +115,20 @@ class AssetModel {
     /**
      * Insert a new asset.
      * @param array $data
-     * @return bool
+     * @return int|false
      */
     public function create($data) {
         $stmt = $this->db->prepare("
             INSERT INTO assets (
-                asset_code, qr_code_ref, description, brand, model, serial_number,
+                asset_code, asset_name, qr_code_ref, description, brand, model, serial_number,
                 acquisition_cost, acquisition_date, asset_accounts_id, status, `condition`, remarks
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $qr_code_ref = 'QR-' . strtoupper(uniqid());
         $stmt->bind_param(
-            'ssssssdsisss',
+            'sssssssdsisss',
             $data['asset_code'],
+            $data['asset_name'],
             $qr_code_ref,
             $data['description'],
             $data['brand'],
@@ -105,9 +143,9 @@ class AssetModel {
         );
         if ($stmt->execute()) {
             return $this->db->insert_id;
-            }
-            return false;
         }
+        return false;
+    }
 
     /**
      * Update an existing asset.
@@ -119,6 +157,7 @@ class AssetModel {
         $stmt = $this->db->prepare("
             UPDATE assets SET
                 asset_code = ?,
+                asset_name = ?,
                 description = ?,
                 brand = ?,
                 model = ?,
@@ -132,8 +171,9 @@ class AssetModel {
             WHERE asset_id = ?
         ");
         $stmt->bind_param(
-            'sssssdsisssi',
+            'ssssssdsisssi',
             $data['asset_code'],
+            $data['asset_name'],
             $data['description'],
             $data['brand'],
             $data['model'],
@@ -160,85 +200,12 @@ class AssetModel {
         return $stmt->execute();
     }
 
-    /**
-     * Get all asset accounts with category names for dropdown.
-     * @return array
-     */
-    public function getAssetAccounts() {
-        $result = $this->db->query("
-            SELECT aa.asset_accounts_id, aa.account_code, aa.account_name, ac.name AS category_name
-            FROM asset_accounts aa
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
-            ORDER BY aa.account_code
-        ");
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
-    // ========== Methods for hierarchical browsing ==========
-
-    /**
-     * Recursively get the category tree starting from a parent ID.
-     * @param int|null $parentId
-     * @return array
-     */
-    public function getCategoryTree($parentId = null) {
-        $sql = "SELECT asset_category_id, name, code, description, parent_category_id 
-                FROM asset_categories 
-                WHERE parent_category_id " . ($parentId === null ? "IS NULL" : "= ?") . "
-                ORDER BY name";
-        $stmt = $this->db->prepare($sql);
-        if ($parentId !== null) {
-            $stmt->bind_param('i', $parentId);
-        }
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $categories = $result->fetch_all(MYSQLI_ASSOC);
-        foreach ($categories as &$cat) {
-            $cat['children'] = $this->getCategoryTree($cat['asset_category_id']);
-        }
-        return $categories;
-    }
-
-    /**
-     * Check if a category has any child categories.
-     * @param int $categoryId
-     * @return bool
-     */
-    public function hasChildren($categoryId) {
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM asset_categories WHERE parent_category_id = ?");
-        $stmt->bind_param('i', $categoryId);
-        $stmt->execute();
-        $stmt->bind_result($count);
-        $stmt->fetch();
-        return $count > 0;
-    }
-
-    /**
-     * Get a single category by ID.
-     * @param int $id
-     * @return array|null
-     */
-    public function getCategory($id) {
-        $stmt = $this->db->prepare("SELECT * FROM asset_categories WHERE asset_category_id = ?");
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
-    }
-
-    // ========== Advanced search ==========
+    // ===== Search =====
 
     /**
      * Search assets with advanced filters.
      * @param string|null $searchTerm
-     * @param array       $filters (category_id, field, status, condition, date_from, date_to, cost_from, cost_to)
-     * @return array
-     */
-    
-    /**
-     * Search assets with advanced filters.
-     * @param string|null $searchTerm
-     * @param array       $filters (category_id, field, status, condition, date_from, date_to, cost_from, cost_to, account_id)
+     * @param array       $filters (account_id, field, status, condition, date_from, date_to, cost_from, cost_to)
      * @return array
      */
     public function searchAssets($searchTerm = null, $filters = []) {
@@ -246,6 +213,7 @@ class AssetModel {
             SELECT 
                 a.asset_id,
                 a.asset_code,
+                a.asset_name,
                 a.qr_code_ref,
                 a.description,
                 a.brand,
@@ -258,11 +226,12 @@ class AssetModel {
                 a.remarks,
                 aa.account_code,
                 aa.account_name,
-                ac.name AS category_name,
-                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians
+                GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians,
+                (SELECT ac.asset_custodies_id FROM asset_custodies ac 
+                WHERE ac.asset_id = a.asset_id AND ac.status = 'active' 
+                ORDER BY ac.effectivity_date DESC LIMIT 1) AS active_custody_id
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
             LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
             LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
             WHERE a.status != 'inactive'
@@ -271,37 +240,31 @@ class AssetModel {
         $params = [];
         $types = '';
 
-        // --- Category filter ---
-        if (!empty($filters['category_id'])) {
-            $sql .= " AND aa.asset_category_id = ?";
-            $params[] = $filters['category_id'];
-            $types .= 'i';
-        }
-
-        // --- Account filter (MOVED HERE) ---
+        // Account filter
         if (!empty($filters['account_id'])) {
             $sql .= " AND a.asset_accounts_id = ?";
             $params[] = $filters['account_id'];
             $types .= 'i';
         }
 
-        // --- Search term ---
+        // Search term
         if (!empty($searchTerm)) {
             $field = $filters['field'] ?? 'all';
             $like = '%' . $searchTerm . '%';
             if ($field === 'all') {
                 $sql .= " AND (
-                    a.asset_code LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? 
+                    a.asset_code LIKE ? OR a.asset_name LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? 
                     OR a.serial_number LIKE ? OR aa.account_code LIKE ? OR aa.account_name LIKE ? 
                     OR p.full_name LIKE ?
                 )";
-                for ($i = 0; $i < 8; $i++) {
+                for ($i = 0; $i < 9; $i++) {
                     $params[] = $like;
                     $types .= 's';
                 }
             } else {
                 $fieldMap = [
                     'asset_code'   => 'a.asset_code',
+                    'asset_name'   => 'a.asset_name',
                     'description'  => 'a.description',
                     'brand'        => 'a.brand',
                     'model'        => 'a.model',
@@ -318,21 +281,17 @@ class AssetModel {
             }
         }
 
-        // --- Status ---
+        // Status, condition, date, cost filters
         if (!empty($filters['status'])) {
             $sql .= " AND a.status = ?";
             $params[] = $filters['status'];
             $types .= 's';
         }
-
-        // --- Condition ---
         if (!empty($filters['condition'])) {
             $sql .= " AND a.condition = ?";
             $params[] = $filters['condition'];
             $types .= 's';
         }
-
-        // --- Date range ---
         if (!empty($filters['date_from'])) {
             $sql .= " AND a.acquisition_date >= ?";
             $params[] = $filters['date_from'];
@@ -343,8 +302,6 @@ class AssetModel {
             $params[] = $filters['date_to'];
             $types .= 's';
         }
-
-        // --- Cost range ---
         if (!empty($filters['cost_from']) && $filters['cost_from'] !== '') {
             $sql .= " AND a.acquisition_cost >= ?";
             $params[] = (float)$filters['cost_from'];
@@ -368,18 +325,6 @@ class AssetModel {
     }
 
     /**
-     * Get assets by category (with optional search/filters).
-     * @param int         $categoryId
-     * @param string|null $search
-     * @param array       $filters
-     * @return array
-     */
-    public function getAssetsByCategory($categoryId, $search = null, $filters = []) {
-        $filters['category_id'] = $categoryId;
-        return $this->searchAssets($search, $filters);
-    }
-
-    /**
      * Get all assets (with optional search/filters).
      * @param string|null $search
      * @param array       $filters
@@ -389,8 +334,141 @@ class AssetModel {
         return $this->searchAssets($search, $filters);
     }
 
-    // ========== Details, custody, audit ==========
+    /**
+     * Get assets belonging to a specific account.
+     * @param int         $accountId
+     * @param string|null $search
+     * @param array       $filters
+     * @return array
+     */
+    public function getAssetsByAccountId($accountId, $search = null, $filters = []) {
+        $filters['account_id'] = $accountId;
+        return $this->searchAssets($search, $filters);
+    }
 
+    // ===== Personnel & Offices =====
+
+    /**
+     * Get all active personnel for dropdown.
+     * @return array
+     */
+    public function getPersonnel() {
+        $result = $this->db->query("SELECT personnel_id, full_name, position, office_id FROM personnel WHERE is_active = 1 ORDER BY full_name");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get a single personnel by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getPersonnelById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM personnel WHERE personnel_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    /**
+     * Get all offices for dropdown.
+     * @return array
+     */
+    public function getOffices() {
+        $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get a single office by ID.
+     * @param int $id
+     * @return array|null
+     */
+    public function getOfficeById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM offices WHERE office_id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    // ===== New methods for Assets by Office (Encoder) =====
+
+    /**
+     * Get offices with asset and custodian counts (for Encoder).
+     * @return array
+     */
+    public function getOfficesWithData() {
+        $sql = "
+            SELECT 
+                o.office_id,
+                o.name,
+                o.location,
+                COUNT(DISTINCT ac.custodian_id) AS custodian_count,
+                COUNT(DISTINCT a.asset_id) AS asset_count
+            FROM offices o
+            LEFT JOIN asset_custodies ac ON o.office_id = ac.office_id AND ac.status = 'active'
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id AND a.status != 'inactive'
+            WHERE o.office_id IS NOT NULL
+            GROUP BY o.office_id
+            ORDER BY o.name
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get custodians (personnel) for a specific office (for Encoder).
+     * @param int $officeId
+     * @return array
+     */
+    public function getCustodiansByOfficeForEncoder($officeId) {
+        $sql = "
+            SELECT DISTINCT 
+                p.personnel_id,
+                p.full_name,
+                p.position,
+                (SELECT COUNT(DISTINCT ac.asset_id) FROM asset_custodies ac WHERE ac.custodian_id = p.personnel_id AND ac.status = 'active') AS asset_count
+            FROM personnel p
+            INNER JOIN asset_custodies ac ON p.personnel_id = ac.custodian_id
+            WHERE ac.office_id = ? AND ac.status = 'active'
+            ORDER BY p.full_name
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $officeId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets for a custodian (for Encoder).
+     * @param int $custodianId
+     * @return array
+     */
+    public function getAssetsByCustodianForEncoder($custodianId) {
+        $sql = "
+            SELECT 
+                a.asset_id,
+                a.asset_code,
+                a.asset_name,
+                a.status,
+                a.condition,
+                aa.account_code
+            FROM assets a
+            INNER JOIN asset_custodies ac ON a.asset_id = ac.asset_id
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            WHERE ac.custodian_id = ? AND ac.status = 'active' AND a.status != 'inactive'
+            ORDER BY a.asset_code
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $custodianId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // ===== Details (custody, audit, transfers) =====
 
     /**
      * Get full asset details including custody, audit, and transfers.
@@ -524,7 +602,7 @@ class AssetModel {
     }
 
     /**
-     * Find an asset by text search (asset_code, description, or serial_number).
+     * Find an asset by text search (asset_code, asset_name, description, or serial_number).
      * Returns the first matching asset.
      * @param string $query
      * @return array|null
@@ -533,76 +611,97 @@ class AssetModel {
         $like = '%' . $query . '%';
         $stmt = $this->db->prepare("
             SELECT * FROM assets 
-            WHERE (asset_code LIKE ? OR description LIKE ? OR serial_number LIKE ?)
+            WHERE (asset_code LIKE ? OR asset_name LIKE ? OR description LIKE ? OR serial_number LIKE ?)
             AND status != 'inactive'
             LIMIT 1
         ");
-        $stmt->bind_param('sss', $like, $like, $like);
+        $stmt->bind_param('ssss', $like, $like, $like, $like);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
     }
 
     /**
-     * Get all active personnel for dropdown.
-     * @return array
+     * Dispose an asset (update status, reason, and log audit).
+     * @param int    $assetId
+     * @param string $reason
+     * @param int    $userId
+     * @return bool
      */
-    public function getPersonnel() {
-        $result = $this->db->query("SELECT personnel_id, full_name, position FROM personnel WHERE is_active = 1 ORDER BY full_name");
-        return $result->fetch_all(MYSQLI_ASSOC);
+    public function disposeAsset($assetId, $reason, $userId) {
+        // Update asset
+        $stmt = $this->db->prepare("UPDATE assets SET status = 'disposed', disposal_reason = ?, updated_at = NOW() WHERE asset_id = ?");
+        $stmt->bind_param('si', $reason, $assetId);
+        $success = $stmt->execute();
+
+        if ($success) {
+            // Log audit trail
+            $asset = $this->getById($assetId);
+            $oldValues = json_encode(['status' => $asset['status']]);
+            $newValues = json_encode(['status' => 'disposed', 'disposal_reason' => $reason]);
+            $this->logAudit($assetId, $userId, 'DISPOSE', 'ASSET', $oldValues, $newValues);
+        }
+        return $success;
     }
 
     /**
-     * Get all offices for dropdown.
-     * @return array
+     * Log an audit entry.
+     * @param int    $assetId
+     * @param int    $userId
+     * @param string $actionType
+     * @param string $module
+     * @param string $previousValues
+     * @param string $newValues
      */
-    public function getOffices() {
-        $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
-        return $result->fetch_all(MYSQLI_ASSOC);
+    private function logAudit($assetId, $userId, $actionType, $module, $previousValues, $newValues) {
+        $stmt = $this->db->prepare("
+            INSERT INTO audit_trail (asset_id, performed_by, action_type, module, previous_values, new_values)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param('iissss', $assetId, $userId, $actionType, $module, $previousValues, $newValues);
+        $stmt->execute();
     }
 
     /**
-     * Get all asset accounts with category names (for top‑level browsing).
+     * Get assets grouped by office (for the by_office view).
+     * Includes custodian name if assigned.
      * @return array
      */
-    public function getAssetAccountsList() {
+    public function getAssetsByOffice() {
         $sql = "
             SELECT 
-                aa.asset_accounts_id,
+                o.office_id,
+                o.name AS office_name,
+                a.asset_id,
+                a.asset_code,
+                a.asset_name,
+                a.status,
                 aa.account_code,
-                aa.account_name,
-                ac.name AS category_name,
-                (SELECT COUNT(*) FROM assets WHERE asset_accounts_id = aa.asset_accounts_id AND status != 'inactive') AS asset_count
-            FROM asset_accounts aa
-            LEFT JOIN asset_categories ac ON aa.asset_category_id = ac.asset_category_id
-            ORDER BY aa.account_code
+                p.full_name AS custodian_name
+            FROM offices o
+            LEFT JOIN asset_custodies ac ON o.office_id = ac.office_id AND ac.status = 'active'
+            LEFT JOIN assets a ON ac.asset_id = a.asset_id AND a.status != 'inactive'
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
+            WHERE o.office_id IS NOT NULL
+            ORDER BY o.name, a.asset_code
         ";
         $result = $this->db->query($sql);
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
-    /**
-     * Get assets belonging to a specific account.
-     * @param int $accountId
-     * @param string|null $search
-     * @param array $filters
-     * @return array
-     */
-    public function getAssetsByAccountId($accountId, $search = null, $filters = []) {
-        $filters['account_id'] = $accountId;
-        return $this->searchAssets($search, $filters);
-    }
-
-    /**
-     * Get a single asset account by ID.
-     * @param int $id
-     * @return array|null
-     */
-    public function getAccountById($id) {
-        $stmt = $this->db->prepare("SELECT * FROM asset_accounts WHERE asset_accounts_id = ?");
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        // Group by office
+        $grouped = [];
+        foreach ($rows as $row) {
+            $officeId = $row['office_id'];
+            if (!isset($grouped[$officeId])) {
+                $grouped[$officeId] = [
+                    'office_name' => $row['office_name'],
+                    'assets' => []
+                ];
+            }
+            if ($row['asset_id']) {
+                $grouped[$officeId]['assets'][] = $row;
+            }
+        }
+        return array_values($grouped);
     }
 }

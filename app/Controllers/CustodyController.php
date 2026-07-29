@@ -13,7 +13,8 @@ class CustodyController {
     private $custodyModel;
 
     public function __construct() {
-        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'supply_officer') {
+        // Only admin can access custody
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
             header('Location: index.php');
             exit;
         }
@@ -76,6 +77,7 @@ class CustodyController {
 
     // ===== Existing methods (add, edit, save, delete) remain unchanged =====
     public function add() {
+        $assetId = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : 0;
         $personnel = $this->custodyModel->getPersonnel();
         $offices = $this->custodyModel->getOffices();
         $assets = $this->custodyModel->getAssets();
@@ -83,11 +85,27 @@ class CustodyController {
         $currentPage = 'custody';
         $viewFile = __DIR__ . '/../Views/custody/form.php';
         $isEdit = false;
+        $preSelectedAsset = $assetId ? $assetId : 0;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
     public function edit() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $assetId = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : 0;
+
+        // If asset_id is provided but no custody_id, find the active custody
+        if ($assetId && !$id) {
+            $activeCustody = $this->custodyModel->getActiveCustody($assetId);
+            if ($activeCustody) {
+                header('Location: index.php?page=custody&sub=edit&id=' . $activeCustody['asset_custodies_id']);
+                exit;
+            } else {
+                // No active custody – redirect to add
+                header('Location: index.php?page=custody&sub=add&asset_id=' . $assetId);
+                exit;
+            }
+        }
+
         if (!$id) {
             header('Location: index.php?page=custody');
             exit;
@@ -104,6 +122,7 @@ class CustodyController {
         $currentPage = 'custody';
         $viewFile = __DIR__ . '/../Views/custody/form.php';
         $isEdit = true;
+        $preSelectedAsset = 0;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 

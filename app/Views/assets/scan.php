@@ -82,6 +82,10 @@
     </div>
 </div>
 
+<script>
+window.userRole = '<?= $_SESSION['role'] ?>';
+</script>
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="public/js/scanner.js"></script>
 <script>

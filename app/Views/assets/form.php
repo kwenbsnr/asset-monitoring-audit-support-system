@@ -48,9 +48,14 @@ $assetId = $asset['asset_id'] ?? 0;
                     </div>
 
                     <div class="mb-3">
-                        <label for="description" class="form-label">Asset Name *</label>
-                        <input type="text" class="form-control" id="description" name="description"
-                               value="<?= htmlspecialchars($data['description'] ?? '') ?>" required>
+                        <label for="asset_name" class="form-label">Asset Name *</label>
+                        <input type="text" class="form-control" id="asset_name" name="asset_name"
+                               value="<?= htmlspecialchars($data['asset_name'] ?? '') ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Additional Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
                     </div>
 
                     <div class="row">
@@ -133,6 +138,7 @@ $assetId = $asset['asset_id'] ?? 0;
                                         <option value="">Select Custodian</option>
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>" 
+                                                    data-office-id="<?= $p['office_id'] ?>"
                                                 <?= (isset($data['custodian_id']) && $data['custodian_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($p['full_name']) ?> (<?= htmlspecialchars($p['position']) ?>)
                                             </option>
@@ -230,7 +236,71 @@ $assetId = $asset['asset_id'] ?? 0;
     }
 </script>
 
+<!-- Two‑way auto‑fill: Office ↔ Custodian -->
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const custodianSelect = document.getElementById('custodian_id');
+    const officeSelect = document.getElementById('office_id');
+
+    // Store original options (all personnel)
+    const allCustodianOptions = Array.from(custodianSelect.options);
+
+    // Function to filter custodians by office
+    function filterCustodiansByOffice(officeId) {
+        // Clear current options
+        custodianSelect.innerHTML = '';
+        // Add the "Select Custodian" placeholder
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select Custodian';
+        custodianSelect.appendChild(placeholder);
+
+        // Filter and add matching options
+        allCustodianOptions.forEach(opt => {
+            if (opt.value === '') return; // skip placeholder
+            const optOfficeId = opt.getAttribute('data-office-id');
+            if (officeId === '' || optOfficeId == officeId) {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.textContent;
+                newOpt.setAttribute('data-office-id', optOfficeId);
+                // Preserve selected state if it was selected before
+                if (opt.selected) {
+                    newOpt.selected = true;
+                }
+                custodianSelect.appendChild(newOpt);
+            }
+        });
+    }
+
+    // When office changes, filter custodians
+    officeSelect.addEventListener('change', function() {
+        const officeId = this.value;
+        filterCustodiansByOffice(officeId);
+    });
+
+    // When custodian changes, auto‑fill office
+    custodianSelect.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        if (selected && selected.value) {
+            const officeId = selected.getAttribute('data-office-id');
+            if (officeId) {
+                officeSelect.value = officeId;
+                // Optionally re‑filter to keep list consistent (though office already set)
+                filterCustodiansByOffice(officeId);
+            }
+        }
+    });
+
+    // Initial filter: if office is pre‑selected, filter custodians
+    if (officeSelect.value) {
+        filterCustodiansByOffice(officeSelect.value);
+    }
+});
+</script>
+
+<script>
+    // Toggle custodian section visibility
     document.addEventListener('DOMContentLoaded', function() {
         const toggle = document.getElementById('assignCustodianToggle');
         const section = document.getElementById('custodianSection');

@@ -1,6 +1,6 @@
 <?php if (!defined('APP_START')) exit; ?>
-    <div class="card shadow">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
+<div class="card shadow">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center flex-wrap py-3">
         <h4 class="mb-0 fw-bold text-success"><i class="bi bi-box-seam me-2"></i><?= $pageTitle ?? 'Assets' ?></h4>
         <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
@@ -53,7 +53,7 @@
                 <thead>
                     <tr>
                         <th>Asset Code</th>
-                        <th>Description</th>
+                        <th>Asset Name</th>
                         <th>Brand / Model</th>
                         <th>Serial #</th>
                         <th>Account</th>
@@ -69,7 +69,7 @@
                                 <?php if (!empty($_GET['search'])): ?>
                                     No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
                                 <?php else: ?>
-                                    No assets found in this category.
+                                    No assets found in this account.
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -77,7 +77,7 @@
                         <?php foreach ($assets as $asset): ?>
                             <tr>
                                 <td><strong><?= htmlspecialchars($asset['asset_code']) ?></strong></td>
-                                <td><?= htmlspecialchars($asset['description']) ?></td>
+                                <td><?= htmlspecialchars($asset['asset_name']) ?></td>
                                 <td><?= htmlspecialchars($asset['brand'] ?? '') ?> <?= htmlspecialchars($asset['model'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($asset['serial_number'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($asset['account_code'] ?? '') ?></td>
@@ -88,7 +88,18 @@
                                         <span class="text-muted">Not assigned</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><span class="badge bg-<?= $asset['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $asset['status'] ?></span></td>
+                                <td>
+                                    <?php 
+                                        $statusClass = match($asset['status']) {
+                                            'active' => 'success',
+                                            'pending_disposal' => 'warning',
+                                            'disposed' => 'secondary',
+                                            'missing' => 'danger',
+                                            default => 'secondary'
+                                        };
+                                    ?>
+                                    <span class="badge bg-<?= $statusClass ?>"><?= $asset['status'] ?></span>
+                                </td>
                                 <td>
                                     <button class="btn btn-sm btn-info view-details" 
                                             data-id="<?= $asset['asset_id'] ?>" 
@@ -97,7 +108,26 @@
                                         <i class="bi bi-eye"></i>
                                     </button>
                                     <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                                    <a href="index.php?page=assets&sub=delete&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this asset?')"><i class="bi bi-trash"></i></a>
+                                    <?php if ($asset['status'] === 'active'): ?>
+                                        <?php if (empty($asset['active_custody_id'])): ?>
+                                            <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-primary" title="Assign Custodian">
+                                                <i class="bi bi-person-plus"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning" title="Transfer Custodian">
+                                                <i class="bi bi-arrow-left-right"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if (in_array($_SESSION['role'], ['asset_inspector', 'admin']) && $asset['status'] === 'active'): ?>
+                                        <button class="btn btn-sm btn-danger dispose-btn" 
+                                                data-id="<?= $asset['asset_id'] ?>" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#disposeModal"
+                                                title="Dispose Asset">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -130,6 +160,18 @@
         </div>
     </div>
 </div>
+
+<?php include __DIR__ . '/dispose_modal.php'; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.dispose-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('disposeAssetId').value = this.dataset.id;
+        });
+    });
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -173,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const audit = data.audit || [];
         const transfers = data.transfers || [];
 
-        // QR Code image URL
         const qrImg = `index.php?page=assets&sub=qr&id=${asset.asset_id}`;
 
         let html = `
@@ -181,14 +222,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row mb-3">
                 <div class="col-md-6"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
                 <div class="col-md-6"><strong>QR Code:</strong> ${escapeHtml(asset.qr_code_ref)}</div>
-                <div class="col-md-12"><strong>Description:</strong> ${escapeHtml(asset.description)}</div>
+                <div class="col-md-12"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
                 <div class="col-md-4"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
                 <div class="col-md-4"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
                 <div class="col-md-4"><strong>Serial #:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
                 <div class="col-md-6"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
                 <div class="col-md-6"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
                 <div class="col-md-6"><strong>Account:</strong> ${escapeHtml(asset.account_code + ' - ' + asset.account_name)}</div>
-                <div class="col-md-6"><strong>Category:</strong> ${escapeHtml(asset.category_name)}</div>
                 <div class="col-md-4"><strong>Status:</strong> <span class="badge bg-${asset.status === 'active' ? 'success' : 'secondary'}">${asset.status}</span></div>
                 <div class="col-md-4"><strong>Condition:</strong> <span class="badge bg-${asset.condition === 'good' ? 'success' : 'warning'}">${asset.condition}</span></div>
                 <div class="col-md-4"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
@@ -196,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // QR Code image
         html += `
             <div class="text-center mb-3">
                 <img src="${qrImg}" alt="QR Code" style="max-width:150px; border:1px solid #ddd; padding:5px; border-radius:8px;">

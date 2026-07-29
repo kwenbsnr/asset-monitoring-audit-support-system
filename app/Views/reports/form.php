@@ -63,7 +63,9 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                         <select class="form-select form-select-sm" name="items[0][asset_id]">
                             <option value="">Select Asset</option>
                             <?php foreach ($assets as $a): ?>
-                                <option value="<?= $a['asset_id'] ?>"><?= htmlspecialchars($a['asset_code']) ?></option>
+                                <option value="<?= $a['asset_id'] ?>">
+                                    <?= htmlspecialchars($a['asset_code'] . ' - ' . ($a['asset_name'] ?? $a['description'])) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -117,7 +119,9 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                 <select class="form-select form-select-sm" name="items[${itemCount}][asset_id]">
                     <option value="">Select Asset</option>
                     <?php foreach ($assets as $a): ?>
-                        <option value="<?= $a['asset_id'] ?>"><?= htmlspecialchars($a['asset_code']) ?></option>
+                        <option value="<?= $a['asset_id'] ?>">
+                            <?= htmlspecialchars($a['asset_code'] . ' - ' . ($a['asset_name'] ?? $a['description'])) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
             </div>

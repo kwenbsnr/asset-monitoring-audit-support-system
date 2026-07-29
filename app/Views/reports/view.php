@@ -20,7 +20,7 @@
                 <thead>
                     <tr>
                         <th>Asset Code</th>
-                        <th>Description</th>
+                        <th>Asset Name</th>
                         <th>Verification</th>
                         <th>Condition</th>
                         <th>Verified By</th>
@@ -34,7 +34,7 @@
                         <?php foreach ($report['items'] as $item): ?>
                             <tr>
                                 <td><?= htmlspecialchars($item['asset_code']) ?></td>
-                                <td><?= htmlspecialchars($item['asset_description']) ?></td>
+                                <td><?= htmlspecialchars($item['asset_name'] ?? $item['asset_description']) ?></td>
                                 <td><span class="badge bg-<?= $item['verification_status'] === 'verified' ? 'success' : 'warning' ?>"><?= $item['verification_status'] ?></span></td>
                                 <td><?= htmlspecialchars($item['asset_condition'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($item['verified_by_username']) ?></td>
