@@ -76,9 +76,11 @@ switch ($page) {
             case 'scan':
                 $controller->scan();
                 break;
-            // ===== ADD THE MISSING CASE =====
             case 'by_office':
                 $controller->byOffice();
+                break;
+            case 'bulk_qr':
+                $controller->bulkQr();
                 break;
             // ===== END ADD =====
             default:

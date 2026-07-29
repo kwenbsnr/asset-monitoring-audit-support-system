@@ -704,4 +704,54 @@ class AssetModel {
         }
         return array_values($grouped);
     }
+
+    /**
+     * Fetch multiple assets by their IDs.
+     * @param array $ids
+     * @return array
+     */
+    public function getAssetsByIds($ids) {
+        if (empty($ids)) return [];
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "SELECT * FROM assets WHERE asset_id IN ($placeholders) AND status != 'inactive' ORDER BY asset_code";
+        $stmt = $this->db->prepare($sql);
+        $types = str_repeat('i', count($ids));
+        $stmt->bind_param($types, ...$ids);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Log a custodial transfer in asset_transfers.
+     * @param int      $assetId
+     * @param int|null $fromCustodianId
+     * @param int      $toCustodianId
+     * @param int|null $fromOfficeId
+     * @param int      $toOfficeId
+     * @param string   $transferDate (Y-m-d)
+     * @param string   $status (default 'completed')
+     * @return bool
+     */
+    public function logTransfer($assetId, $fromCustodianId, $toCustodianId, $fromOfficeId, $toOfficeId, $transferDate, $status = 'completed') {
+        $transferNumber = 'TR-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        $stmt = $this->db->prepare("
+            INSERT INTO asset_transfers (
+                asset_id, from_custodian_id, to_custodian_id, from_office_id, to_office_id,
+                transfer_number, transfer_date, status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->bind_param(
+            'iiiiiss',
+            $assetId,
+            $fromCustodianId,
+            $toCustodianId,
+            $fromOfficeId,
+            $toOfficeId,
+            $transferNumber,
+            $transferDate,
+            $status
+        );
+        return $stmt->execute();
+    }
 }

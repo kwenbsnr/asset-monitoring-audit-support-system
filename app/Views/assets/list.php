@@ -48,10 +48,22 @@
             </div>
         <?php endif; ?>
 
+        <form method="POST" action="index.php?page=assets&sub=bulk_qr" id="bulkQrForm">
+        <div class="mb-2 d-flex justify-content-between align-items-center">
+            <div>
+                <button type="submit" class="btn btn-outline-primary btn-sm" onclick="return confirm('Print QR codes for selected assets?')">
+                    <i class="bi bi-printer"></i> Print Selected QR
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAllCheckboxes()">Select All</button>
+            </div>
+            <span class="text-muted small" id="selectedCount">0 selected</span>
+        </div>
+        
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
                         <th>Asset Code</th>
                         <th>Asset Name</th>
                         <th>Brand / Model</th>
@@ -89,6 +101,7 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
+                                    <td><input type="checkbox" name="asset_ids[]" value="<?= $asset['asset_id'] ?>" class="asset-checkbox"></td>
                                     <?php 
                                         $statusClass = match($asset['status']) {
                                             'active' => 'success',
@@ -313,5 +326,26 @@ document.addEventListener('DOMContentLoaded', function() {
         div.textContent = text;
         return div.innerHTML;
     }
+});
+</script>
+
+<script>
+function toggleAllCheckboxes() {
+    const checkboxes = document.querySelectorAll('.asset-checkbox');
+    const selectAll = document.getElementById('selectAll');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.asset-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = checked + ' selected';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.asset-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSelectedCount);
+    });
+    updateSelectedCount();
 });
 </script>
