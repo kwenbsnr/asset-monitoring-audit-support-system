@@ -1,6 +1,6 @@
 <?php
 namespace App\Controllers;
-
+use App\Models\CustodyModel;
 use App\Models\AssetModel;
 
 if (!defined('APP_START')) {
@@ -9,88 +9,178 @@ if (!defined('APP_START')) {
 }
 
 class AssetController {
+    /** @var AssetModel */
     private $assetModel;
 
     public function __construct() {
-        // Only supply_officer or admin can access
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['supply_officer', 'admin'])) {
+        // Allow all three roles for browsing, listing, scanning, and viewing details
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'asset_inspector', 'admin'])) {
             header('Location: index.php');
             exit;
         }
         $this->assetModel = new AssetModel();
     }
 
-    /**
-     * List all assets
-     */
-    public function list() {
-        $assets = $this->assetModel->getAll();
-        require_once __DIR__ . '/../Views/assets/list.php';
+    // ===== Account list (top level) – all roles =====
+    public function browse() {
+        $accountId = isset($_GET['account_id']) ? (int)$_GET['account_id'] : null;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        $filters = $this->getFiltersFromGet();
+
+        if ($accountId) {
+            $assets = $this->assetModel->getAssetsByAccountId($accountId, $search, $filters);
+            $account = $this->assetModel->getAccountById($accountId);
+            $pageTitle = 'Assets' . ($account ? ' - ' . $account['account_code'] : '');
+            $currentPage = 'assets';
+            $viewFile = __DIR__ . '/../Views/assets/list.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        } else {
+            $accounts = $this->assetModel->getAssetAccountsList();
+            $pageTitle = 'Asset Accounts';
+            $currentPage = 'assets';
+            $viewFile = __DIR__ . '/../Views/assets/accounts.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        }
     }
 
-    /**
-     * Show add form
-     */
+    public function listAll() {
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        $filters = $this->getFiltersFromGet();
+        $assets = $this->assetModel->getAllAssets($search, $filters);
+        $pageTitle = 'All Assets' . ($search ? ' (Search: ' . htmlspecialchars($search) . ')' : '');
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/list.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    private function getFiltersFromGet() {
+        $filters = [];
+        if (isset($_GET['field']) && !empty($_GET['field'])) $filters['field'] = $_GET['field'];
+        if (isset($_GET['status']) && !empty($_GET['status'])) $filters['status'] = $_GET['status'];
+        if (isset($_GET['condition']) && !empty($_GET['condition'])) $filters['condition'] = $_GET['condition'];
+        if (isset($_GET['date_from']) && !empty($_GET['date_from'])) $filters['date_from'] = $_GET['date_from'];
+        if (isset($_GET['date_to']) && !empty($_GET['date_to'])) $filters['date_to'] = $_GET['date_to'];
+        if (isset($_GET['cost_from']) && $_GET['cost_from'] !== '') $filters['cost_from'] = (float)$_GET['cost_from'];
+        if (isset($_GET['cost_to']) && $_GET['cost_to'] !== '') $filters['cost_to'] = (float)$_GET['cost_to'];
+        return $filters;
+    }
+
+    public function details() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $qr = isset($_GET['qr']) ? trim($_GET['qr']) : null;
+        $query = isset($_GET['q']) ? trim($_GET['q']) : null;
+
+        if ($id) {
+            $data = $this->assetModel->getFullDetails($id);
+        } elseif ($qr) {
+            $asset = $this->assetModel->getByQrCode($qr);
+            if ($asset) {
+                $data = $this->assetModel->getFullDetails($asset['asset_id']);
+            } else {
+                $data = null;
+            }
+        } elseif ($query) {
+            $asset = $this->assetModel->searchAssetByText($query);
+            if ($asset) {
+                $data = $this->assetModel->getFullDetails($asset['asset_id']);
+            } else {
+                $data = null;
+            }
+        } else {
+            http_response_code(400);
+            echo json_encode(['error' => 'Asset ID, QR code, or search term required']);
+            return;
+        }
+        if (!$data) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Asset not found']);
+            return;
+        }
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    }
+
+    // ===== Add / Edit / Save / Delete =====
+    // Only encoder and admin can add assets
     public function add() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
         $accounts = $this->assetModel->getAssetAccounts();
-        // Define enum options for status and condition (from schema)
-        $statusOptions = ['active', 'inactive', 'disposed', 'missing']; // adjust based on your enum
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
+        $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
-        require_once __DIR__ . '/../Views/assets/form.php';
+        $pageTitle = 'Add Asset';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/form.php';
+        $isEdit = false;
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-    /**
-     * Show edit form
-     */
+    // Edit and delete are admin-only
     public function edit() {
+        if ($_SESSION['role'] !== 'admin') {
+            header('Location: index.php');
+            exit;
+        }
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if (!$id) {
-            header('Location: index.php?page=assets&sub=list');
+            header('Location: index.php?page=assets&sub=browse');
             exit;
         }
         $asset = $this->assetModel->getById($id);
         if (!$asset) {
-            header('Location: index.php?page=assets&sub=list');
+            header('Location: index.php?page=assets&sub=browse');
             exit;
         }
+        $custodyModel = new CustodyModel();
+        $currentCustody = $custodyModel->getActiveCustody($id);
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
         $accounts = $this->assetModel->getAssetAccounts();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
-        require_once __DIR__ . '/../Views/assets/form.php';
+        $pageTitle = 'Edit Asset';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/form.php';
+        $isEdit = true;
+        require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-    /**
-     * Save (create or update)
-     */
     public function save() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: index.php?page=assets&sub=list');
+            header('Location: index.php?page=assets&sub=browse');
             exit;
         }
 
         $id = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
         $data = [
             'asset_code' => trim($_POST['asset_code']),
-            'description' => trim($_POST['description']),
+            'asset_name' => trim($_POST['asset_name']),
+            'description' => trim($_POST['description'] ?? ''),
             'brand' => trim($_POST['brand'] ?? ''),
             'model' => trim($_POST['model'] ?? ''),
             'serial_number' => trim($_POST['serial_number'] ?? ''),
             'acquisition_cost' => $_POST['acquisition_cost'] ? (float)$_POST['acquisition_cost'] : null,
             'acquisition_date' => $_POST['acquisition_date'] ?: null,
             'asset_accounts_id' => (int)$_POST['asset_accounts_id'],
-            'status' => $_POST['status'],
-            'condition' => $_POST['condition'],
+            'status' => $id ? $_POST['status'] : 'active',
+            'condition' => $id ? $_POST['condition'] : 'good',
             'remarks' => trim($_POST['remarks'] ?? ''),
         ];
 
-        // Basic validation
         $errors = [];
         if (empty($data['asset_code'])) $errors[] = 'Asset code is required.';
-        if (empty($data['description'])) $errors[] = 'Description is required.';
+        if (empty($data['asset_name'])) $errors[] = 'Asset name is required.';
         if (empty($data['asset_accounts_id'])) $errors[] = 'Account is required.';
 
         if (!empty($errors)) {
-            // Pass errors back to form
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $data;
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -98,36 +188,228 @@ class AssetController {
         }
 
         if ($id) {
-            // Update
             $success = $this->assetModel->update($id, $data);
         } else {
-            // Create
-            $success = $this->assetModel->create($data);
+            $newId = $this->assetModel->create($data);
+            if ($newId) {
+                $success = true;
+                $id = $newId;
+            } else {
+                $success = false;
+            }
         }
 
-        if ($success) {
-            unset($_SESSION['form_errors'], $_SESSION['form_data']);
-            $_SESSION['flash'] = 'Asset saved successfully.';
-        } else {
-            $_SESSION['form_errors'] = ['Failed to save asset. Please try again.'];
+        if (!$success) {
+            $_SESSION['flash'] = 'Failed to save asset. Please try again.';
+            $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
         }
 
-        header('Location: index.php?page=assets&sub=list');
+        unset($_SESSION['form_errors'], $_SESSION['form_data']);
+        $_SESSION['flash'] = 'Asset saved successfully.';
+        $_SESSION['flash_type'] = 'success';
+
+        if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1' && $id) {
+            $custodyData = [
+                'asset_id' => $id,
+                'custodian_id' => (int)$_POST['custodian_id'],
+                'office_id' => (int)$_POST['office_id'],
+                'accountability_document' => trim($_POST['accountability_document'] ?? ''),
+                'accountability_reference' => trim($_POST['accountability_reference'] ?? ''),
+                'effectivity_date' => $_POST['effectivity_date'] ?? date('Y-m-d'),
+                'status' => 'active'
+            ];
+            $custodyModel = new CustodyModel();
+            $existing = $custodyModel->getActiveCustody($id);
+            if ($existing) {
+                $custodyModel->update($existing['asset_custodies_id'], [
+                    'custodian_id' => $existing['custodian_id'],
+                    'office_id' => $existing['office_id'],
+                    'accountability_document' => $existing['accountability_document'],
+                    'accountability_reference' => $existing['accountability_reference'],
+                    'effectivity_date' => $existing['effectivity_date'],
+                    'end_date' => date('Y-m-d'),
+                    'status' => 'inactive'
+                ]);
+            }
+            $custodyModel->create($custodyData);
+        }
+
+        if ($id) {
+            header('Location: index.php?page=assets&sub=edit&id=' . $id);
+        } else {
+            header('Location: index.php?page=assets&sub=browse');
+        }
         exit;
     }
 
-    /**
-     * Delete (soft delete)
-     */
     public function delete() {
+        if ($_SESSION['role'] !== 'admin') {
+            header('Location: index.php');
+            exit;
+        }
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id) {
             $this->assetModel->delete($id);
             $_SESSION['flash'] = 'Asset deleted (soft delete).';
+            $_SESSION['flash_type'] = 'warning';
         }
-        header('Location: index.php?page=assets&sub=list');
+        header('Location: index.php?page=assets&sub=browse');
         exit;
+    }
+
+    public function searchJson() {
+        $query = isset($_GET['q']) ? trim($_GET['q']) : '';
+        if (strlen($query) < 2) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Please type at least 2 characters']);
+            return;
+        }
+        $assets = $this->assetModel->searchAssets($query);
+        header('Content-Type: application/json');
+        echo json_encode($assets);
+    }
+
+    public function qr() {
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            http_response_code(400);
+            die('Asset ID required');
+        }
+        $asset = $this->assetModel->getById($id);
+        if (!$asset) {
+            http_response_code(404);
+            die('Asset not found');
+        }
+        $content = $asset['qr_code_ref'];
+        $download = isset($_GET['download']);
+        \App\Helpers\QRGenerator::output($content, $download);
+    }
+
+    public function scan() {
+        $pageTitle = 'Scan QR Code';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/scan.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    /**
+     * Dispose an asset (mark as disposed) – only for asset_inspector and admin.
+     */
+    public function dispose() {
+        // Only asset_inspector and admin can dispose
+        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $assetId = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
+            $reason = trim($_POST['disposal_reason'] ?? '');
+
+            if (!$assetId) {
+                $_SESSION['flash'] = 'Invalid asset.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            if (empty($reason)) {
+                $_SESSION['flash'] = 'Please provide a reason for disposal.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            $asset = $this->assetModel->getById($assetId);
+            if (!$asset) {
+                $_SESSION['flash'] = 'Asset not found.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            if ($asset['status'] !== 'active') {
+                $_SESSION['flash'] = 'Only active assets can be disposed.';
+                $_SESSION['flash_type'] = 'danger';
+                header('Location: index.php?page=assets&sub=browse');
+                exit;
+            }
+
+            // Update asset status and reason
+            $updated = $this->assetModel->disposeAsset($assetId, $reason, $_SESSION['user_id']);
+            if ($updated) {
+                $_SESSION['flash'] = 'Asset marked as disposed successfully.';
+                $_SESSION['flash_type'] = 'success';
+            } else {
+                $_SESSION['flash'] = 'Failed to dispose asset.';
+                $_SESSION['flash_type'] = 'danger';
+            }
+            header('Location: index.php?page=assets&sub=browse');
+            exit;
+        }
+
+        // GET request – redirect to browse (the modal handles the action)
+        header('Location: index.php?page=assets&sub=browse');
+        exit;
+    }
+
+    /**
+     * View assets by office – shows office cards, then custodians, then assets.
+     */
+    public function byOffice() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+
+        $officeId = isset($_GET['office_id']) ? (int)$_GET['office_id'] : null;
+        $custodianId = isset($_GET['custodian_id']) ? (int)$_GET['custodian_id'] : null;
+
+        if ($custodianId) {
+            // Show assets for a specific custodian (popover or modal)
+            $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
+            $custodian = $this->assetModel->getPersonnelById($custodianId);
+            $pageTitle = 'Assets of ' . ($custodian ? $custodian['full_name'] : '');
+            $currentPage = 'assets_by_office';
+            $viewFile = __DIR__ . '/../Views/assets/custodian_assets.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        } elseif ($officeId) {
+            // Show custodians in this office
+            $custodians = $this->assetModel->getCustodiansByOfficeForEncoder($officeId);
+            $office = $this->assetModel->getOfficeById($officeId);
+            $pageTitle = 'Custodians - ' . ($office ? $office['name'] : '');
+            $currentPage = 'assets_by_office';
+            $viewFile = __DIR__ . '/../Views/assets/office_custodians.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        } else {
+            // Show office cards
+            $offices = $this->assetModel->getOfficesWithData();
+            $pageTitle = 'Assets by Office';
+            $currentPage = 'assets_by_office';
+            $viewFile = __DIR__ . '/../Views/assets/offices.php';
+            require_once __DIR__ . '/../Views/layouts/main.php';
+        }
+    }
+
+    /**
+     * Return assets for a custodian as JSON (for popover).
+     */
+    public function custodianAssetsJson() {
+        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+        $custodianId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$custodianId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Custodian ID required']);
+            return;
+        }
+        $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
+        header('Content-Type: application/json');
+        echo json_encode($assets);
     }
 }
