@@ -45,6 +45,11 @@
             <!-- Encoder modules -->
             <?php if ($_SESSION['role'] === 'encoder'): ?>
                 <li class="nav-item">
+                    <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
+                        <i class="bi bi-plus-circle"></i> Register Asset
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Records
                     </a>
@@ -52,11 +57,6 @@
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets_by_office') ? 'active' : '' ?>" href="index.php?page=assets&sub=by_office">
                         <i class="bi bi-building"></i> Assets by Office
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
-                        <i class="bi bi-plus-circle"></i> Register Asset
                     </a>
                 </li>
             <?php endif; ?>
