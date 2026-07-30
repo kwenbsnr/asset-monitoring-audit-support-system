@@ -180,6 +180,11 @@ class AssetController {
         if (empty($data['asset_code'])) $errors[] = 'Asset code is required.';
         if (empty($data['asset_name'])) $errors[] = 'Asset name is required.';
         if (empty($data['asset_accounts_id'])) $errors[] = 'Account is required.';
+        
+        // PPE cost validation
+        if ($data['acquisition_cost'] === null || $data['acquisition_cost'] < 50000) {
+            $errors[] = 'Acquisition cost must be at least ₱50,000.00 for PPE registration.';
+        }
 
         if (!empty($errors)) {
             $_SESSION['form_errors'] = $errors;

@@ -78,9 +78,12 @@ $assetId = $asset['asset_id'] ?? 0;
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="acquisition_cost" class="form-label">Acquisition Cost</label>
+                            <label for="acquisition_cost" class="form-label">Acquisition Cost (₱) *</label>
                             <input type="number" step="0.01" class="form-control" id="acquisition_cost" name="acquisition_cost"
-                                   value="<?= htmlspecialchars($data['acquisition_cost'] ?? '') ?>">
+                                value="<?= htmlspecialchars($data['acquisition_cost'] ?? '') ?>"
+                                min="50000" required
+                                placeholder="Minimum ₱50,000.00">
+                            <small class="text-muted">For PPE registration, acquisition cost must be at least ₱50,000.00.</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="acquisition_date" class="form-label">Acquisition Date</label>
