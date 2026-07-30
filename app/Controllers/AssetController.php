@@ -112,14 +112,14 @@ class AssetController {
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
         $pageTitle = 'Add Asset';
-        $currentPage = 'assets';
+        $currentPage = 'add_asset';  
         $viewFile = __DIR__ . '/../Views/assets/form.php';
         $isEdit = false;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
     /**
-     * Edit asset – now accessible to encoder and admin.
+     * Edit asset – accessible to encoder and admin.
      */
     public function edit() {
         if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
@@ -144,7 +144,7 @@ class AssetController {
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
         $pageTitle = 'Edit Asset';
-        $currentPage = 'assets';
+        $currentPage = 'assets'; // Keep highlighting "Asset Records"
         $viewFile = __DIR__ . '/../Views/assets/form.php';
         $isEdit = true;
         require_once __DIR__ . '/../Views/layouts/main.php';
@@ -232,7 +232,7 @@ class AssetController {
                     $existing['office_id'],
                     $newOfficeId,
                     $effectivityDate,
-                    'completed'
+                    'approved'
                 );
 
                 // End old custody
@@ -255,7 +255,7 @@ class AssetController {
                     null,
                     $newOfficeId,
                     $effectivityDate,
-                    'completed'
+                    'approved'
                 );
             }
 
@@ -449,7 +449,7 @@ class AssetController {
         echo json_encode($assets);
     }
 
-        /**
+    /**
      * Bulk print QR codes for selected assets.
      */
     public function bulkQr() {
