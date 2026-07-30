@@ -329,11 +329,10 @@ class AssetController {
     }
 
     public function scan() {
-        $pageTitle = 'Scan QR Code';
-        $currentPage = 'assets';
-        $viewFile = __DIR__ . '/../Views/assets/scan.php';
-        require_once __DIR__ . '/../Views/layouts/main.php';
-    }
+    // Redirect to the verification page
+    header('Location: index.php?page=assets&sub=verify');
+    exit;
+}
 
     /**
      * Dispose an asset (mark as disposed) – only for asset_inspector and admin.
@@ -485,5 +484,160 @@ class AssetController {
         $currentPage = 'assets';
         $viewFile = __DIR__ . '/../Views/assets/bulk_qr.php';
         require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    /**
+     * Verify asset – main page for asset inspection.
+     * GET: shows scanner/search and asset details.
+     * POST: updates operational fields.
+     */
+    public function verify() {
+        // Only asset_inspector and admin can access
+        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+
+        $assetId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $qr = isset($_GET['qr']) ? trim($_GET['qr']) : null;
+        $asset = null;
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
+
+        // If ID or QR provided, load the asset
+        if ($assetId) {
+            $asset = $this->assetModel->getById($assetId);
+        } elseif ($qr) {
+            $asset = $this->assetModel->getByQrCode($qr);
+        }
+
+        // If asset found, get active custody
+        if ($asset) {
+            $custodyModel = new CustodyModel();
+            $activeCustody = $custodyModel->getActiveCustody($asset['asset_id']);
+            if ($activeCustody) {
+                $asset['custodian_id'] = $activeCustody['custodian_id'];
+                $asset['office_id'] = $activeCustody['office_id'];
+            } else {
+                $asset['custodian_id'] = 0;
+                $asset['office_id'] = 0;
+            }
+        }
+
+        // Handle POST update
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->saveInspection();
+            // After save, reload the same asset
+            if (isset($_POST['asset_id'])) {
+                header('Location: index.php?page=assets&sub=verify&id=' . (int)$_POST['asset_id']);
+            } else {
+                header('Location: index.php?page=assets&sub=verify');
+            }
+            exit;
+        }
+
+        // Prepare view data
+        $pageTitle = 'Verify Asset';
+        $currentPage = 'verify';
+        $viewFile = __DIR__ . '/../Views/assets/verify.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    /**
+     * Save inspection updates (POST handler).
+     */
+    private function saveInspection() {
+        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+            http_response_code(403);
+            exit('Unauthorized');
+        }
+
+        $assetId = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
+        if (!$assetId) {
+            $_SESSION['flash'] = 'Invalid asset.';
+            $_SESSION['flash_type'] = 'danger';
+            return;
+        }
+
+        // Allowed fields for inspector
+        $data = [
+            'condition' => $_POST['condition'] ?? 'good',
+            'status' => $_POST['status'] ?? 'active',
+            'verification_status' => $_POST['verification_status'] ?? 'pending',
+            'inspection_remarks' => trim($_POST['inspection_remarks'] ?? ''),
+            'custodian_id' => isset($_POST['custodian_id']) ? (int)$_POST['custodian_id'] : 0,
+            'office_id' => isset($_POST['office_id']) ? (int)$_POST['office_id'] : 0,
+        ];
+
+        // Validate custodian/office if changed
+        if ($data['custodian_id'] > 0 && $data['office_id'] == 0) {
+            $_SESSION['flash'] = 'Office is required when changing custodian.';
+            $_SESSION['flash_type'] = 'danger';
+            return;
+        }
+
+        // Update asset operational fields (condition, status, verification_status, inspection_remarks)
+        $updated = $this->assetModel->updateInspection($assetId, $data);
+        if (!$updated) {
+            $_SESSION['flash'] = 'Failed to update asset.';
+            $_SESSION['flash_type'] = 'danger';
+            return;
+        }
+
+        // Handle custodian change
+        if ($data['custodian_id'] > 0) {
+            $custodyModel = new CustodyModel();
+            $existing = $custodyModel->getActiveCustody($assetId);
+            if ($existing && $existing['custodian_id'] != $data['custodian_id']) {
+                // End old custody and log transfer
+                $this->assetModel->logTransfer(
+                    $assetId,
+                    $existing['custodian_id'],
+                    $data['custodian_id'],
+                    $existing['office_id'],
+                    $data['office_id'],
+                    date('Y-m-d'),
+                    'approved'
+                );
+                $custodyModel->update($existing['asset_custodies_id'], [
+                    'custodian_id' => $existing['custodian_id'],
+                    'office_id' => $existing['office_id'],
+                    'accountability_document' => $existing['accountability_document'],
+                    'accountability_reference' => $existing['accountability_reference'],
+                    'effectivity_date' => $existing['effectivity_date'],
+                    'end_date' => date('Y-m-d'),
+                    'status' => 'inactive'
+                ]);
+                // Create new custody
+                $newCustody = [
+                    'asset_id' => $assetId,
+                    'custodian_id' => $data['custodian_id'],
+                    'office_id' => $data['office_id'],
+                    'accountability_document' => 'INSPECTION',
+                    'accountability_reference' => 'TRANSFER-' . date('Ymd'),
+                    'effectivity_date' => date('Y-m-d'),
+                    'status' => 'active'
+                ];
+                $custodyModel->create($newCustody);
+            } elseif (!$existing) {
+                // No existing custody – create one
+                $newCustody = [
+                    'asset_id' => $assetId,
+                    'custodian_id' => $data['custodian_id'],
+                    'office_id' => $data['office_id'],
+                    'accountability_document' => 'INSPECTION',
+                    'accountability_reference' => 'ASSIGN-' . date('Ymd'),
+                    'effectivity_date' => date('Y-m-d'),
+                    'status' => 'active'
+                ];
+                $custodyModel->create($newCustody);
+            }
+        }
+
+        // Log audit (using public logAudit method)
+        $this->assetModel->logAudit($assetId, $_SESSION['user_id'], 'VERIFY', 'ASSET', '', '');
+
+        $_SESSION['flash'] = 'Asset verification updated successfully.';
+        $_SESSION['flash_type'] = 'success';
     }
 }

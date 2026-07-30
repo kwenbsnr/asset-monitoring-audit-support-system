@@ -82,6 +82,9 @@ switch ($page) {
             case 'bulk_qr':
                 $controller->bulkQr();
                 break;
+            case 'verify':
+                $controller->verify();
+                break;
             // ===== END ADD =====
             default:
                 $controller->browse();

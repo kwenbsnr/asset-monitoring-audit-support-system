@@ -653,7 +653,7 @@ class AssetModel {
      * @param string $previousValues
      * @param string $newValues
      */
-    private function logAudit($assetId, $userId, $actionType, $module, $previousValues, $newValues) {
+    public function logAudit($assetId, $userId, $actionType, $module, $previousValues, $newValues) {
         $stmt = $this->db->prepare("
             INSERT INTO audit_trail (asset_id, performed_by, action_type, module, previous_values, new_values)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -751,6 +751,33 @@ class AssetModel {
             $transferNumber,
             $transferDate,
             $status
+        );
+        return $stmt->execute();
+    }
+
+    /**
+     * Update operational fields for inspection.
+     * @param int   $id
+     * @param array $data
+     * @return bool
+     */
+    public function updateInspection($id, $data) {
+        $stmt = $this->db->prepare("
+            UPDATE assets SET
+                `condition` = ?,
+                status = ?,
+                verification_status = ?,
+                inspection_remarks = ?,
+                updated_at = NOW()
+            WHERE asset_id = ?
+        ");
+        $stmt->bind_param(
+            'ssssi',
+            $data['condition'],
+            $data['status'],
+            $data['verification_status'],
+            $data['inspection_remarks'],
+            $id
         );
         return $stmt->execute();
     }

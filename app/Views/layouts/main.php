@@ -1,5 +1,5 @@
 <?php
-// This is the main layout – use it by including it at the top of every authenticated view
+// Main layout
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -69,8 +69,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage === 'scan') ? 'active' : '' ?>" href="index.php?page=assets&sub=scan">
-                        <i class="bi bi-qr-code-scan"></i> Scan QR
+                    <a class="nav-link <?= ($currentPage === 'verify') ? 'active' : '' ?>" href="index.php?page=assets&sub=verify">
+                        <i class="bi bi-qr-code-scan"></i> Verify Asset
                     </a>
                 </li>
             <?php endif; ?>
