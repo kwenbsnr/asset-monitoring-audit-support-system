@@ -569,6 +569,11 @@ class AssetController {
             'office_id' => isset($_POST['office_id']) ? (int)$_POST['office_id'] : 0,
         ];
 
+        // If "Mark as Verified" button was clicked, force verification_status = 'verified'
+        if (isset($_POST['mark_verified'])) {
+            $data['verification_status'] = 'verified';
+        }
+
         // Validate custodian/office if changed
         if ($data['custodian_id'] > 0 && $data['office_id'] == 0) {
             $_SESSION['flash'] = 'Office is required when changing custodian.';

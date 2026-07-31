@@ -1,7 +1,7 @@
 <?php if (!defined('APP_START')) exit; ?>
 <div class="container-fluid">
     <div class="row g-4">
-        <!-- LEFT: Scanner / Search (35%) -->
+        <!-- LEFT: Scanner / Search -->
         <div class="col-lg-4 col-md-5">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white border-bottom">
@@ -50,7 +50,7 @@
             </div>
         </div>
 
-        <!-- RIGHT: Asset Profile + Verification Form (65%) -->
+        <!-- RIGHT: Asset Profile + Actions -->
         <div class="col-lg-8 col-md-7">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
@@ -66,72 +66,89 @@
                         <p class="mt-3">No asset selected.</p>
                         <p class="small">Scan a QR code or search manually to verify an asset.</p>
                     </div>
+
                     <!-- Asset Profile & Form -->
                     <div id="profileContent" style="display:none;">
                         <form id="verifyForm" method="POST" action="index.php?page=assets&sub=verify">
                             <input type="hidden" name="asset_id" id="assetIdField" value="">
 
-                            <!-- View-only fields (same as before) -->
+                            <!-- View-only fields -->
                             <h6 class="border-bottom pb-2">Asset Information (View‑only)</h6>
                             <div id="assetInfo" class="row mb-3"></div>
 
-                            <!-- Editable fields -->
-                            <h6 class="border-bottom pb-2 mt-3">Inspection / Operational Data</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="condition" class="form-label">Condition</label>
-                                    <select class="form-select" id="condition" name="condition">
-                                        <option value="good">Good</option>
-                                        <option value="fair">Fair</option>
-                                        <option value="poor">Poor</option>
-                                        <option value="damaged">Damaged</option>
-                                        <option value="obsolete">Obsolete</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="status" class="form-label">Status</label>
-                                    <select class="form-select" id="status" name="status">
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                        <option value="missing">Missing</option>
-                                        <option value="disposed">Disposed</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="verification_status" class="form-label">Verification Status</label>
-                                    <select class="form-select" id="verification_status" name="verification_status">
-                                        <option value="pending">Pending</option>
-                                        <option value="verified">Verified</option>
-                                        <option value="discrepancy">Discrepancy</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="custodian_id" class="form-label">Accountable Custodian</label>
-                                    <select class="form-select" id="custodian_id" name="custodian_id">
-                                        <option value="">Select Custodian</option>
-                                        <?php foreach ($personnel as $p): ?>
-                                            <option value="<?= $p['personnel_id'] ?>"><?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="office_id" class="form-label">Office</label>
-                                    <select class="form-select" id="office_id" name="office_id">
-                                        <option value="">Select Office</option>
-                                        <?php foreach ($offices as $o): ?>
-                                            <option value="<?= $o['office_id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label for="inspection_remarks" class="form-label">Inspection Remarks</label>
-                                    <textarea class="form-control" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
-                                </div>
+                            <!-- Action Buttons (always visible) -->
+                            <div id="actionButtons" class="d-flex gap-2 mb-3">
+                                <button type="submit" name="mark_verified" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> Mark as Verified
+                                </button>
+                                <button type="button" id="showUpdateBtn" class="btn btn-warning">
+                                    <i class="bi bi-pencil"></i> Update Asset Details
+                                </button>
                             </div>
 
-                            <div class="d-flex justify-content-between">
-                                <a href="index.php?page=assets&sub=browse" class="btn btn-secondary">Cancel</a>
-                                <button type="submit" class="btn btn-success">Update Verification</button>
+                            <!-- Editable fields (hidden by default) -->
+                            <div id="editableFields" style="display:none;">
+                                <h6 class="border-bottom pb-2 mt-3">Inspection / Operational Data</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="condition" class="form-label">Condition</label>
+                                        <select class="form-select" id="condition" name="condition">
+                                            <option value="good">Good</option>
+                                            <option value="fair">Fair</option>
+                                            <option value="poor">Poor</option>
+                                            <option value="damaged">Damaged</option>
+                                            <option value="obsolete">Obsolete</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="status" class="form-label">Status</label>
+                                        <select class="form-select" id="status" name="status">
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                            <option value="missing">Missing</option>
+                                            <option value="disposed">Disposed</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="verification_status" class="form-label">Verification Status</label>
+                                        <select class="form-select" id="verification_status" name="verification_status">
+                                            <option value="pending">Pending</option>
+                                            <option value="verified">Verified</option>
+                                            <option value="discrepancy">Discrepancy</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="custodian_id" class="form-label">Accountable Custodian</label>
+                                        <select class="form-select" id="custodian_id" name="custodian_id">
+                                            <option value="">Select Custodian</option>
+                                            <?php foreach ($personnel as $p): ?>
+                                                <option value="<?= $p['personnel_id'] ?>"><?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="office_id" class="form-label">Office</label>
+                                        <select class="form-select" id="office_id" name="office_id">
+                                            <option value="">Select Office</option>
+                                            <?php foreach ($offices as $o): ?>
+                                                <option value="<?= $o['office_id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="inspection_remarks" class="form-label">Inspection Remarks</label>
+                                        <textarea class="form-control" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" name="update_asset" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Save Updates
+                                    </button>
+                                    <button type="button" id="cancelUpdateBtn" class="btn btn-secondary">
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -150,7 +167,7 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="public/js/scanner.js"></script>
 <script>
-// Override showAssetProfile to populate the form
+// Override showAssetProfile to populate the form and manage visibility
 const originalShowAssetProfile = window.showAssetProfile;
 window.showAssetProfile = function(data) {
     const asset = data.asset;
@@ -180,7 +197,7 @@ window.showAssetProfile = function(data) {
         <div class="col-md-3"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
     `;
 
-    // Populate editable fields
+    // Populate editable fields (hidden initially)
     document.getElementById('condition').value = asset.condition || 'good';
     document.getElementById('status').value = asset.status || 'active';
     document.getElementById('verification_status').value = asset.verification_status || 'pending';
@@ -197,13 +214,26 @@ window.showAssetProfile = function(data) {
         officeSelect.value = '';
     }
 
-    // Show content
+    // Show content, hide editable fields, show action buttons
     document.getElementById('profilePlaceholder').style.display = 'none';
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('profileFooter').style.display = 'flex';
     document.getElementById('scanAnotherBtn').style.display = 'inline-block';
     document.getElementById('scanSuccessMsg').style.display = 'inline';
+    document.getElementById('editableFields').style.display = 'none';
+    document.getElementById('actionButtons').style.display = 'flex';
 };
+
+// Toggle editable fields
+document.getElementById('showUpdateBtn').addEventListener('click', function() {
+    document.getElementById('editableFields').style.display = 'block';
+    document.getElementById('actionButtons').style.display = 'none';
+});
+
+document.getElementById('cancelUpdateBtn').addEventListener('click', function() {
+    document.getElementById('editableFields').style.display = 'none';
+    document.getElementById('actionButtons').style.display = 'flex';
+});
 
 // Manual search
 document.getElementById('manualSearchBtn').addEventListener('click', function() {
