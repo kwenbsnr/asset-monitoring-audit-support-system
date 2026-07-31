@@ -65,7 +65,7 @@
                         <h6 class="font-semibold text-gray-800 border-b pb-2 mb-3">Asset Information (View‑only)</h6>
                         <div id="assetInfo" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm mb-4"></div>
 
-                        <div id="currentCustodianInfo" class="grid grid-cols-2 gap-2 text-sm mb-4 hidden">
+                        <div id="currentCustodianInfo" class="grid grid-cols-2 gap-2 text-sm mb-4" style="display: none;">
                             <div><strong>Custodian:</strong> <span id="currentCustodianName"></span></div>
                             <div><strong>Office:</strong> <span id="currentOfficeName"></span></div>
                         </div>
@@ -157,7 +157,7 @@
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="public/js/scanner.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/scanner.js"></script>
 <script>
 // Override showAssetProfile to populate the form and display full history
 const originalShowAssetProfile = window.showAssetProfile;
@@ -167,10 +167,8 @@ window.showAssetProfile = function(data) {
     const transfers = data.transfers || [];
     const activeCustody = custody.find(c => c.custody_status === 'active');
 
-    // Populate hidden asset_id
     document.getElementById('assetIdField').value = asset.asset_id;
 
-    // ---- View-only asset info ----
     const infoDiv = document.getElementById('assetInfo');
     infoDiv.innerHTML = `
         <div class="md:col-span-1"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
@@ -179,49 +177,47 @@ window.showAssetProfile = function(data) {
         <div class="md:col-span-1"><strong>Description:</strong> ${escapeHtml(asset.description || 'N/A')}</div>
         <div class="md:col-span-1"><strong>Classification:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
         <div class="md:col-span-1"><strong>Account Code:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
-        <div class="col-md-3"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
-        <div class="col-md-3"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
-        <div class="col-md-3"><strong>Serial Number:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
-        <div class="col-md-3"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
-        <div class="col-md-3"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
-        <div class="col-md-3"><strong>Supplier:</strong> N/A</div>
-        <div class="col-md-3"><strong>Funding Source:</strong> N/A</div>
-        <div class="col-md-3"><strong>Status:</strong> <span class="badge bg-${asset.status === 'active' ? 'success' : 'secondary'}">${asset.status}</span></div>
-        <div class="col-md-3"><strong>Condition:</strong> <span class="badge bg-${asset.condition === 'good' ? 'success' : 'warning'}">${asset.condition}</span></div>
-        <div class="col-md-3"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
-        <div class="col-md-3"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
-        <div class="col-md-4"><strong>Verification Status:</strong> <span class="badge bg-${asset.verification_status === 'verified' ? 'success' : 'secondary'}">${asset.verification_status || 'pending'}</span></div>
-        <div class="col-md-4"><strong>Last Verified:</strong> ${asset.verified_at ? new Date(asset.verified_at).toLocaleString() : 'Never'}</div>
-        <div class="col-md-4"><strong>Verified By:</strong> ${asset.verified_by_username || 'N/A'}</div>
+        <div class="md:col-span-1"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
+        <div class="md:col-span-1"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
+        <div class="md:col-span-1"><strong>Serial Number:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
+        <div class="md:col-span-1"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
+        <div class="md:col-span-1"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
+        <div class="md:col-span-1"><strong>Supplier:</strong> N/A</div>
+        <div class="md:col-span-1"><strong>Funding Source:</strong> N/A</div>
+        <div class="md:col-span-1"><strong>Status:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${asset.status}</span></div>
+        <div class="md:col-span-1"><strong>Condition:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.condition === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${asset.condition}</span></div>
+        <div class="md:col-span-1"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
+        <div class="md:col-span-1"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
+        <div class="md:col-span-1"><strong>Verification Status:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.verification_status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${asset.verification_status || 'pending'}</span></div>
+        <div class="md:col-span-1"><strong>Last Verified:</strong> ${asset.verified_at ? new (window.Date)(asset.verified_at).toLocaleString() : 'Never'}</div>
+        <div class="md:col-span-1"><strong>Verified By:</strong> ${asset.verified_by_username || 'N/A'}</div>
     `;
 
-    // ---- Current Custodian & Office ----
     const custodianInfo = document.getElementById('currentCustodianInfo');
     if (activeCustody) {
         document.getElementById('currentCustodianName').textContent = activeCustody.custodian_name + ' (' + (activeCustody.position || '') + ')';
         document.getElementById('currentOfficeName').textContent = activeCustody.office_name;
-        custodianInfo.style.display = 'flex';
+        custodianInfo.style.display = 'grid';
     } else {
         document.getElementById('currentCustodianName').textContent = 'Not assigned';
         document.getElementById('currentOfficeName').textContent = 'N/A';
-        custodianInfo.style.display = 'flex';
+        custodianInfo.style.display = 'grid';
     }
 
-    // ---- Custody History ----
     const custodyContainer = document.getElementById('custodyHistoryContainer');
     const custodyTable = document.getElementById('custodyHistoryTable');
     if (custody.length === 0) {
-        custodyTable.innerHTML = '<p class="text-muted">No custody records found.</p>';
+        custodyTable.innerHTML = '<p class="text-gray-500 text-sm">No custody records found.</p>';
     } else {
-        let tableHtml = '<table class="table table-sm table-bordered"><thead><tr><th>From</th><th>To</th><th>Custodian</th><th>Office</th><th>Status</th><th>Document</th></tr></thead><tbody>';
+        let tableHtml = '<table class="w-full text-sm border border-gray-200"><thead class="bg-gray-100"><tr><th class="px-2 py-1 border">From</th><th class="px-2 py-1 border">To</th><th class="px-2 py-1 border">Custodian</th><th class="px-2 py-1 border">Office</th><th class="px-2 py-1 border">Status</th><th class="px-2 py-1 border">Document</th></tr></thead><tbody>';
         custody.forEach(c => {
             tableHtml += `<tr>
-                <td>${c.effectivity_date || 'N/A'}</td>
-                <td>${c.end_date || 'Current'}</td>
-                <td>${escapeHtml(c.custodian_name)} <br><small>${escapeHtml(c.position || '')}</small></td>
-                <td>${escapeHtml(c.office_name)}</td>
-                <td><span class="badge bg-${c.custody_status === 'active' ? 'success' : 'secondary'}">${c.custody_status}</span></td>
-                <td>${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><small>Ref: ' + escapeHtml(c.accountability_reference) + '</small>' : ''}</td>
+                <td class="px-2 py-1 border">${c.effectivity_date || 'N/A'}</td>
+                <td class="px-2 py-1 border">${c.end_date || 'Current'}</td>
+                <td class="px-2 py-1 border">${escapeHtml(c.custodian_name)} <br><span class="text-xs text-gray-500">${escapeHtml(c.position || '')}</span></td>
+                <td class="px-2 py-1 border">${escapeHtml(c.office_name)}</td>
+                <td class="px-2 py-1 border"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.custody_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${c.custody_status}</span></td>
+                <td class="px-2 py-1 border">${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><span class="text-xs text-gray-500">Ref: ' + escapeHtml(c.accountability_reference) + '</span>' : ''}</td>
             </tr>`;
         });
         tableHtml += '</tbody></table>';
@@ -229,21 +225,20 @@ window.showAssetProfile = function(data) {
     }
     custodyContainer.style.display = 'block';
 
-    // ---- Transfer History ----
     const transferContainer = document.getElementById('transferHistoryContainer');
     const transferTable = document.getElementById('transferHistoryTable');
     if (transfers.length === 0) {
-        transferTable.innerHTML = '<p class="text-muted">No transfer records found.</p>';
+        transferTable.innerHTML = '<p class="text-gray-500 text-sm">No transfer records found.</p>';
     } else {
-        let tableHtml = '<table class="table table-sm table-bordered"><thead><tr><th>Transfer #</th><th>Date</th><th>From</th><th>To</th><th>Status</th><th>Remarks</th></tr></thead><tbody>';
+        let tableHtml = '<table class="w-full text-sm border border-gray-200"><thead class="bg-gray-100"><tr><th class="px-2 py-1 border">Transfer #</th><th class="px-2 py-1 border">Date</th><th class="px-2 py-1 border">From</th><th class="px-2 py-1 border">To</th><th class="px-2 py-1 border">Status</th><th class="px-2 py-1 border">Remarks</th></tr></thead><tbody>';
         transfers.forEach(t => {
             tableHtml += `<tr>
-                <td>${escapeHtml(t.transfer_number)}</td>
-                <td>${escapeHtml(t.transfer_date)}</td>
-                <td>${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
-                <td>${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
-                <td><span class="badge bg-${t.status === 'approved' ? 'success' : 'warning'}">${escapeHtml(t.status)}</span></td>
-                <td>${escapeHtml(t.remarks || '')}</td>
+                <td class="px-2 py-1 border">${escapeHtml(t.transfer_number)}</td>
+                <td class="px-2 py-1 border">${escapeHtml(t.transfer_date)}</td>
+                <td class="px-2 py-1 border">${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
+                <td class="px-2 py-1 border">${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
+                <td class="px-2 py-1 border"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(t.status)}</span></td>
+                <td class="px-2 py-1 border">${escapeHtml(t.remarks || '')}</td>
             </tr>`;
         });
         tableHtml += '</tbody></table>';
@@ -251,13 +246,11 @@ window.showAssetProfile = function(data) {
     }
     transferContainer.style.display = 'block';
 
-    // ---- Populate editable fields (hidden initially) ----
     document.getElementById('condition').value = asset.condition || 'good';
     document.getElementById('status').value = asset.status || 'active';
     document.getElementById('verification_status').value = asset.verification_status || 'pending';
     document.getElementById('inspection_remarks').value = asset.inspection_remarks || '';
 
-    // Custodian and office
     const custodianSelect = document.getElementById('custodian_id');
     const officeHidden = document.getElementById('office_id');
     if (activeCustody) {
@@ -268,14 +261,12 @@ window.showAssetProfile = function(data) {
         officeHidden.value = '';
     }
 
-    // ---- Auto-fill office when custodian changes ----
     custodianSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const officeId = selectedOption ? selectedOption.getAttribute('data-office-id') : '';
         officeHidden.value = officeId || '';
     });
 
-    // ---- Show content, hide editable fields ----
     document.getElementById('profilePlaceholder').style.display = 'none';
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('profileFooter').style.display = 'flex';
@@ -285,7 +276,6 @@ window.showAssetProfile = function(data) {
     document.getElementById('actionButtons').style.display = 'flex';
 };
 
-// ---- Toggle editable fields ----
 document.getElementById('showUpdateBtn').addEventListener('click', function() {
     document.getElementById('editableFields').style.display = 'block';
     document.getElementById('actionButtons').style.display = 'none';
@@ -296,7 +286,6 @@ document.getElementById('cancelUpdateBtn').addEventListener('click', function() 
     document.getElementById('actionButtons').style.display = 'flex';
 });
 
-// ---- Manual search ----
 document.getElementById('manualSearchBtn').addEventListener('click', function() {
     const query = document.getElementById('manualSearchInput').value.trim();
     if (query.length < 2) {
@@ -317,7 +306,6 @@ document.getElementById('manualSearchBtn').addEventListener('click', function() 
         .catch(err => alert('Failed to fetch asset: ' + err.message));
 });
 
-// ---- Auto-start scanner ----
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         if (typeof startScanner === 'function') {
@@ -326,7 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 });
 
-// ---- Reuse escapeHtml from scanner.js ----
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');

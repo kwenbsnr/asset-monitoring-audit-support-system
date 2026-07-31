@@ -3,27 +3,31 @@ $data = $_SESSION['form_data'] ?? [];
 $errors = $_SESSION['form_errors'] ?? [];
 unset($_SESSION['form_errors'], $_SESSION['form_data']);
 ?>
-<div class="card shadow">
-    <div class="card-header">
-        <h4><i class="bi bi-file-earmark-plus"></i> Create Report</h4>
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="border-b border-gray-200 px-6 py-4">
+        <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="bi bi-file-earmark-plus"></i> Create Report
+        </h4>
     </div>
-    <div class="card-body">
+    <div class="p-6">
         <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul></div>
+            <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded mb-4">
+                <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
+            </div>
         <?php endif; ?>
         <form method="POST" action="index.php?page=reports&sub=save" id="reportForm">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Report Number *</label>
-                    <input type="text" class="form-control" name="report_number" value="<?= htmlspecialchars($data['report_number'] ?? 'RPT-'.date('Ymd').'-001') ?>" required>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Report Number *</label>
+                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="report_number" value="<?= htmlspecialchars($data['report_number'] ?? 'RPT-'.date('Ymd').'-001') ?>" required>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Report Date *</label>
-                    <input type="date" class="form-control" name="report_date" value="<?= htmlspecialchars($data['report_date'] ?? date('Y-m-d')) ?>" required>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Report Date *</label>
+                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="report_date" value="<?= htmlspecialchars($data['report_date'] ?? date('Y-m-d')) ?>" required>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Office *</label>
-                    <select class="form-select" name="office_id" required>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Office *</label>
+                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="office_id" required>
                         <option value="">Select Office</option>
                         <?php foreach ($offices as $o): ?>
                             <option value="<?= $o['office_id'] ?>" <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
@@ -32,9 +36,9 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Prepared By *</label>
-                    <select class="form-select" name="prepared_by" required>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Prepared By *</label>
+                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="prepared_by" required>
                         <option value="">Select User</option>
                         <?php foreach ($users as $u): ?>
                             <option value="<?= $u['users_id'] ?>" <?= (isset($data['prepared_by']) && $data['prepared_by'] == $u['users_id']) ? 'selected' : '' ?>>
@@ -43,24 +47,24 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" name="status">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="status">
                         <option value="draft" <?= (isset($data['status']) && $data['status'] == 'draft') ? 'selected' : '' ?>>Draft</option>
                         <option value="submitted" <?= (isset($data['status']) && $data['status'] == 'submitted') ? 'selected' : '' ?>>Submitted</option>
                     </select>
                 </div>
-                <div class="col-md-12 mb-3">
-                    <label class="form-label">Remarks</label>
-                    <textarea class="form-control" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700">Remarks</label>
+                    <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
                 </div>
             </div>
 
-            <h6 class="border-bottom pb-2">Report Items</h6>
-            <div id="itemsContainer">
-                <div class="row item-row mb-2">
-                    <div class="col-md-4">
-                        <select class="form-select form-select-sm" name="items[0][asset_id]">
+            <h6 class="font-semibold text-gray-800 border-b pb-2 mt-6">Report Items</h6>
+            <div id="itemsContainer" class="mt-3 space-y-2">
+                <div class="item-row grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <div>
+                        <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[0][asset_id]">
                             <option value="">Select Asset</option>
                             <?php foreach ($assets as $a): ?>
                                 <option value="<?= $a['asset_id'] ?>">
@@ -69,15 +73,15 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" name="items[0][verification_status]">
+                    <div>
+                        <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[0][verification_status]">
                             <option value="pending">Pending</option>
                             <option value="verified">Verified</option>
                             <option value="rejected">Rejected</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" name="items[0][asset_condition]">
+                    <div>
+                        <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[0][asset_condition]">
                             <option value="good">Good</option>
                             <option value="fair">Fair</option>
                             <option value="poor">Poor</option>
@@ -85,24 +89,24 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                             <option value="obsolete">Obsolete</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <select class="form-select form-select-sm" name="items[0][verified_by]">
+                    <div>
+                        <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[0][verified_by]">
                             <option value="">Verifier</option>
                             <?php foreach ($users as $u): ?>
                                 <option value="<?= $u['users_id'] ?>"><?= htmlspecialchars($u['username']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm" name="items[0][remarks]" placeholder="Remarks">
+                    <div>
+                        <input type="text" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[0][remarks]" placeholder="Remarks">
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addItem()"><i class="bi bi-plus-circle"></i> Add Item</button>
+            <button type="button" class="mt-2 px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50" onclick="addItem()"><i class="bi bi-plus-circle"></i> Add Item</button>
 
-            <div class="d-flex justify-content-between mt-3">
-                <a href="index.php?page=reports" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Create Report</button>
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                <a href="index.php?page=reports" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create Report</button>
             </div>
         </form>
     </div>
@@ -113,10 +117,10 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
     function addItem() {
         const container = document.getElementById('itemsContainer');
         const newRow = document.createElement('div');
-        newRow.className = 'row item-row mb-2';
+        newRow.className = 'item-row grid grid-cols-1 md:grid-cols-5 gap-2';
         newRow.innerHTML = `
-            <div class="col-md-4">
-                <select class="form-select form-select-sm" name="items[${itemCount}][asset_id]">
+            <div>
+                <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[${itemCount}][asset_id]">
                     <option value="">Select Asset</option>
                     <?php foreach ($assets as $a): ?>
                         <option value="<?= $a['asset_id'] ?>">
@@ -125,15 +129,15 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2">
-                <select class="form-select form-select-sm" name="items[${itemCount}][verification_status]">
+            <div>
+                <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[${itemCount}][verification_status]">
                     <option value="pending">Pending</option>
                     <option value="verified">Verified</option>
                     <option value="rejected">Rejected</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <select class="form-select form-select-sm" name="items[${itemCount}][asset_condition]">
+            <div>
+                <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[${itemCount}][asset_condition]">
                     <option value="good">Good</option>
                     <option value="fair">Fair</option>
                     <option value="poor">Poor</option>
@@ -141,16 +145,16 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
                     <option value="obsolete">Obsolete</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <select class="form-select form-select-sm" name="items[${itemCount}][verified_by]">
+            <div>
+                <select class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[${itemCount}][verified_by]">
                     <option value="">Verifier</option>
                     <?php foreach ($users as $u): ?>
                         <option value="<?= $u['users_id'] ?>"><?= htmlspecialchars($u['username']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2">
-                <input type="text" class="form-control form-control-sm" name="items[${itemCount}][remarks]" placeholder="Remarks">
+            <div>
+                <input type="text" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="items[${itemCount}][remarks]" placeholder="Remarks">
             </div>
         `;
         container.appendChild(newRow);

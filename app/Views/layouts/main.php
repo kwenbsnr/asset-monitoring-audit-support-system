@@ -7,17 +7,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'NIA Asset Monitoring' ?></title>
-    
-    <!-- 🚀 NEW: Tailwind Production CSS (Built locally, stable) -->
-    <link href="/public/css/output.css" rel="stylesheet">
+<link href="/asset-monitoring-audit-support-system/public/css/output.css?v=<?= time() ?>" rel="stylesheet">
 
-    <!-- 🛡️ KEPT: Bootstrap Icons (they are just fonts, no conflicts) -->
+    <!-- Bootstrap Icons (fonts only – no conflict) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 </head>
 <body>
 
-<!-- ✅ REWRITTEN: Toast container using ONLY Tailwind (no Bootstrap CSS needed) -->
+<!-- Toast container -->
 <div class="fixed top-4 right-4 z-[1100] flex flex-col gap-2" id="toastContainer">
     <?php if (isset($_SESSION['flash'])): ?>
         <div class="flex items-center p-4 rounded-lg shadow-lg text-white 
@@ -35,26 +33,23 @@
     <?php endif; ?>
 </div>
 
-<!-- ✅ REWRITTEN: Main wrapper using Tailwind flex -->
+<!-- Main wrapper -->
 <div class="flex h-screen overflow-hidden">
 
-    <!-- SIDEBAR: Using EXISTING CSS classes (sidebar, sidebar-admin) 
-         Plus a Tailwind helper to hide/show on mobile -->
+    <!-- Sidebar -->
     <nav id="sidebar" class="sidebar <?= ($_SESSION['role'] === 'admin') ? 'sidebar-admin' : 'sidebar-supply' ?> 
                                translate-x-[-100%] md:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="sidebar-header">
-            <img src="/public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
+            <img src="/asset-monitoring-audit-support-system/public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
         </div>
         <ul class="nav flex-column">
-            <!-- Dashboard -->
             <li class="nav-item">
                 <a class="nav-link <?= ($currentPage === 'dashboard') ? 'active' : '' ?>" href="index.php">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
 
-            <!-- Encoder modules -->
             <?php if ($_SESSION['role'] === 'encoder'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
@@ -73,7 +68,6 @@
                 </li>
             <?php endif; ?>
 
-            <!-- Asset Inspector -->
             <?php if ($_SESSION['role'] === 'asset_inspector'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
@@ -87,7 +81,6 @@
                 </li>
             <?php endif; ?>
 
-            <!-- Admin -->
             <?php if ($_SESSION['role'] === 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
@@ -124,9 +117,8 @@
         </ul>
     </nav>
 
-    <!-- ✅ REWRITTEN: Main content area using Tailwind -->
+    <!-- Main content -->
     <div class="flex-1 flex flex-col overflow-y-auto bg-gray-50">
-        <!-- 🆕 ADDED: Mobile Hamburger Button (so you can open sidebar on phones) -->
         <div class="md:hidden p-4 bg-white shadow-sm flex items-center gap-3">
             <button id="sidebarToggle" class="text-2xl text-gray-700 hover:text-blue-600">
                 <i class="bi bi-list"></i>
@@ -134,24 +126,14 @@
             <span class="font-semibold text-gray-800">NIA Asset System</span>
         </div>
 
-        <!-- Page Content -->
         <div class="p-4 md:p-6 flex-1">
             <?php require_once $viewFile; ?>
         </div>
     </div>
 </div>
 
-<!-- 
-    🛡️ KEPT: Bootstrap JS Bundle (still handles dropdowns/modals if you use them)
-    🛡️ KEPT: custom scripts
--->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/public/js/script.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/scanner.js"></script>
 
-<!-- 
-    ✅ UPDATED TOGGLE: Works with Tailwind's translate classes 
-    Toggles the 'translate-x-[-100%]' class to show/hide sidebar on mobile
--->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('sidebar');
@@ -163,7 +145,6 @@
             });
         }
 
-        // Auto-close toasts after 4 seconds
         const toasts = document.querySelectorAll('#toastContainer > div');
         toasts.forEach(toast => {
             setTimeout(() => {

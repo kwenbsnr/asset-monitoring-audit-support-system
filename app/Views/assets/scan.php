@@ -1,13 +1,12 @@
 <?php if (!defined('APP_START')) exit; ?>
 <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-    <!-- LEFT: Scanner / Search (4 columns on md+) -->
+    <!-- LEFT -->
     <div class="md:col-span-4">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full p-4">
             <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4 flex items-center gap-2">
                 <i class="bi bi-qr-code-scan"></i> Find Asset
             </h5>
             <div class="flex flex-col items-center">
-                <!-- Scanner Preview -->
                 <div class="relative w-full max-w-[350px] aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
                     <div id="reader" class="w-full h-full"></div>
                     <div id="scanner-frame" class="absolute inset-0 pointer-events-none scanner-frame-idle">
@@ -15,8 +14,6 @@
                         <div id="scanner-checkmark" class="scanner-checkmark hidden">✓</div>
                     </div>
                 </div>
-
-                <!-- Controls -->
                 <div class="mt-4 w-full max-w-[350px] space-y-2">
                     <button id="startScannerBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">
                         <i class="bi bi-camera"></i> Tap to scan QR code
@@ -29,10 +26,7 @@
                     </button>
                     <p class="text-xs text-gray-500 text-center"><i class="bi bi-info-circle"></i> Point the camera at an asset QR label.</p>
                 </div>
-
                 <hr class="my-4 w-full max-w-[350px] border-gray-300">
-
-                <!-- Manual Search -->
                 <div class="w-full max-w-[350px]">
                     <div class="text-xs text-gray-500 text-center mb-1">— or search manually —</div>
                     <div class="flex">
@@ -47,7 +41,7 @@
         </div>
     </div>
 
-    <!-- RIGHT: Asset Profile + Verification Form (8 columns) -->
+    <!-- RIGHT -->
     <div class="md:col-span-8">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
             <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
@@ -59,23 +53,16 @@
                 </button>
             </div>
             <div class="flex-1 p-6" id="profileBody">
-                <!-- Placeholder -->
                 <div id="profilePlaceholder" class="text-center text-gray-500 py-12">
                     <i class="bi bi-box-seam text-6xl"></i>
                     <p class="mt-3">No asset selected.</p>
                     <p class="text-sm">Scan a QR code or search manually to verify an asset.</p>
                 </div>
-
-                <!-- Asset Profile & Actions -->
                 <div id="profileContent" class="hidden">
                     <form id="verifyForm" method="POST" action="index.php?page=assets&sub=verify">
                         <input type="hidden" name="asset_id" id="assetIdField" value="">
-
-                        <!-- View-only fields -->
                         <h6 class="font-semibold text-gray-800 border-b pb-2 mb-3">Asset Information (View‑only)</h6>
                         <div id="assetInfo" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm mb-4"></div>
-
-                        <!-- Action Buttons -->
                         <div id="actionButtons" class="flex gap-2 mb-4">
                             <button type="submit" name="mark_verified" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                                 <i class="bi bi-check-circle"></i> Mark as Verified
@@ -84,8 +71,6 @@
                                 <i class="bi bi-pencil"></i> Update Asset Details
                             </button>
                         </div>
-
-                        <!-- Editable fields (hidden initially) -->
                         <div id="editableFields" class="hidden">
                             <h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Inspection / Operational Data</h6>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">

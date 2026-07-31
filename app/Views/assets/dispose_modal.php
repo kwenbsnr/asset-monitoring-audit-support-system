@@ -1,6 +1,6 @@
 <?php if (!defined('APP_START')) exit; ?>
-<!-- Dispose Modal (Tailwind) -->
-<div id="disposeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+<!-- Dispose Modal – uses style="display:none" initially, no class conflict -->
+<div id="disposeModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center" style="display:none; z-index:1050;">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <form id="disposeForm" method="POST" action="index.php?page=assets&sub=dispose">
             <input type="hidden" name="asset_id" id="disposeAssetId">
@@ -32,12 +32,12 @@
 <script>
 function openDisposeModal(assetId) {
     document.getElementById('disposeAssetId').value = assetId;
-    document.getElementById('disposeModal').classList.remove('hidden');
+    var modal = document.getElementById('disposeModal');
+    modal.style.display = 'flex';
 }
 function closeDisposeModal() {
-    document.getElementById('disposeModal').classList.add('hidden');
+    document.getElementById('disposeModal').style.display = 'none';
 }
-// Close on backdrop click
 document.getElementById('disposeModal').addEventListener('click', function(e) {
     if (e.target === this) closeDisposeModal();
 });

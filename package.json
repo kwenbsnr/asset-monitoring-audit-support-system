@@ -1,0 +1,26 @@
+{
+  "name": "asset-monitoring-audit-support-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kwenbsnr/asset-monitoring-audit-support-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kwenbsnr/asset-monitoring-audit-support-system/issues"
+  },
+  "homepage": "https://github.com/kwenbsnr/asset-monitoring-audit-support-system#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.25",
+    "tailwindcss": "^4.3.3"
+  }
+}

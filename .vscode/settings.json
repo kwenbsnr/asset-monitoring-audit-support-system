@@ -6,5 +6,10 @@
     "intelephense.diagnostics.undefinedClassConstants": false,
     "intelephense.diagnostics.undefinedMethods": false,
     "intelephense.diagnostics.undefinedProperties": false,
-    "intelephense.diagnostics.undefinedTypes": false
+    "intelephense.diagnostics.undefinedTypes": false,
+    "css.lint.unknownAtRules": "ignore",
+    "css.lint.unknownProperties": "ignore",
+    "css.lint.validProperties": [],
+    "css.lint.propertyValue": "ignore",
+    "css.lint.ruleOrSelector": "ignore"
 }

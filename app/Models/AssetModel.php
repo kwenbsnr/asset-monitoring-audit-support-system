@@ -41,7 +41,7 @@ class AssetModel {
      * @param int $id
      * @return array|null
      */
-    public function getAccountById($id) {
+    public function getAccountById(int $id) {
         $stmt = $this->db->prepare("SELECT * FROM asset_accounts WHERE asset_accounts_id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -93,8 +93,10 @@ class AssetModel {
 
     /**
      * Get a single asset by ID – include verifier username.
+     * @param int $id
+     * @return array|null
      */
-    public function getById($id) {
+    public function getById(int $id) {
         $stmt = $this->db->prepare("
             SELECT 
                 a.*,
@@ -117,7 +119,7 @@ class AssetModel {
      * @param array $data
      * @return int|false
      */
-    public function create($data) {
+    public function create(array $data) {
         $stmt = $this->db->prepare("
             INSERT INTO assets (
                 asset_code, asset_name, qr_code_ref, description, brand, model, serial_number,
@@ -153,7 +155,7 @@ class AssetModel {
      * @param array $data
      * @return bool
      */
-    public function update($id, $data) {
+    public function update(int $id, array $data) {
         $stmt = $this->db->prepare("
             UPDATE assets SET
                 asset_code = ?,
@@ -194,7 +196,7 @@ class AssetModel {
      * @param int $id
      * @return bool
      */
-    public function delete($id) {
+    public function delete(int $id) {
         $stmt = $this->db->prepare("UPDATE assets SET status = 'inactive' WHERE asset_id = ?");
         $stmt->bind_param('i', $id);
         return $stmt->execute();
@@ -208,7 +210,7 @@ class AssetModel {
      * @param array       $filters (account_id, field, status, condition, date_from, date_to, cost_from, cost_to)
      * @return array
      */
-    public function searchAssets($searchTerm = null, $filters = []) {
+    public function searchAssets(?string $searchTerm = null, array $filters = []) {
         $sql = "
             SELECT 
                 a.asset_id,
@@ -244,14 +246,12 @@ class AssetModel {
         $params = [];
         $types = '';
 
-        // Account filter
         if (!empty($filters['account_id'])) {
             $sql .= " AND a.asset_accounts_id = ?";
             $params[] = $filters['account_id'];
             $types .= 'i';
         }
 
-        // Search term
         if (!empty($searchTerm)) {
             $field = $filters['field'] ?? 'all';
             $like = '%' . $searchTerm . '%';
@@ -285,7 +285,6 @@ class AssetModel {
             }
         }
 
-        // Status, condition, date, cost filters
         if (!empty($filters['status'])) {
             $sql .= " AND a.status = ?";
             $params[] = $filters['status'];
@@ -334,7 +333,7 @@ class AssetModel {
      * @param array       $filters
      * @return array
      */
-    public function getAllAssets($search = null, $filters = []) {
+    public function getAllAssets(?string $search = null, array $filters = []) {
         return $this->searchAssets($search, $filters);
     }
 
@@ -345,7 +344,7 @@ class AssetModel {
      * @param array       $filters
      * @return array
      */
-    public function getAssetsByAccountId($accountId, $search = null, $filters = []) {
+    public function getAssetsByAccountId(int $accountId, ?string $search = null, array $filters = []) {
         $filters['account_id'] = $accountId;
         return $this->searchAssets($search, $filters);
     }
@@ -366,7 +365,7 @@ class AssetModel {
      * @param int $id
      * @return array|null
      */
-    public function getPersonnelById($id) {
+    public function getPersonnelById(int $id) {
         $stmt = $this->db->prepare("SELECT * FROM personnel WHERE personnel_id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -388,7 +387,7 @@ class AssetModel {
      * @param int $id
      * @return array|null
      */
-    public function getOfficeById($id) {
+    public function getOfficeById(int $id) {
         $stmt = $this->db->prepare("SELECT * FROM offices WHERE office_id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -426,7 +425,7 @@ class AssetModel {
      * @param int $officeId
      * @return array
      */
-    public function getCustodiansByOfficeForEncoder($officeId) {
+    public function getCustodiansByOfficeForEncoder(int $officeId) {
         $sql = "
             SELECT DISTINCT 
                 p.personnel_id,
@@ -450,7 +449,7 @@ class AssetModel {
      * @param int $custodianId
      * @return array
      */
-    public function getAssetsByCustodianForEncoder($custodianId) {
+    public function getAssetsByCustodianForEncoder(int $custodianId) {
         $sql = "
             SELECT 
                 a.asset_id,
@@ -479,7 +478,7 @@ class AssetModel {
      * @param int $assetId
      * @return array|null
      */
-    public function getFullDetails($assetId) {
+    public function getFullDetails(int $assetId) {
         $asset = $this->getById($assetId);
         if (!$asset) {
             return null;
@@ -497,7 +496,7 @@ class AssetModel {
      * @param int $assetId
      * @return array
      */
-    public function getCustodyHistory($assetId) {
+    public function getCustodyHistory(int $assetId) {
         $sql = "
             SELECT 
                 ac.asset_custodies_id,
@@ -527,7 +526,7 @@ class AssetModel {
      * @param int $assetId
      * @return array
      */
-    public function getAuditTrail($assetId) {
+    public function getAuditTrail(int $assetId) {
         $sql = "
             SELECT 
                 at.audit_trail_id,
@@ -554,7 +553,7 @@ class AssetModel {
      * @param int $assetId
      * @return array
      */
-    public function getTransferHistory($assetId) {
+    public function getTransferHistory(int $assetId) {
         $sql = "
             SELECT 
                 atr.transfer_number,
@@ -585,7 +584,7 @@ class AssetModel {
      * @param string $qrCode
      * @return array|null
      */
-    public function getByQrCode($qrCode) {
+    public function getByQrCode(string $qrCode) {
         $stmt = $this->db->prepare("SELECT * FROM assets WHERE qr_code_ref = ? AND status != 'inactive'");
         $stmt->bind_param('s', $qrCode);
         $stmt->execute();
@@ -599,7 +598,7 @@ class AssetModel {
      * @param string $condition
      * @return bool
      */
-    public function updateCondition($id, $condition) {
+    public function updateCondition(int $id, string $condition) {
         $stmt = $this->db->prepare("UPDATE assets SET `condition` = ? WHERE asset_id = ?");
         $stmt->bind_param('si', $condition, $id);
         return $stmt->execute();
@@ -611,7 +610,7 @@ class AssetModel {
      * @param string $query
      * @return array|null
      */
-    public function searchAssetByText($query) {
+    public function searchAssetByText(string $query) {
         $like = '%' . $query . '%';
         $stmt = $this->db->prepare("
             SELECT * FROM assets 
@@ -632,14 +631,12 @@ class AssetModel {
      * @param int    $userId
      * @return bool
      */
-    public function disposeAsset($assetId, $reason, $userId) {
-        // Update asset
+    public function disposeAsset(int $assetId, string $reason, int $userId) {
         $stmt = $this->db->prepare("UPDATE assets SET status = 'disposed', disposal_reason = ?, updated_at = NOW() WHERE asset_id = ?");
         $stmt->bind_param('si', $reason, $assetId);
         $success = $stmt->execute();
 
         if ($success) {
-            // Log audit trail
             $asset = $this->getById($assetId);
             $oldValues = json_encode(['status' => $asset['status']]);
             $newValues = json_encode(['status' => 'disposed', 'disposal_reason' => $reason]);
@@ -657,7 +654,7 @@ class AssetModel {
      * @param string $previousValues
      * @param string $newValues
      */
-    public function logAudit($assetId, $userId, $actionType, $module, $previousValues, $newValues) {
+    public function logAudit(int $assetId, int $userId, string $actionType, string $module, string $previousValues, string $newValues) {
         $stmt = $this->db->prepare("
             INSERT INTO audit_trail (asset_id, performed_by, action_type, module, previous_values, new_values)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -692,7 +689,6 @@ class AssetModel {
         ";
         $result = $this->db->query($sql);
         $rows = $result->fetch_all(MYSQLI_ASSOC);
-        // Group by office
         $grouped = [];
         foreach ($rows as $row) {
             $officeId = $row['office_id'];
@@ -714,7 +710,7 @@ class AssetModel {
      * @param array $ids
      * @return array
      */
-    public function getAssetsByIds($ids) {
+    public function getAssetsByIds(array $ids) {
         if (empty($ids)) return [];
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $sql = "SELECT * FROM assets WHERE asset_id IN ($placeholders) AND status != 'inactive' ORDER BY asset_code";
@@ -737,7 +733,7 @@ class AssetModel {
      * @param string   $status (default 'approved')
      * @return bool
      */
-    public function logTransfer($assetId, $fromCustodianId, $toCustodianId, $fromOfficeId, $toOfficeId, $transferDate, $status = 'approved') {
+    public function logTransfer(int $assetId, ?int $fromCustodianId, int $toCustodianId, ?int $fromOfficeId, int $toOfficeId, string $transferDate, string $status = 'approved') {
         $transferNumber = 'TR-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
         $stmt = $this->db->prepare("
             INSERT INTO asset_transfers (
@@ -746,7 +742,7 @@ class AssetModel {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
         $stmt->bind_param(
-            'iiiiisss',  // 5 integers + 3 strings = 8 parameters
+            'iiiiisss',
             $assetId,
             $fromCustodianId,
             $toCustodianId,
@@ -763,9 +759,10 @@ class AssetModel {
      * Update operational fields for inspection – sets verified_at and verified_by when status becomes 'verified'.
      * @param int   $id
      * @param array $data
+     * @param int|null $userId
      * @return bool
      */
-    public function updateInspection($id, $data, $userId = null) {
+    public function updateInspection(int $id, array $data, ?int $userId = null) {
         $verifiedAt = null;
         $verifiedBy = null;
         if ($data['verification_status'] === 'verified' && $userId) {

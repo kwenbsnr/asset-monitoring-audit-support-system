@@ -1,13 +1,14 @@
 <?php if (!defined('APP_START')) exit; ?>
+<?php 
+$flashType = $_SESSION['flash_type'] ?? 'success';
+$alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+?>
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <div class="border-b border-gray-200 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <h4 class="text-xl font-bold text-green-700 flex items-center gap-2">
             <i class="bi bi-box-seam"></i> <?= $pageTitle ?? 'Assets' ?>
         </h4>
         <div class="flex flex-wrap items-center gap-2">
-            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
-                <i class="bi bi-sliders2"></i> Advanced
-            </button>
             <form method="GET" action="index.php" class="flex gap-1">
                 <input type="hidden" name="page" value="assets">
                 <input type="hidden" name="sub" value="<?= isset($_GET['account_id']) ? 'browse' : 'list_all' ?>">
@@ -33,7 +34,7 @@
 
     <div class="p-6">
         <?php if (isset($_SESSION['flash'])): ?>
-            <div class="mb-4 p-3 rounded border <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700' ?> flex justify-between items-center">
+            <div class="mb-4 p-3 rounded border <?= $alertClass ?> flex justify-between items-center">
                 <span><?= htmlspecialchars($_SESSION['flash']) ?></span>
                 <button type="button" class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.remove()">&times;</button>
             </div>
@@ -62,7 +63,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left border border-gray-200">
+                <table class="w-full text-sm border border-gray-200">
                     <thead class="bg-gray-100 text-gray-700">
                         <tr>
                             <th class="px-3 py-2 border-b"><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
@@ -166,12 +167,12 @@
     </div>
 </div>
 
-<!-- Asset Details Modal (Tailwind) -->
-<div id="assetDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+<!-- Asset Details Modal (Tailwind) – using style="display:none" to avoid conflict -->
+<div id="assetDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center" style="display:none; z-index:1050;">
     <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h5 class="text-lg font-semibold text-gray-800">Asset Details</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('assetDetailsModal').classList.add('hidden')">&times;</button>
+            <button type="button" class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('assetDetailsModal').style.display='none'">&times;</button>
         </div>
         <div class="p-6 overflow-y-auto flex-1" id="modalBody">
             <div class="text-center py-8">
@@ -180,7 +181,7 @@
             </div>
         </div>
         <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
-            <button type="button" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onclick="document.getElementById('assetDetailsModal').classList.add('hidden')">Close</button>
+            <button type="button" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onclick="document.getElementById('assetDetailsModal').style.display='none'">Close</button>
         </div>
     </div>
 </div>
@@ -200,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="mt-2 text-gray-500">Loading asset details...</p>
                 </div>
             `;
-            document.getElementById('assetDetailsModal').classList.remove('hidden');
+            document.getElementById('assetDetailsModal').style.display = 'flex';
 
             fetch(`index.php?page=assets&sub=details&id=${assetId}`)
                 .then(response => {
@@ -250,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Custody history
         html += `<h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Custody History</h6>`;
         if (custody.length === 0) {
             html += `<p class="text-gray-500 text-sm">No custody records found.</p>`;
@@ -270,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `</tbody></table></div>`;
         }
 
-        // Transfer history
         html += `<h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Transfer History</h6>`;
         if (transfers.length === 0) {
             html += `<p class="text-gray-500 text-sm">No transfer records found.</p>`;
@@ -290,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `</tbody></table></div>`;
         }
 
-        // Audit trail
         html += `<h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Audit Trail</h6>`;
         if (audit.length === 0) {
             html += `<p class="text-gray-500 text-sm">No audit records found.</p>`;
@@ -321,9 +319,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
-    // Close modal on backdrop click
     document.getElementById('assetDetailsModal').addEventListener('click', function(e) {
-        if (e.target === this) this.classList.add('hidden');
+        if (e.target === this) this.style.display = 'none';
     });
 });
 

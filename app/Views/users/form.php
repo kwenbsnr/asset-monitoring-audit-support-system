@@ -7,14 +7,14 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
 $isEdit = $isEdit ?? false;
 $title = $isEdit ? 'Edit User' : 'Add User';
 ?>
-<div class="card shadow">
-    <div class="card-header">
-        <h4><?= $title ?></h4>
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="border-b border-gray-200 px-6 py-4">
+        <h4 class="text-xl font-bold text-gray-800"><?= $title ?></h4>
     </div>
-    <div class="card-body">
+    <div class="p-6">
         <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger">
-                <ul class="mb-0"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
+            <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded mb-4">
+                <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
             </div>
         <?php endif; ?>
         <form method="POST" action="index.php?page=users&sub=save">
@@ -22,44 +22,43 @@ $title = $isEdit ? 'Edit User' : 'Add User';
                 <input type="hidden" name="user_id" value="<?= $user['users_id'] ?>">
             <?php endif; ?>
 
-            <!-- Username -->
-            <div class="mb-3">
-                <label for="username" class="form-label">Username *</label>
-                <input type="text" class="form-control" id="username" name="username" value="<?= htmlspecialchars($data['username'] ?? '') ?>" required>
-            </div>
-
-            <!-- Password -->
-            <div class="mb-3">
-                <label for="password" class="form-label"><?= $isEdit ? 'New Password (leave blank to keep current)' : 'Password *' ?></label>
-                <input type="password" class="form-control" id="password" name="password" <?= $isEdit ? '' : 'required' ?>>
-            </div>
-
-            <!-- Role -->
-            <div class="mb-3">
-                <label for="role" class="form-label">Role *</label>
-                <select class="form-select" id="role" name="role" required>
-                    <option value="supply_officer" <?= (isset($data['role']) && $data['role'] == 'supply_officer') ? 'selected' : '' ?>>Supply Officer</option>
-                    <option value="admin" <?= (isset($data['role']) && $data['role'] == 'admin') ? 'selected' : '' ?>>Administrator (IT Personnel)</option>
-                </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Username *</label>
+                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="username" name="username" value="<?= htmlspecialchars($data['username'] ?? '') ?>" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700"><?= $isEdit ? 'New Password (leave blank to keep current)' : 'Password *' ?></label>
+                    <input type="password" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="password" name="password" <?= $isEdit ? '' : 'required' ?>>
+                </div>
+                <div>
+                    <label for="role" class="block text-sm font-medium text-gray-700">Role *</label>
+                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="role" name="role" required>
+                        <option value="supply_officer" <?= (isset($data['role']) && $data['role'] == 'supply_officer') ? 'selected' : '' ?>>Supply Officer</option>
+                        <option value="admin" <?= (isset($data['role']) && $data['role'] == 'admin') ? 'selected' : '' ?>>Administrator (IT Personnel)</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Personnel selection -->
-            <div class="mb-3">
-                <label class="form-label">Personnel</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="new_personnel" id="existingPersonnel" value="0" checked>
-                    <label class="form-check-label" for="existingPersonnel">Select existing personnel</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="new_personnel" id="newPersonnel" value="1">
-                    <label class="form-check-label" for="newPersonnel">Create new personnel</label>
+            <div class="mt-4 border-t border-gray-200 pt-4">
+                <p class="font-medium text-gray-700 mb-2">Personnel</p>
+                <div class="flex gap-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="new_personnel" value="0" checked class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500" onchange="togglePersonnelFields()">
+                        <span class="ml-2 text-sm text-gray-700">Select existing personnel</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="new_personnel" value="1" class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500" onchange="togglePersonnelFields()">
+                        <span class="ml-2 text-sm text-gray-700">Create new personnel</span>
+                    </label>
                 </div>
             </div>
 
             <!-- Existing personnel dropdown -->
-            <div class="mb-3" id="existingPersonnelDiv">
-                <label for="personnel_id" class="form-label">Personnel</label>
-                <select class="form-select" id="personnel_id" name="personnel_id">
+            <div class="mt-3" id="existingPersonnelDiv">
+                <label for="personnel_id" class="block text-sm font-medium text-gray-700">Personnel</label>
+                <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="personnel_id" name="personnel_id">
                     <option value="">Select Personnel</option>
                     <?php foreach ($personnel as $p): ?>
                         <option value="<?= $p['personnel_id'] ?>" <?= (isset($data['personnel_id']) && $data['personnel_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
@@ -70,53 +69,55 @@ $title = $isEdit ? 'Edit User' : 'Add User';
             </div>
 
             <!-- New personnel fields -->
-            <div id="newPersonnelDiv" style="display:none;">
-                <div class="mb-3">
-                    <label for="full_name" class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="full_name" name="full_name" value="<?= htmlspecialchars($data['full_name'] ?? '') ?>">
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="position" class="form-label">Position</label>
-                        <input type="text" class="form-control" id="position" name="position" value="<?= htmlspecialchars($data['position'] ?? '') ?>">
+            <div id="newPersonnelDiv" style="display:none;" class="mt-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="full_name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="full_name" name="full_name" value="<?= htmlspecialchars($data['full_name'] ?? '') ?>">
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="designation" class="form-label">Designation</label>
-                        <input type="text" class="form-control" id="designation" name="designation" value="<?= htmlspecialchars($data['designation'] ?? '') ?>">
+                    <div>
+                        <label for="position" class="block text-sm font-medium text-gray-700">Position</label>
+                        <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="position" name="position" value="<?= htmlspecialchars($data['position'] ?? '') ?>">
                     </div>
-                </div>
-                <div class="mb-3">
-                    <label for="office_id" class="form-label">Office</label>
-                    <select class="form-select" id="office_id" name="office_id">
-                        <option value="">Select Office</option>
-                        <?php foreach ($offices as $o): ?>
-                            <option value="<?= $o['office_id'] ?>" <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($o['name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div>
+                        <label for="designation" class="block text-sm font-medium text-gray-700">Designation</label>
+                        <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="designation" name="designation" value="<?= htmlspecialchars($data['designation'] ?? '') ?>">
+                    </div>
+                    <div>
+                        <label for="office_id" class="block text-sm font-medium text-gray-700">Office</label>
+                        <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="office_id" name="office_id">
+                            <option value="">Select Office</option>
+                            <?php foreach ($offices as $o): ?>
+                                <option value="<?= $o['office_id'] ?>" <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($o['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Active status -->
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="1" <?= (!isset($data['is_active']) || $data['is_active'] == 1) ? 'checked' : '' ?>>
-                <label class="form-check-label" for="is_active">Active</label>
+            <div class="mt-4 flex items-center">
+                <input type="checkbox" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500" id="is_active" name="is_active" value="1" <?= (!isset($data['is_active']) || $data['is_active'] == 1) ? 'checked' : '' ?>>
+                <label class="ml-2 text-sm text-gray-700" for="is_active">Active</label>
             </div>
 
-            <div class="d-flex justify-content-between">
-                <a href="index.php?page=users" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary"><?= $isEdit ? 'Update' : 'Create' ?></button>
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                <a href="index.php?page=users" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><?= $isEdit ? 'Update' : 'Create' ?></button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    document.querySelectorAll('input[name="new_personnel"]').forEach(el => {
-        el.addEventListener('change', function() {
-            document.getElementById('existingPersonnelDiv').style.display = this.value == '0' ? 'block' : 'none';
-            document.getElementById('newPersonnelDiv').style.display = this.value == '1' ? 'block' : 'none';
-        });
-    });
+function togglePersonnelFields() {
+    const radios = document.querySelectorAll('input[name="new_personnel"]');
+    let value = '0';
+    radios.forEach(r => { if (r.checked) value = r.value; });
+    document.getElementById('existingPersonnelDiv').style.display = value === '0' ? 'block' : 'none';
+    document.getElementById('newPersonnelDiv').style.display = value === '1' ? 'block' : 'none';
+}
+document.addEventListener('DOMContentLoaded', togglePersonnelFields);
 </script>

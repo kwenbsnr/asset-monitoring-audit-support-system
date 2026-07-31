@@ -1,11 +1,15 @@
 <?php if (!defined('APP_START')) exit; ?>
+<?php 
+$flashType = $_SESSION['flash_type'] ?? 'success';
+$alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+?>
 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
     <div class="border-b border-gray-200 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <h4 class="text-xl font-bold text-green-700 flex items-center gap-2">
             <i class="bi bi-folder2-open"></i> <?= $pageTitle ?? 'Asset Categories' ?>
         </h4>
         <div class="flex flex-wrap items-center gap-2">
-            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50" type="button" onclick="document.getElementById('advancedSearch').classList.toggle('hidden')">
                 <i class="bi bi-sliders2"></i> Advanced
             </button>
             <form method="GET" action="index.php" class="flex gap-1">
@@ -21,8 +25,7 @@
         </div>
     </div>
 
-    <!-- Advanced Search (Bootstrap collapse still works because we load Bootstrap JS) -->
-    <div class="collapse" id="advancedSearch">
+    <div class="hidden" id="advancedSearch">
         <div class="bg-gray-50 p-4 border-b border-gray-200">
             <form method="GET" action="index.php">
                 <input type="hidden" name="page" value="assets">
@@ -93,14 +96,13 @@
 
     <div class="p-6">
         <?php if (isset($_SESSION['flash'])): ?>
-            <div class="mb-4 p-3 rounded border <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700' ?> flex justify-between items-center">
+            <div class="mb-4 p-3 rounded border <?= $alertClass ?> flex justify-between items-center">
                 <span><?= htmlspecialchars($_SESSION['flash']) ?></span>
                 <button type="button" class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.remove()">&times;</button>
             </div>
             <?php unset($_SESSION['flash'], $_SESSION['flash_type']); ?>
         <?php endif; ?>
 
-        <!-- Back buttons -->
         <?php if (isset($currentCategory) && $currentCategory['parent_category_id'] !== null): ?>
             <div class="mb-3">
                 <a href="index.php?page=assets&sub=browse&cat_id=<?= $currentCategory['parent_category_id'] ?>" class="inline-block px-4 py-1.5 bg-gray-500 text-white text-sm rounded hover:bg-gray-600">
@@ -115,7 +117,6 @@
             </div>
         <?php endif; ?>
 
-        <!-- Categories Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" id="categoriesGrid">
             <?php if (empty($categories)): ?>
                 <div class="col-span-full">

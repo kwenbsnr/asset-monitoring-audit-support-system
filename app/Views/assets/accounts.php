@@ -1,18 +1,19 @@
 <?php if (!defined('APP_START')) exit; ?>
+<?php 
+$flashType = $_SESSION['flash_type'] ?? 'success';
+$alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+?>
 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
     <div class="border-b border-gray-200 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <h4 class="text-xl font-bold text-green-700 flex items-center gap-2">
             <i class="bi bi-collection"></i> <?= $pageTitle ?? 'Asset Accounts' ?>
         </h4>
         <div class="flex flex-wrap items-center gap-2">
-            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearch" aria-expanded="false">
-                <i class="bi bi-sliders2"></i> Advanced
-            </button>
             <form method="GET" action="index.php" class="flex gap-1">
                 <input type="hidden" name="page" value="assets">
                 <input type="hidden" name="sub" value="list_all">
                 <div class="flex">
-                    <input type="text" class="form-control form-control-sm border border-gray-300 rounded-l px-3 py-1 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="search" placeholder="Search all assets..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                    <input type="text" class="border border-gray-300 rounded-l px-3 py-1 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="search" placeholder="Search all assets..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                     <button class="px-3 py-1 bg-green-600 text-white text-sm rounded-r hover:bg-green-700" type="submit"><i class="bi bi-search"></i></button>
                 </div>
             </form>
@@ -23,7 +24,7 @@
 
     <div class="p-6">
         <?php if (isset($_SESSION['flash'])): ?>
-            <div class="mb-4 p-3 rounded border <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700' ?> flex justify-between items-center">
+            <div class="mb-4 p-3 rounded border <?= $alertClass ?> flex justify-between items-center">
                 <span><?= htmlspecialchars($_SESSION['flash']) ?></span>
                 <button type="button" class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.remove()">&times;</button>
             </div>
