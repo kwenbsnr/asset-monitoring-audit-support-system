@@ -1,49 +1,37 @@
 <?php if (!defined('APP_START')) exit; ?>
-<div class="card shadow">
-    <div class="card-header">
-        <h4 class="mb-0 fw-bold text-success"><i class="bi bi-building me-2"></i>Assets by Office</h4>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bulk QR Codes</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .qr-item { text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        .qr-item img { max-width: 150px; height: auto; }
+        .qr-item .code { font-size: 12px; margin-top: 5px; }
+        @media print {
+            .no-print { display: none; }
+            .qr-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom:20px;">
+        <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Print</button>
+        <a href="index.php?page=assets&sub=browse" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Back</a>
     </div>
-    <div class="card-body">
-        <?php if (empty($officeData)): ?>
-            <div class="alert alert-info">No offices found.</div>
-        <?php else: ?>
-            <?php foreach ($officeData as $office): ?>
-                <h5 class="mt-3"><?= htmlspecialchars($office['office_name']) ?></h5>
-                <?php if (empty($office['assets'])): ?>
-                    <p class="text-muted">No assets in this office.</p>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Asset Code</th>
-                                    <th>Asset Name</th>
-                                    <th>Account</th>
-                                    <th>Custodian</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($office['assets'] as $asset): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($asset['asset_code']) ?></td>
-                                        <td><?= htmlspecialchars($asset['asset_name']) ?></td>
-                                        <td><?= htmlspecialchars($asset['account_code']) ?></td>
-                                        <td>
-                                            <?php if (!empty($asset['custodian_name'])): ?>
-                                                <?= htmlspecialchars($asset['custodian_name']) ?>
-                                            <?php else: ?>
-                                                <span class="text-muted">Not assigned</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><span class="badge bg-<?= $asset['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $asset['status'] ?></span></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        <?php endif; ?>
+    <h2>QR Codes for Selected Assets</h2>
+    <div class="qr-grid">
+        <?php foreach ($assets as $asset): ?>
+            <div class="qr-item">
+                <img src="index.php?page=assets&sub=qr&id=<?= $asset['asset_id'] ?>" alt="QR">
+                <div class="code"><strong><?= htmlspecialchars($asset['asset_code']) ?></strong><br><?= htmlspecialchars($asset['asset_name']) ?></div>
+            </div>
+        <?php endforeach; ?>
     </div>
-</div>
+    <script>
+        window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

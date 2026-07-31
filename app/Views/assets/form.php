@@ -8,17 +8,17 @@ $isEdit = $isEdit ?? false;
 $title = $isEdit ? 'Edit Asset' : 'Add New Asset';
 $assetId = $asset['asset_id'] ?? 0;
 ?>
-<div class="row">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Left column: Form -->
-    <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header">
-                <h4><?= $title ?></h4>
+    <div class="md:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h4 class="text-xl font-bold text-gray-800"><?= $title ?></h4>
             </div>
-            <div class="card-body">
+            <div class="p-6">
                 <?php if (!empty($errors)): ?>
-                    <div class="alert alert-danger">
-                        <ul class="mb-0"><?php foreach ($errors as $err) echo '<li>'.htmlspecialchars($err).'</li>'; ?></ul>
+                    <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded mb-4">
+                        <ul class="list-disc list-inside"><?php foreach ($errors as $err) echo '<li>'.htmlspecialchars($err).'</li>'; ?></ul>
                     </div>
                 <?php endif; ?>
 
@@ -27,15 +27,15 @@ $assetId = $asset['asset_id'] ?? 0;
                         <input type="hidden" name="asset_id" value="<?= $asset['asset_id'] ?>">
                     <?php endif; ?>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="asset_code" class="form-label">Asset Code *</label>
-                            <input type="text" class="form-control" id="asset_code" name="asset_code"
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="asset_code" class="block text-sm font-medium text-gray-700">Asset Code *</label>
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_code" name="asset_code"
                                    value="<?= htmlspecialchars($data['asset_code'] ?? '') ?>" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="asset_accounts_id" class="form-label">Account *</label>
-                            <select class="form-select" id="asset_accounts_id" name="asset_accounts_id" required>
+                        <div>
+                            <label for="asset_accounts_id" class="block text-sm font-medium text-gray-700">Account *</label>
+                            <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_accounts_id" name="asset_accounts_id" required>
                                 <option value="">Select Account</option>
                                 <?php foreach ($accounts as $acc): ?>
                                     <option value="<?= $acc['asset_accounts_id'] ?>"
@@ -47,56 +47,56 @@ $assetId = $asset['asset_id'] ?? 0;
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="asset_name" class="form-label">Asset Name *</label>
-                        <input type="text" class="form-control" id="asset_name" name="asset_name"
+                    <div class="mt-4">
+                        <label for="asset_name" class="block text-sm font-medium text-gray-700">Asset Name *</label>
+                        <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_name" name="asset_name"
                                value="<?= htmlspecialchars($data['asset_name'] ?? '') ?>" required>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Additional Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="2"><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
+                    <div class="mt-4">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Additional Description</label>
+                        <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="description" name="description" rows="2"><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="brand" class="form-label">Brand</label>
-                            <input type="text" class="form-control" id="brand" name="brand"
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <label for="brand" class="block text-sm font-medium text-gray-700">Brand</label>
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="brand" name="brand"
                                    value="<?= htmlspecialchars($data['brand'] ?? '') ?>">
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="model" class="form-label">Model</label>
-                            <input type="text" class="form-control" id="model" name="model"
+                        <div>
+                            <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="model" name="model"
                                    value="<?= htmlspecialchars($data['model'] ?? '') ?>">
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="serial_number" class="form-label">Serial Number</label>
-                            <input type="text" class="form-control" id="serial_number" name="serial_number"
+                        <div>
+                            <label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="serial_number" name="serial_number"
                                    value="<?= htmlspecialchars($data['serial_number'] ?? '') ?>">
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="acquisition_cost" class="form-label">Acquisition Cost (₱) *</label>
-                            <input type="number" step="0.01" class="form-control" id="acquisition_cost" name="acquisition_cost"
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="acquisition_cost" class="block text-sm font-medium text-gray-700">Acquisition Cost (₱) *</label>
+                            <input type="number" step="0.01" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="acquisition_cost" name="acquisition_cost"
                                 value="<?= htmlspecialchars($data['acquisition_cost'] ?? '') ?>"
                                 min="50000" required
                                 placeholder="Minimum ₱50,000.00">
-                            <small class="text-muted">For PPE registration, acquisition cost must be at least ₱50,000.00.</small>
+                            <p class="text-xs text-gray-500 mt-1">For PPE registration, acquisition cost must be at least ₱50,000.00.</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="acquisition_date" class="form-label">Acquisition Date</label>
-                            <input type="date" class="form-control" id="acquisition_date" name="acquisition_date"
+                        <div>
+                            <label for="acquisition_date" class="block text-sm font-medium text-gray-700">Acquisition Date</label>
+                            <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="acquisition_date" name="acquisition_date"
                                    value="<?= htmlspecialchars($data['acquisition_date'] ?? '') ?>">
                         </div>
                     </div>
 
                     <?php if ($isEdit): ?>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                            <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="status" name="status">
                                 <?php foreach ($statusOptions as $opt): ?>
                                     <option value="<?= $opt ?>"
                                         <?= (isset($data['status']) && $data['status'] == $opt) ? 'selected' : '' ?>>
@@ -105,9 +105,9 @@ $assetId = $asset['asset_id'] ?? 0;
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="condition" class="form-label">Condition</label>
-                            <select class="form-select" id="condition" name="condition">
+                        <div>
+                            <label for="condition" class="block text-sm font-medium text-gray-700">Condition</label>
+                            <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="condition" name="condition">
                                 <?php foreach ($conditionOptions as $opt): ?>
                                     <option value="<?= $opt ?>"
                                         <?= (isset($data['condition']) && $data['condition'] == $opt) ? 'selected' : '' ?>>
@@ -119,25 +119,26 @@ $assetId = $asset['asset_id'] ?? 0;
                     </div>
                     <?php endif; ?>
 
-                    <div class="mb-3">
-                        <label for="remarks" class="form-label">Remarks</label>
-                        <textarea class="form-control" id="remarks" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
+                    <div class="mt-4">
+                        <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                        <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="remarks" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
                     </div>
 
                     <!-- Optional Custodian Assignment -->
-                    <div class="mt-4">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="assignCustodianToggle" name="assign_custodian" value="1" 
-                                <?= (isset($data['assign_custodian']) && $data['assign_custodian'] == '1') ? 'checked' : '' ?>>
-                            <label class="form-check-label fw-semibold" for="assignCustodianToggle">
+                    <div class="mt-6 border-t border-gray-200 pt-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <input type="checkbox" id="assignCustodianToggle" name="assign_custodian" value="1" 
+                                <?= (isset($data['assign_custodian']) && $data['assign_custodian'] == '1') ? 'checked' : '' ?>
+                                class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <label for="assignCustodianToggle" class="font-semibold text-gray-700">
                                 <i class="bi bi-person-check"></i> Assign Custodian (Optional)
                             </label>
                         </div>
                         <div id="custodianSection" style="<?= (isset($data['assign_custodian']) && $data['assign_custodian'] == '1') ? 'display:block;' : 'display:none;' ?>">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="custodian_id" class="form-label">Custodian</label>
-                                    <select class="form-select" id="custodian_id" name="custodian_id">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="custodian_id" class="block text-sm font-medium text-gray-700">Custodian</label>
+                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="custodian_id" name="custodian_id">
                                         <option value="">Select Custodian</option>
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>" 
@@ -148,9 +149,9 @@ $assetId = $asset['asset_id'] ?? 0;
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="office_id" class="form-label">Office</label>
-                                    <select class="form-select" id="office_id" name="office_id">
+                                <div>
+                                    <label for="office_id" class="block text-sm font-medium text-gray-700">Office</label>
+                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="office_id" name="office_id">
                                         <option value="">Select Office</option>
                                         <?php foreach ($offices as $o): ?>
                                             <option value="<?= $o['office_id'] ?>" 
@@ -160,65 +161,58 @@ $assetId = $asset['asset_id'] ?? 0;
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="effectivity_date" class="form-label">Effectivity Date</label>
-                                    <input type="date" class="form-control" id="effectivity_date" name="effectivity_date" 
+                                <div>
+                                    <label for="effectivity_date" class="block text-sm font-medium text-gray-700">Effectivity Date</label>
+                                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="effectivity_date" name="effectivity_date" 
                                         value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>">
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="accountability_document" class="form-label">Accountability Document</label>
-                                    <input type="text" class="form-control" id="accountability_document" name="accountability_document" 
+                                <div>
+                                    <label for="accountability_document" class="block text-sm font-medium text-gray-700">Accountability Document</label>
+                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="accountability_document" name="accountability_document" 
                                         value="<?= htmlspecialchars($data['accountability_document'] ?? '') ?>" placeholder="e.g., PAR, ICS">
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="accountability_reference" class="form-label">Reference Number</label>
-                                    <input type="text" class="form-control" id="accountability_reference" name="accountability_reference" 
+                                <div class="md:col-span-2">
+                                    <label for="accountability_reference" class="block text-sm font-medium text-gray-700">Reference Number</label>
+                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="accountability_reference" name="accountability_reference" 
                                         value="<?= htmlspecialchars($data['accountability_reference'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between">
-                        <a href="index.php?page=assets&sub=browse" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary"><?= $isEdit ? 'Update' : 'Create' ?> Asset</button>
+                    <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                        <a href="index.php?page=assets&sub=browse" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</a>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><?= $isEdit ? 'Update' : 'Create' ?> Asset</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Right column: QR Preview (only when editing) -->
-    <div class="col-md-4">
+    <!-- Right column: QR Preview -->
+    <div class="md:col-span-1">
         <?php if ($isEdit && $assetId): ?>
-            <div class="card shadow">
-                <div class="card-header">
-                    <h5>QR Code</h5>
-                </div>
-                <div class="card-body text-center">
-                    <img src="index.php?page=assets&sub=qr&id=<?= $assetId ?>" 
-                         alt="QR Code" class="img-fluid" style="max-width:200px;">
-                    <p class="text-muted small mt-2">
-                        <i class="bi bi-info-circle"></i> 
-                        The QR code is linked to this asset record.<br>
-                        Print and affix it to the physical asset.
-                    </p>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary" onclick="window.open('index.php?page=assets&sub=qr&id=<?= $assetId ?>&download=1')">
-                            <i class="bi bi-download"></i> Download PNG
-                        </button>
-                        <button class="btn btn-success" onclick="printQR(<?= $assetId ?>)">
-                            <i class="bi bi-printer"></i> Print QR Label
-                        </button>
-                    </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                <h5 class="font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">QR Code</h5>
+                <img src="index.php?page=assets&sub=qr&id=<?= $assetId ?>" alt="QR Code" class="mx-auto max-w-[200px] border border-gray-200 p-2 rounded">
+                <p class="text-xs text-gray-500 mt-3">
+                    <i class="bi bi-info-circle"></i> 
+                    The QR code is linked to this asset record.<br>
+                    Print and affix it to the physical asset.
+                </p>
+                <div class="mt-4 space-y-2">
+                    <button class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="window.open('index.php?page=assets&sub=qr&id=<?= $assetId ?>&download=1')">
+                        <i class="bi bi-download"></i> Download PNG
+                    </button>
+                    <button class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" onclick="printQR(<?= $assetId ?>)">
+                        <i class="bi bi-printer"></i> Print QR Label
+                    </button>
                 </div>
             </div>
         <?php else: ?>
-            <div class="card shadow bg-light">
-                <div class="card-body text-center text-muted">
-                    <i class="bi bi-qr-code" style="font-size: 3rem;"></i>
-                    <p class="mt-2">QR code will appear here<br>after saving the asset.</p>
-                </div>
+            <div class="bg-gray-50 rounded-lg border border-gray-200 p-6 text-center text-gray-500">
+                <i class="bi bi-qr-code text-6xl"></i>
+                <p class="mt-2">QR code will appear here<br>after saving the asset.</p>
             </div>
         <?php endif; ?>
     </div>
@@ -239,76 +233,54 @@ $assetId = $asset['asset_id'] ?? 0;
     }
 </script>
 
-<!-- Two‑way auto‑fill: Office ↔ Custodian -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const custodianSelect = document.getElementById('custodian_id');
-    const officeSelect = document.getElementById('office_id');
-
-    // Store original options (all personnel)
-    const allCustodianOptions = Array.from(custodianSelect.options);
-
-    // Function to filter custodians by office
-    function filterCustodiansByOffice(officeId) {
-        // Clear current options
-        custodianSelect.innerHTML = '';
-        // Add the "Select Custodian" placeholder
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select Custodian';
-        custodianSelect.appendChild(placeholder);
-
-        // Filter and add matching options
-        allCustodianOptions.forEach(opt => {
-            if (opt.value === '') return; // skip placeholder
-            const optOfficeId = opt.getAttribute('data-office-id');
-            if (officeId === '' || optOfficeId == officeId) {
-                const newOpt = document.createElement('option');
-                newOpt.value = opt.value;
-                newOpt.textContent = opt.textContent;
-                newOpt.setAttribute('data-office-id', optOfficeId);
-                // Preserve selected state if it was selected before
-                if (opt.selected) {
-                    newOpt.selected = true;
-                }
-                custodianSelect.appendChild(newOpt);
-            }
-        });
-    }
-
-    // When office changes, filter custodians
-    officeSelect.addEventListener('change', function() {
-        const officeId = this.value;
-        filterCustodiansByOffice(officeId);
-    });
-
-    // When custodian changes, auto‑fill office
-    custodianSelect.addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        if (selected && selected.value) {
-            const officeId = selected.getAttribute('data-office-id');
-            if (officeId) {
-                officeSelect.value = officeId;
-                // Optionally re‑filter to keep list consistent (though office already set)
-                filterCustodiansByOffice(officeId);
-            }
-        }
-    });
-
-    // Initial filter: if office is pre‑selected, filter custodians
-    if (officeSelect.value) {
-        filterCustodiansByOffice(officeSelect.value);
-    }
-});
-</script>
-
-<script>
-    // Toggle custodian section visibility
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggle = document.getElementById('assignCustodianToggle');
-        const section = document.getElementById('custodianSection');
+    const toggle = document.getElementById('assignCustodianToggle');
+    const section = document.getElementById('custodianSection');
+    if (toggle) {
         toggle.addEventListener('change', function() {
             section.style.display = this.checked ? 'block' : 'none';
         });
-    });
+    }
+
+    // Office ↔ Custodian auto-fill
+    const custodianSelect = document.getElementById('custodian_id');
+    const officeSelect = document.getElementById('office_id');
+    if (custodianSelect && officeSelect) {
+        const allOptions = Array.from(custodianSelect.options);
+        function filterCustodians(officeId) {
+            custodianSelect.innerHTML = '';
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Select Custodian';
+            custodianSelect.appendChild(placeholder);
+            allOptions.forEach(opt => {
+                if (opt.value === '') return;
+                const optOffice = opt.getAttribute('data-office-id');
+                if (officeId === '' || optOffice == officeId) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.textContent = opt.textContent;
+                    newOpt.setAttribute('data-office-id', optOffice);
+                    if (opt.selected) newOpt.selected = true;
+                    custodianSelect.appendChild(newOpt);
+                }
+            });
+        }
+        officeSelect.addEventListener('change', function() {
+            filterCustodians(this.value);
+        });
+        custodianSelect.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            if (selected && selected.value) {
+                const officeId = selected.getAttribute('data-office-id');
+                if (officeId) {
+                    officeSelect.value = officeId;
+                    filterCustodians(officeId);
+                }
+            }
+        });
+        if (officeSelect.value) filterCustodians(officeSelect.value);
+    }
+});
 </script>

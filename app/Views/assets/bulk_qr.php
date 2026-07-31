@@ -18,8 +18,8 @@
 </head>
 <body>
     <div class="no-print" style="margin-bottom:20px;">
-        <button onclick="window.print()" class="btn btn-primary">Print</button>
-        <a href="index.php?page=assets&sub=browse" class="btn btn-secondary">Back</a>
+        <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Print</button>
+        <a href="index.php?page=assets&sub=browse" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Back</a>
     </div>
     <h2>QR Codes for Selected Assets</h2>
     <div class="qr-grid">
