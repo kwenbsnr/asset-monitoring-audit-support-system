@@ -746,7 +746,7 @@ class AssetModel {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
         $stmt->bind_param(
-            'iiiiiss',
+            'iiiiisss',  // 5 integers + 3 strings = 8 parameters
             $assetId,
             $fromCustodianId,
             $toCustodianId,

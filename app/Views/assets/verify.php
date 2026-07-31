@@ -76,6 +76,25 @@
                             <h6 class="border-bottom pb-2">Asset Information (View‑only)</h6>
                             <div id="assetInfo" class="row mb-3"></div>
 
+                            <!-- Current Custodian & Office (View‑only) -->
+                            <div id="currentCustodianInfo" class="row mb-3" style="display:none;">
+                                <div class="col-md-12"><h6 class="border-bottom pb-2">Current Custodian</h6></div>
+                                <div class="col-md-6"><strong>Custodian:</strong> <span id="currentCustodianName"></span></div>
+                                <div class="col-md-6"><strong>Office:</strong> <span id="currentOfficeName"></span></div>
+                            </div>
+
+                            <!-- Custody History (View‑only) -->
+                            <div id="custodyHistoryContainer" style="display:none;">
+                                <h6 class="border-bottom pb-2 mt-3">Custody History</h6>
+                                <div id="custodyHistoryTable" class="table-responsive"></div>
+                            </div>
+
+                            <!-- Transfer History (View‑only) -->
+                            <div id="transferHistoryContainer" style="display:none;">
+                                <h6 class="border-bottom pb-2 mt-3">Transfer History</h6>
+                                <div id="transferHistoryTable" class="table-responsive"></div>
+                            </div>
+
                             <!-- Action Buttons (always visible) -->
                             <div id="actionButtons" class="d-flex gap-2 mb-3">
                                 <button type="submit" name="mark_verified" class="btn btn-success">
@@ -122,18 +141,13 @@
                                         <select class="form-select" id="custodian_id" name="custodian_id">
                                             <option value="">Select Custodian</option>
                                             <?php foreach ($personnel as $p): ?>
-                                                <option value="<?= $p['personnel_id'] ?>"><?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?></option>
+                                                <option value="<?= $p['personnel_id'] ?>" data-office-id="<?= $p['office_id'] ?>">
+                                                    <?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?>
+                                                </option>
                                             <?php endforeach; ?>
                                         </select>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="office_id" class="form-label">Office</label>
-                                        <select class="form-select" id="office_id" name="office_id">
-                                            <option value="">Select Office</option>
-                                            <?php foreach ($offices as $o): ?>
-                                                <option value="<?= $o['office_id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <!-- Hidden input for office – auto‑filled from custodian -->
+                                        <input type="hidden" name="office_id" id="office_id" value="">
                                     </div>
                                     <div class="col-md-12 mb-3">
                                         <label for="inspection_remarks" class="form-label">Inspection Remarks</label>
@@ -167,17 +181,18 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="public/js/scanner.js"></script>
 <script>
-// Override showAssetProfile to populate the form and manage visibility
+// Override showAssetProfile to populate the form and display full history
 const originalShowAssetProfile = window.showAssetProfile;
 window.showAssetProfile = function(data) {
     const asset = data.asset;
     const custody = data.custody || [];
+    const transfers = data.transfers || [];
     const activeCustody = custody.find(c => c.custody_status === 'active');
 
     // Populate hidden asset_id
     document.getElementById('assetIdField').value = asset.asset_id;
 
-    // Populate view-only fields
+    // ---- View-only asset info ----
     const infoDiv = document.getElementById('assetInfo');
     infoDiv.innerHTML = `
         <div class="col-md-4"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
@@ -193,6 +208,8 @@ window.showAssetProfile = function(data) {
         <div class="col-md-3"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
         <div class="col-md-3"><strong>Supplier:</strong> N/A</div>
         <div class="col-md-3"><strong>Funding Source:</strong> N/A</div>
+        <div class="col-md-3"><strong>Status:</strong> <span class="badge bg-${asset.status === 'active' ? 'success' : 'secondary'}">${asset.status}</span></div>
+        <div class="col-md-3"><strong>Condition:</strong> <span class="badge bg-${asset.condition === 'good' ? 'success' : 'warning'}">${asset.condition}</span></div>
         <div class="col-md-3"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
         <div class="col-md-3"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
         <div class="col-md-4"><strong>Verification Status:</strong> <span class="badge bg-${asset.verification_status === 'verified' ? 'success' : 'secondary'}">${asset.verification_status || 'pending'}</span></div>
@@ -200,7 +217,63 @@ window.showAssetProfile = function(data) {
         <div class="col-md-4"><strong>Verified By:</strong> ${asset.verified_by_username || 'N/A'}</div>
     `;
 
-    // Populate editable fields (hidden initially)
+    // ---- Current Custodian & Office ----
+    const custodianInfo = document.getElementById('currentCustodianInfo');
+    if (activeCustody) {
+        document.getElementById('currentCustodianName').textContent = activeCustody.custodian_name + ' (' + (activeCustody.position || '') + ')';
+        document.getElementById('currentOfficeName').textContent = activeCustody.office_name;
+        custodianInfo.style.display = 'flex';
+    } else {
+        document.getElementById('currentCustodianName').textContent = 'Not assigned';
+        document.getElementById('currentOfficeName').textContent = 'N/A';
+        custodianInfo.style.display = 'flex';
+    }
+
+    // ---- Custody History ----
+    const custodyContainer = document.getElementById('custodyHistoryContainer');
+    const custodyTable = document.getElementById('custodyHistoryTable');
+    if (custody.length === 0) {
+        custodyTable.innerHTML = '<p class="text-muted">No custody records found.</p>';
+    } else {
+        let tableHtml = '<table class="table table-sm table-bordered"><thead><tr><th>From</th><th>To</th><th>Custodian</th><th>Office</th><th>Status</th><th>Document</th></tr></thead><tbody>';
+        custody.forEach(c => {
+            tableHtml += `<tr>
+                <td>${c.effectivity_date || 'N/A'}</td>
+                <td>${c.end_date || 'Current'}</td>
+                <td>${escapeHtml(c.custodian_name)} <br><small>${escapeHtml(c.position || '')}</small></td>
+                <td>${escapeHtml(c.office_name)}</td>
+                <td><span class="badge bg-${c.custody_status === 'active' ? 'success' : 'secondary'}">${c.custody_status}</span></td>
+                <td>${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><small>Ref: ' + escapeHtml(c.accountability_reference) + '</small>' : ''}</td>
+            </tr>`;
+        });
+        tableHtml += '</tbody></table>';
+        custodyTable.innerHTML = tableHtml;
+    }
+    custodyContainer.style.display = 'block';
+
+    // ---- Transfer History ----
+    const transferContainer = document.getElementById('transferHistoryContainer');
+    const transferTable = document.getElementById('transferHistoryTable');
+    if (transfers.length === 0) {
+        transferTable.innerHTML = '<p class="text-muted">No transfer records found.</p>';
+    } else {
+        let tableHtml = '<table class="table table-sm table-bordered"><thead><tr><th>Transfer #</th><th>Date</th><th>From</th><th>To</th><th>Status</th><th>Remarks</th></tr></thead><tbody>';
+        transfers.forEach(t => {
+            tableHtml += `<tr>
+                <td>${escapeHtml(t.transfer_number)}</td>
+                <td>${escapeHtml(t.transfer_date)}</td>
+                <td>${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
+                <td>${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
+                <td><span class="badge bg-${t.status === 'approved' ? 'success' : 'warning'}">${escapeHtml(t.status)}</span></td>
+                <td>${escapeHtml(t.remarks || '')}</td>
+            </tr>`;
+        });
+        tableHtml += '</tbody></table>';
+        transferTable.innerHTML = tableHtml;
+    }
+    transferContainer.style.display = 'block';
+
+    // ---- Populate editable fields (hidden initially) ----
     document.getElementById('condition').value = asset.condition || 'good';
     document.getElementById('status').value = asset.status || 'active';
     document.getElementById('verification_status').value = asset.verification_status || 'pending';
@@ -208,16 +281,23 @@ window.showAssetProfile = function(data) {
 
     // Custodian and office
     const custodianSelect = document.getElementById('custodian_id');
-    const officeSelect = document.getElementById('office_id');
+    const officeHidden = document.getElementById('office_id');
     if (activeCustody) {
         custodianSelect.value = activeCustody.custodian_id;
-        officeSelect.value = activeCustody.office_id;
+        officeHidden.value = activeCustody.office_id;
     } else {
         custodianSelect.value = '';
-        officeSelect.value = '';
+        officeHidden.value = '';
     }
 
-    // Show content, hide editable fields, show action buttons
+    // ---- Auto-fill office when custodian changes ----
+    custodianSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const officeId = selectedOption ? selectedOption.getAttribute('data-office-id') : '';
+        officeHidden.value = officeId || '';
+    });
+
+    // ---- Show content, hide editable fields ----
     document.getElementById('profilePlaceholder').style.display = 'none';
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('profileFooter').style.display = 'flex';
@@ -227,7 +307,7 @@ window.showAssetProfile = function(data) {
     document.getElementById('actionButtons').style.display = 'flex';
 };
 
-// Toggle editable fields
+// ---- Toggle editable fields ----
 document.getElementById('showUpdateBtn').addEventListener('click', function() {
     document.getElementById('editableFields').style.display = 'block';
     document.getElementById('actionButtons').style.display = 'none';
@@ -238,7 +318,7 @@ document.getElementById('cancelUpdateBtn').addEventListener('click', function() 
     document.getElementById('actionButtons').style.display = 'flex';
 });
 
-// Manual search
+// ---- Manual search ----
 document.getElementById('manualSearchBtn').addEventListener('click', function() {
     const query = document.getElementById('manualSearchInput').value.trim();
     if (query.length < 2) {
@@ -259,7 +339,7 @@ document.getElementById('manualSearchBtn').addEventListener('click', function() 
         .catch(err => alert('Failed to fetch asset: ' + err.message));
 });
 
-// Auto-start scanner
+// ---- Auto-start scanner ----
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         if (typeof startScanner === 'function') {
@@ -268,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 });
 
-// Reuse escapeHtml from scanner.js
+// ---- Reuse escapeHtml from scanner.js ----
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
