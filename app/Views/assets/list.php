@@ -72,12 +72,14 @@
                             <th>Custodian</th>
                             <th>Status</th>
                             <th>Actions</th>
+                            <th>Verification</th>
+                            <th>Last Verified</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($assets)): ?>
                             <tr>
-                                <td colspan="9" class="text-center">
+                                <td colspan="11" class="text-center">
                                     <?php if (!empty($_GET['search'])): ?>
                                         No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
                                     <?php else: ?>
@@ -150,6 +152,22 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         <?php endif; ?>
+                                    </td>
+                                    <!-- Verification Status -->
+                                    <td>
+                                        <?php 
+                                            $vStatus = $asset['verification_status'] ?? 'pending';
+                                            $badgeClass = match($vStatus) {
+                                                'verified' => 'success',
+                                                'discrepancy' => 'danger',
+                                                default => 'secondary'
+                                            };
+                                        ?>
+                                        <span class="badge bg-<?= $badgeClass ?>"><?= ucfirst($vStatus) ?></span>
+                                    </td>
+                                    <!-- Last Verified -->
+                                    <td>
+                                        <?= $asset['verified_at'] ? date('Y-m-d H:i', strtotime($asset['verified_at'])) : 'Never' ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

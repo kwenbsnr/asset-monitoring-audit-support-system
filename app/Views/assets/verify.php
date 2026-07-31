@@ -195,6 +195,9 @@ window.showAssetProfile = function(data) {
         <div class="col-md-3"><strong>Funding Source:</strong> N/A</div>
         <div class="col-md-3"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
         <div class="col-md-3"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
+        <div class="col-md-4"><strong>Verification Status:</strong> <span class="badge bg-${asset.verification_status === 'verified' ? 'success' : 'secondary'}">${asset.verification_status || 'pending'}</span></div>
+        <div class="col-md-4"><strong>Last Verified:</strong> ${asset.verified_at ? new Date(asset.verified_at).toLocaleString() : 'Never'}</div>
+        <div class="col-md-4"><strong>Verified By:</strong> ${asset.verified_by_username || 'N/A'}</div>
     `;
 
     // Populate editable fields (hidden initially)

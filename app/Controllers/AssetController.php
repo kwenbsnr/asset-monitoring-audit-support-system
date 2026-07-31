@@ -582,7 +582,7 @@ class AssetController {
         }
 
         // Update asset operational fields (condition, status, verification_status, inspection_remarks)
-        $updated = $this->assetModel->updateInspection($assetId, $data);
+        $updated = $this->assetModel->updateInspection($assetId, $data, $_SESSION['user_id']);
         if (!$updated) {
             $_SESSION['flash'] = 'Failed to update asset.';
             $_SESSION['flash_type'] = 'danger';

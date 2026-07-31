@@ -92,18 +92,18 @@ class AssetModel {
     }
 
     /**
-     * Get a single asset by ID.
-     * @param int $id
-     * @return array|null
+     * Get a single asset by ID – include verifier username.
      */
     public function getById($id) {
         $stmt = $this->db->prepare("
             SELECT 
                 a.*,
                 aa.account_code,
-                aa.account_name
+                aa.account_name,
+                u.username AS verified_by_username
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN users u ON a.verified_by = u.users_id
             WHERE a.asset_id = ?
         ");
         $stmt->bind_param('i', $id);
@@ -224,16 +224,20 @@ class AssetModel {
                 a.status,
                 a.condition,
                 a.remarks,
+                a.verification_status,
+                a.verified_at,
                 aa.account_code,
                 aa.account_name,
+                u.username AS verified_by_username,
                 GROUP_CONCAT(DISTINCT p.full_name SEPARATOR ', ') AS custodians,
                 (SELECT ac.asset_custodies_id FROM asset_custodies ac 
-                WHERE ac.asset_id = a.asset_id AND ac.status = 'active' 
-                ORDER BY ac.effectivity_date DESC LIMIT 1) AS active_custody_id
+                    WHERE ac.asset_id = a.asset_id AND ac.status = 'active' 
+                    ORDER BY ac.effectivity_date DESC LIMIT 1) AS active_custody_id
             FROM assets a
             LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
             LEFT JOIN asset_custodies acust ON a.asset_id = acust.asset_id AND acust.status = 'active'
             LEFT JOIN personnel p ON acust.custodian_id = p.personnel_id
+            LEFT JOIN users u ON a.verified_by = u.users_id
             WHERE a.status != 'inactive'
         ";
 
@@ -756,27 +760,37 @@ class AssetModel {
     }
 
     /**
-     * Update operational fields for inspection.
+     * Update operational fields for inspection – sets verified_at and verified_by when status becomes 'verified'.
      * @param int   $id
      * @param array $data
      * @return bool
      */
-    public function updateInspection($id, $data) {
+    public function updateInspection($id, $data, $userId = null) {
+        $verifiedAt = null;
+        $verifiedBy = null;
+        if ($data['verification_status'] === 'verified' && $userId) {
+            $verifiedAt = date('Y-m-d H:i:s');
+            $verifiedBy = $userId;
+        }
         $stmt = $this->db->prepare("
             UPDATE assets SET
                 `condition` = ?,
                 status = ?,
                 verification_status = ?,
                 inspection_remarks = ?,
+                verified_at = ?,
+                verified_by = ?,
                 updated_at = NOW()
             WHERE asset_id = ?
         ");
         $stmt->bind_param(
-            'ssssi',
+            'sssssii',
             $data['condition'],
             $data['status'],
             $data['verification_status'],
             $data['inspection_remarks'],
+            $verifiedAt,
+            $verifiedBy,
             $id
         );
         return $stmt->execute();
