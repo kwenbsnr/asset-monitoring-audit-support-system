@@ -114,30 +114,34 @@
                                         <span class="badge bg-<?= $statusClass ?>"><?= $asset['status'] ?></span>
                                     </td>
                                     <td>
-                                        <!-- Eye button – MUST be type="button" to prevent form submission -->
+                                        <!-- Eye button – always visible -->
                                         <button type="button" class="btn btn-sm btn-info view-details" 
                                                 data-id="<?= $asset['asset_id'] ?>" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#assetDetailsModal">
                                             <i class="bi bi-eye"></i>
                                         </button>
+
+                                        <!-- Edit – only for encoder and admin -->
                                         <?php if (in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
                                             <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
                                         <?php endif; ?>
-                                        <?php if ($asset['status'] === 'active'): ?>
-                                            <?php if (in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
-                                                <?php if (empty($asset['active_custody_id'])): ?>
-                                                    <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-primary" title="Assign Custodian">
-                                                        <i class="bi bi-person-plus"></i>
-                                                    </a>
-                                                <?php else: ?>
-                                                    <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning" title="Transfer Custodian">
-                                                        <i class="bi bi-arrow-left-right"></i>
-                                                    </a>
-                                                <?php endif; ?>
+
+                                        <!-- Custody actions – only for encoder and admin -->
+                                        <?php if ($asset['status'] === 'active' && in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
+                                            <?php if (empty($asset['active_custody_id'])): ?>
+                                                <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-primary" title="Assign Custodian">
+                                                    <i class="bi bi-person-plus"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn btn-sm btn-warning" title="Transfer Custodian">
+                                                    <i class="bi bi-arrow-left-right"></i>
+                                                </a>
                                             <?php endif; ?>
                                         <?php endif; ?>
-                                        <?php if (in_array($_SESSION['role'], ['asset_inspector', 'admin']) && $asset['status'] === 'active'): ?>
+
+                                        <!-- Dispose – only for admin (not for asset_inspector) -->
+                                        <?php if ($_SESSION['role'] === 'admin' && $asset['status'] === 'active'): ?>
                                             <button class="btn btn-sm btn-danger dispose-btn" 
                                                     data-id="<?= $asset['asset_id'] ?>" 
                                                     data-bs-toggle="modal" 
