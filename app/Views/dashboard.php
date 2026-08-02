@@ -1,9 +1,5 @@
 <?php if (!defined('APP_START')) exit; ?>
 
-<div class="bg-red-500 text-white p-4 rounded-lg shadow-lg mb-4">
-  ✅ TAILWIND IS WORKING! If you see this red box, styles are applied.
-</div>
-
 <!-- Dashboard Header -->
 <div class="flex flex-wrap items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>

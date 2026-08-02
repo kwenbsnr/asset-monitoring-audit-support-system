@@ -1,3 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Keeps existing tailwind.config.js (content globs + safelist) working
+   under Tailwind v4. Without this, the JS config is silently ignored. */
+@config "../../tailwind.config.js";

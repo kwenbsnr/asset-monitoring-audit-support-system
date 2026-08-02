@@ -7,7 +7,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'NIA Asset Monitoring' ?></title>
-<link href="/asset-monitoring-audit-support-system/public/css/output.css?v=<?= time() ?>" rel="stylesheet">
+    
+    <link href="/asset-monitoring-audit-support-system/public/css/output.css" rel="stylesheet">
+    <link href="/asset-monitoring-audit-support-system/public/css/style.css" rel="stylesheet">
 
     <!-- Bootstrap Icons (fonts only – no conflict) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -43,25 +45,25 @@
             <img src="/asset-monitoring-audit-support-system/public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
         </div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
+        <ul class="flex flex-col list-none p-0 m-0">
+            <li>
                 <a class="nav-link <?= ($currentPage === 'dashboard') ? 'active' : '' ?>" href="index.php">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
 
             <?php if ($_SESSION['role'] === 'encoder'): ?>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
                         <i class="bi bi-plus-circle"></i> Register Asset
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Records
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'assets_by_office') ? 'active' : '' ?>" href="index.php?page=assets&sub=by_office">
                         <i class="bi bi-building"></i> Assets by Office
                     </a>
@@ -69,12 +71,12 @@
             <?php endif; ?>
 
             <?php if ($_SESSION['role'] === 'asset_inspector'): ?>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Records
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'verify') ? 'active' : '' ?>" href="index.php?page=assets&sub=verify">
                         <i class="bi bi-qr-code-scan"></i> Verify Asset
                     </a>
@@ -82,35 +84,35 @@
             <?php endif; ?>
 
             <?php if ($_SESSION['role'] === 'admin'): ?>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
                         <i class="bi bi-box-seam"></i> Asset Registry
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'custody') ? 'active' : '' ?>" href="index.php?page=custody">
                         <i class="bi bi-people"></i> Custodial Tracking
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'reports') ? 'active' : '' ?>" href="index.php?page=reports">
                         <i class="bi bi-file-earmark-text"></i> Reports
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'audit') ? 'active' : '' ?>" href="index.php?page=audit">
                         <i class="bi bi-clock-history"></i> Audit Trail
                     </a>
                 </li>
-                <li class="nav-item">
+                <li>
                     <a class="nav-link <?= ($currentPage === 'users') ? 'active' : '' ?>" href="index.php?page=users">
                         <i class="bi bi-people"></i> User Management
                     </a>
                 </li>
             <?php endif; ?>
 
-            <li class="nav-item mt-4">
-                <a class="nav-link text-danger" href="index.php?action=logout">
+            <li class="mt-4">
+                <a class="nav-link !text-red-400 hover:!text-red-300" href="index.php?action=logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>
             </li>
