@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Bulk QR Codes</title>
+    <link href="/asset-monitoring-audit-support-system/public/css/output.css" rel="stylesheet">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
