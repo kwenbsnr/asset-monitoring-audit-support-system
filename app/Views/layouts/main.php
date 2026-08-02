@@ -18,7 +18,7 @@
 <body>
 
 <!-- Toast container -->
-<div class="fixed top-4 right-4 z-[1100] flex flex-col gap-2" id="toastContainer">
+<div class="fixed top-4 right-4 z-1100 flex flex-col gap-2" id="toastContainer">
     <?php if (isset($_SESSION['flash'])): ?>
         <div class="flex items-center p-4 rounded-lg shadow-lg text-white 
              <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'bg-green-600' : 'bg-red-600' ?> 
@@ -40,7 +40,7 @@
 
     <!-- Sidebar -->
     <nav id="sidebar" class="sidebar <?= ($_SESSION['role'] === 'admin') ? 'sidebar-admin' : 'sidebar-supply' ?> 
-                               translate-x-[-100%] md:translate-x-0 transition-transform duration-300 ease-in-out">
+                               -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="sidebar-header">
             <img src="/asset-monitoring-audit-support-system/public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
@@ -112,7 +112,7 @@
             <?php endif; ?>
 
             <li class="mt-4">
-                <a class="nav-link !text-red-400 hover:!text-red-300" href="index.php?action=logout">
+                <a class="nav-link text-red-400! hover:text-red-300!" href="index.php?action=logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>
             </li>
@@ -143,7 +143,7 @@
 
         if (toggleBtn && sidebar) {
             toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('translate-x-[-100%]');
+                sidebar.classList.toggle('-translate-x-full');
             });
         }
 

@@ -102,90 +102,13 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-/* @noinspection PhpUndefinedClassInspection */
-// Suppresses false "Class 'Chart' not imported" warnings from Intelephense
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Doughnut: Status Distribution
-    const statusLabels = <?= json_encode($statusLabels) ?>;
-    const statusData = <?= json_encode($statusData) ?>;
-    if (statusLabels.length) {
-        new Chart(document.getElementById('statusDoughnutChart'), {
-            type: 'doughnut',
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    data: statusData,
-                    backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#6c757d', '#dc3545'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { boxWidth: 10, font: { size: 10 } }
-                    }
-                },
-                cutout: '70%'
-            }
-        });
-    }
-
-    // Bar: Assets by Account
-    const accountLabels = <?= json_encode($accountLabels) ?>;
-    const accountData = <?= json_encode($accountData) ?>;
-    if (accountLabels.length) {
-        new Chart(document.getElementById('accountBarChart'), {
-            type: 'bar',
-            data: {
-                labels: accountLabels,
-                datasets: [{
-                    label: 'Assets',
-                    data: accountData,
-                    backgroundColor: '#0d6efd',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    }
-
-    // Bar: Assets by Office (horizontal)
-    const officeLabels = <?= json_encode($officeLabels) ?>;
-    const officeData = <?= json_encode($officeData) ?>;
-    if (officeLabels.length) {
-        new Chart(document.getElementById('officeBarChart'), {
-            type: 'bar',
-            data: {
-                labels: officeLabels,
-                datasets: [{
-                    label: 'Assets',
-                    data: officeData,
-                    backgroundColor: '#198754',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                },
-                indexAxis: 'y'
-            }
-        });
-    }
-});
+    window.dashboardChartData = <?= json_encode([
+        'statusLabels' => $statusLabels,
+        'statusData' => $statusData,
+        'accountLabels' => $accountLabels,
+        'accountData' => $accountData,
+        'officeLabels' => $officeLabels,
+        'officeData' => $officeData,
+    ]) ?>;
 </script>
+<script src="/asset-monitoring-audit-support-system/public/js/dashboard-charts.js"></script>
