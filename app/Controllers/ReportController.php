@@ -191,18 +191,27 @@ class ReportController {
      */
     public function buildReportHtml($data, $reportType, $title) {
         $headers = $this->getReportHeaders($reportType);
-        $html = '<!DOCTYPE html><html><head><title>' . $title . '</title>';
-        $html .= '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">';
-        $html .= '</head><body><div class="container mt-4">';
-        $html .= '<h2>' . $title . '</h2>';
-        $html .= '<p><strong>Generated:</strong> ' . date('Y-m-d H:i') . '</p>';
-        $html .= '<table class="table table-bordered table-striped"><thead><tr>';
+        $html = '<!DOCTYPE html><html><head><title>' . htmlspecialchars($title) . '</title>';
+        $html .= '<style>
+            body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; margin: 20px; }
+            h2 { color: #15803d; margin-bottom: 4px; }
+            .report-meta { color: #4b5563; font-size: 13px; margin-bottom: 16px; }
+            table.report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            table.report-table th, table.report-table td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; }
+            table.report-table thead th { background-color: #f3f4f6; color: #374151; font-weight: 600; }
+            table.report-table tbody tr:nth-child(even) { background-color: #f9fafb; }
+            .report-empty { text-align: center; color: #6b7280; padding: 16px; }
+        </style>';
+        $html .= '</head><body>';
+        $html .= '<h2>' . htmlspecialchars($title) . '</h2>';
+        $html .= '<p class="report-meta"><strong>Generated:</strong> ' . date('Y-m-d H:i') . '</p>';
+        $html .= '<table class="report-table"><thead><tr>';
         foreach ($headers as $h) {
-            $html .= '<th>' . $h . '</th>';
+            $html .= '<th>' . htmlspecialchars($h) . '</th>';
         }
         $html .= '</tr></thead><tbody>';
         if (empty($data)) {
-            $html .= '<tr><td colspan="' . count($headers) . '" class="text-center">No records found.</td></tr>';
+            $html .= '<tr><td colspan="' . count($headers) . '" class="report-empty">No records found.</td></tr>';
         } else {
             foreach ($data as $row) {
                 $html .= '<tr>';
@@ -213,7 +222,7 @@ class ReportController {
                 $html .= '</tr>';
             }
         }
-        $html .= '</tbody></table></div></body></html>';
+        $html .= '</tbody></table></body></html>';
         return $html;
     }
 
@@ -307,7 +316,7 @@ class ReportController {
         } else {
             header('Content-Type: text/html');
             echo $html;
-            echo '<p class="text-center"><strong>PDF library not installed.</strong> Please run: <code>composer require dompdf/dompdf</code></p>';
+            echo '<p style="text-align:center"><strong>PDF library not installed.</strong> Please run: <code>composer require dompdf/dompdf</code></p>';
         }
         exit;
     }
