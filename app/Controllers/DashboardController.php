@@ -23,6 +23,7 @@ class DashboardController {
     public function index() {
         $totalAssets = $this->dashboardModel->getTotalAssets();
         $activeInactive = $this->dashboardModel->getActiveInactiveCounts();
+        $activeAssets = $activeInactive['active'] ?? 0;
         $statusCounts = $this->dashboardModel->getAssetStatusCounts();
         $accountCounts = $this->dashboardModel->getAssetAccountCounts(); // changed from categories
         $conditionCounts = $this->dashboardModel->getConditionCounts();
