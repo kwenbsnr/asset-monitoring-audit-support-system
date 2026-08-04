@@ -47,7 +47,7 @@ function startScanner() {
     if (isScanning || isStarting) return;
     isStarting = true;
     startBtn.disabled = true;
-    startBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Starting...';
+    startBtn.innerHTML = '<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin align-middle"></span> Starting...';
     setScannerFrameState('idle');
 
     const isSecure = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -211,20 +211,20 @@ function resetButton() {
 
 function setScannerFrameState(state) {
     if (state === 'idle') {
-        scannerFrame.className = 'position-absolute top-0 start-0 w-100 h-100 pointer-events-none scanner-frame-idle';
+        scannerFrame.className = 'absolute inset-0 pointer-events-none scanner-frame-idle';
         scannerLine.style.display = 'block';
-        scannerCheckmark.classList.add('d-none');
+        scannerCheckmark.classList.add('hidden');
     } else if (state === 'detected') {
-        scannerFrame.className = 'position-absolute top-0 start-0 w-100 h-100 pointer-events-none scanner-frame-detected';
+        scannerFrame.className = 'absolute inset-0 pointer-events-none scanner-frame-detected';
         scannerLine.style.display = 'none';
-        scannerCheckmark.classList.remove('d-none');
+        scannerCheckmark.classList.remove('hidden');
         scannerFrame.classList.add('pulse');
         setTimeout(() => scannerFrame.classList.remove('pulse'), 1000);
-        setTimeout(() => scannerCheckmark.classList.add('d-none'), 1200);
+        setTimeout(() => scannerCheckmark.classList.add('hidden'), 1200);
     } else if (state === 'paused') {
-        scannerFrame.className = 'position-absolute top-0 start-0 w-100 h-100 pointer-events-none scanner-frame-detected';
+        scannerFrame.className = 'absolute inset-0 pointer-events-none scanner-frame-detected';
         scannerLine.style.display = 'none';
-        scannerCheckmark.classList.add('d-none');
+        scannerCheckmark.classList.add('hidden');
     }
 }
 
@@ -274,12 +274,12 @@ function showAssetProfile(data) {
     let actionButton = '';
     if (hasActiveCustody) {
         const transferUrl = `index.php?page=custody&sub=edit&id=${activeCustody.asset_custodies_id}`;
-        actionButton = `<a href="${transferUrl}" class="btn btn-warning btn-sm">
+        actionButton = `<a href="${transferUrl}" class="inline-block px-3 py-1.5 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600">
                             <i class="bi bi-arrow-left-right"></i> Transfer Custodian
                         </a>`;
     } else {
         const assignUrl = `index.php?page=custody&sub=add&asset_id=${asset.asset_id}`;
-        actionButton = `<a href="${assignUrl}" class="btn btn-primary btn-sm">
+        actionButton = `<a href="${assignUrl}" class="inline-block px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
                             <i class="bi bi-person-plus"></i> Assign Custodian
                         </a>`;
     }
@@ -288,10 +288,10 @@ function showAssetProfile(data) {
     let disposeForm = '';
     if (asset.status === 'active' && (window.userRole === 'asset_inspector' || window.userRole === 'admin')) {
         disposeForm = `
-            <form method="POST" action="index.php?page=assets&sub=dispose" class="d-inline" id="disposeFormScan_${asset.asset_id}">
+            <form method="POST" action="index.php?page=assets&sub=dispose" class="inline-block ml-2" id="disposeFormScan_${asset.asset_id}">
                 <input type="hidden" name="asset_id" value="${asset.asset_id}">
                 <input type="hidden" name="disposal_reason" id="disposal_reason_scan_${asset.asset_id}">
-                <button type="button" class="btn btn-danger btn-sm ms-2" onclick="const reason = prompt('Reason for disposal:'); if(reason && reason.trim() !== '') { document.getElementById('disposal_reason_scan_${asset.asset_id}').value = reason.trim(); document.getElementById('disposeFormScan_${asset.asset_id}').submit(); } else if(reason !== null) { alert('Reason is required.'); }">
+                <button type="button" class="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700" onclick="const reason = prompt('Reason for disposal:'); if(reason && reason.trim() !== '') { document.getElementById('disposal_reason_scan_${asset.asset_id}').value = reason.trim(); document.getElementById('disposeFormScan_${asset.asset_id}').submit(); } else if(reason !== null) { alert('Reason is required.'); }">
                     <i class="bi bi-trash"></i> Dispose
                 </button>
             </form>
@@ -300,55 +300,55 @@ function showAssetProfile(data) {
 
     // -------- Asset Information (using asset_name) --------
     let html = `
-        <h6 class="border-bottom pb-2">Asset Information</h6>
-        <div class="row mb-2">
-            <div class="col-6"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
-            <div class="col-6"><strong>QR Ref:</strong> ${escapeHtml(asset.qr_code_ref)}</div>
-            <div class="col-12"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
-            <div class="col-6"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
-            <div class="col-6"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
-            <div class="col-6"><strong>Serial #:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
-            <div class="col-6"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
-            <div class="col-6"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
-            <div class="col-6"><strong>Account:</strong> ${escapeHtml(asset.account_code + ' - ' + asset.account_name)}</div>
-            <div class="col-6"><strong>Status:</strong> <span class="badge bg-${asset.status === 'active' ? 'success' : 'secondary'}">${asset.status}</span></div>
-            <div class="col-6"><strong>Condition:</strong> <span class="badge bg-${asset.condition === 'good' ? 'success' : 'warning'}">${asset.condition}</span></div>
-            <div class="col-12"><strong>Remarks:</strong> ${escapeHtml(asset.remarks || 'N/A')}</div>
-            <div class="col-6"><strong>Date Created:</strong> ${asset.created_at || 'N/A'}</div>
-            <div class="col-6"><strong>Last Updated:</strong> ${asset.updated_at || 'N/A'}</div>
+        <h6 class="font-semibold text-gray-800 border-b border-gray-200 pb-2">Asset Information</h6>
+        <div class="grid grid-cols-2 gap-2 mb-2 text-sm">
+            <div><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
+            <div><strong>QR Ref:</strong> ${escapeHtml(asset.qr_code_ref)}</div>
+            <div class="col-span-2"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
+            <div><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
+            <div><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
+            <div><strong>Serial #:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
+            <div><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
+            <div><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
+            <div><strong>Account:</strong> ${escapeHtml(asset.account_code + ' - ' + asset.account_name)}</div>
+            <div><strong>Status:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${escapeHtml(asset.status)}</span></div>
+            <div><strong>Condition:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.condition === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(asset.condition)}</span></div>
+            <div class="col-span-2"><strong>Remarks:</strong> ${escapeHtml(asset.remarks || 'N/A')}</div>
+            <div><strong>Date Created:</strong> ${asset.created_at || 'N/A'}</div>
+            <div><strong>Last Updated:</strong> ${asset.updated_at || 'N/A'}</div>
         </div>
     `;
 
     if (hasActiveCustody) {
         html += `
-            <h6 class="border-bottom pb-2 mt-3">Current Custodian</h6>
-            <div class="row mb-2">
-                <div class="col-6"><strong>Custodian:</strong> ${escapeHtml(activeCustody.custodian_name)}</div>
-                <div class="col-6"><strong>Position:</strong> ${escapeHtml(activeCustody.position || 'N/A')}</div>
-                <div class="col-6"><strong>Office:</strong> ${escapeHtml(activeCustody.office_name)}</div>
-                <div class="col-6"><strong>Effectivity:</strong> ${activeCustody.effectivity_date}</div>
-                <div class="col-6"><strong>Accountability Doc:</strong> ${escapeHtml(activeCustody.accountability_document || 'N/A')}</div>
-                <div class="col-6"><strong>Reference:</strong> ${escapeHtml(activeCustody.accountability_reference || 'N/A')}</div>
+            <h6 class="font-semibold text-gray-800 border-b border-gray-200 pb-2 mt-3">Current Custodian</h6>
+            <div class="grid grid-cols-2 gap-2 mb-2 text-sm">
+                <div><strong>Custodian:</strong> ${escapeHtml(activeCustody.custodian_name)}</div>
+                <div><strong>Position:</strong> ${escapeHtml(activeCustody.position || 'N/A')}</div>
+                <div><strong>Office:</strong> ${escapeHtml(activeCustody.office_name)}</div>
+                <div><strong>Effectivity:</strong> ${activeCustody.effectivity_date}</div>
+                <div><strong>Accountability Doc:</strong> ${escapeHtml(activeCustody.accountability_document || 'N/A')}</div>
+                <div><strong>Reference:</strong> ${escapeHtml(activeCustody.accountability_reference || 'N/A')}</div>
             </div>
         `;
     } else {
-        html += `<div class="alert alert-secondary mt-3"><i class="bi bi-info-circle"></i> No active custodian assigned.</div>`;
+        html += `<div class="bg-gray-100 border border-gray-300 text-gray-600 p-3 rounded mt-3"><i class="bi bi-info-circle"></i> No active custodian assigned.</div>`;
     }
 
-    html += `<h6 class="border-bottom pb-2 mt-3">Custody History</h6>`;
+    html += `<h6 class="font-semibold text-gray-800 border-b border-gray-200 pb-2 mt-3">Custody History</h6>`;
     if (custody.length === 0) {
-        html += `<p class="text-muted">No custody records found.</p>`;
+        html += `<p class="text-gray-500">No custody records found.</p>`;
     } else {
-        html += `<div class="table-responsive"><table class="table table-sm table-bordered">`;
-        html += `<thead><tr><th>From</th><th>To</th><th>Custodian</th><th>Office</th><th>Status</th><th>Document</th></tr></thead><tbody>`;
+        html += `<div class="overflow-x-auto"><table class="w-full text-sm border border-gray-200">`;
+        html += `<thead class="bg-gray-100 text-gray-700"><tr><th class="px-2 py-1 border-b text-left font-medium">From</th><th class="px-2 py-1 border-b text-left font-medium">To</th><th class="px-2 py-1 border-b text-left font-medium">Custodian</th><th class="px-2 py-1 border-b text-left font-medium">Office</th><th class="px-2 py-1 border-b text-left font-medium">Status</th><th class="px-2 py-1 border-b text-left font-medium">Document</th></tr></thead><tbody>`;
         custody.forEach(c => {
-            html += `<tr>
-                <td>${c.effectivity_date || 'N/A'}</td>
-                <td>${c.end_date || 'Current'}</td>
-                <td>${escapeHtml(c.custodian_name)} <br><small>${escapeHtml(c.position || '')}</small></td>
-                <td>${escapeHtml(c.office_name)}</td>
-                <td><span class="badge bg-${c.custody_status === 'active' ? 'success' : 'secondary'}">${c.custody_status}</span></td>
-                <td>${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><small>Ref: ' + escapeHtml(c.accountability_reference) + '</small>' : ''}</td>
+            html += `<tr class="border-b hover:bg-gray-50">
+                <td class="px-2 py-1">${c.effectivity_date || 'N/A'}</td>
+                <td class="px-2 py-1">${c.end_date || 'Current'}</td>
+                <td class="px-2 py-1">${escapeHtml(c.custodian_name)} <br><small class="text-gray-500">${escapeHtml(c.position || '')}</small></td>
+                <td class="px-2 py-1">${escapeHtml(c.office_name)}</td>
+                <td class="px-2 py-1"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.custody_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${escapeHtml(c.custody_status)}</span></td>
+                <td class="px-2 py-1">${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><small class="text-gray-500">Ref: ' + escapeHtml(c.accountability_reference) + '</small>' : ''}</td>
             </tr>`;
         });
         html += `</tbody></table></div>`;
