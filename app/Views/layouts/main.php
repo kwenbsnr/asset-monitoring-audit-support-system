@@ -1,5 +1,11 @@
 <?php
 // Main layout
+$roleLabels = [
+    'admin'           => 'System Administrator',
+    'encoder'         => 'Data Encoder',
+    'asset_inspector' => 'Asset Inspector',
+];
+$roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_SESSION['role']));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,8 +50,9 @@
         <div class="sidebar-header">
             <img src="/asset-monitoring-audit-support-system/public/images/nia-logo.png" alt="NIA" class="sidebar-logo" onerror="this.style.display='none'">
             <h5>NIA RO IX</h5>
+            <div class="sidebar-role"><?= htmlspecialchars($roleLabel) ?></div>
         </div>
-        <ul class="flex flex-col list-none p-0 m-0">
+        <ul class="sidebar-nav flex flex-col list-none p-0 m-0">
             <li>
                 <a class="nav-link <?= ($currentPage === 'dashboard') ? 'active' : '' ?>" href="index.php">
                     <i class="bi bi-speedometer2"></i> Dashboard
@@ -110,13 +117,13 @@
                     </a>
                 </li>
             <?php endif; ?>
-
-            <li class="mt-4">
-                <a class="nav-link text-red-400! hover:text-red-300!" href="index.php?action=logout">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                </a>
-            </li>
         </ul>
+
+        <div class="sidebar-footer">
+            <a class="nav-link text-red-400! hover:text-red-300!" href="index.php?action=logout">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
     </nav>
 
     <!-- Main content -->
