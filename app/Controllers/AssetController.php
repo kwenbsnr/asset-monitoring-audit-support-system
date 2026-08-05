@@ -187,6 +187,22 @@ class AssetController {
             $errors[] = 'Acquisition cost must be at least ₱50,000.00 for PPE registration.';
         }
 
+        // ===== Acquisition date validation =====
+        // Reject malformed or nonsensical dates
+        // instead of silently passing them to MySQL as NULL or a garbage DATE value.
+        if (!empty($_POST['acquisition_date'])) {
+            $rawDate = trim($_POST['acquisition_date']);
+            $d = \DateTime::createFromFormat('Y-m-d', $rawDate);
+            $currentYear = (int)date('Y');
+            if (!$d || $d->format('Y-m-d') !== $rawDate) {
+                $errors[] = 'Acquisition date is not a valid date.';
+            } elseif ((int)$d->format('Y') < 1990 || (int)$d->format('Y') > $currentYear) {
+                $errors[] = 'Acquisition date year must be between 1990 and ' . $currentYear . '.';
+            } elseif ($d > new \DateTime('today')) {
+                $errors[] = 'Acquisition date cannot be in the future.';
+            }
+        }
+
         // ===== Salary Grade vs. asset value validation =====
         // If a custodian is being assigned/reassigned right here, the asset's
         // value must not exceed that custodian's Salary Grade threshold.
@@ -198,6 +214,9 @@ class AssetController {
                 if ($sgCheck !== true) {
                     $errors[] = $sgCheck;
                 }
+            }
+            if (empty(trim($_POST['property_number'] ?? ''))) {
+                $errors[] = 'Property number is required.';
             }
         }
 
@@ -239,8 +258,7 @@ class AssetController {
             $newCustodianId = (int)$_POST['custodian_id'];
             $newOfficeId = (int)$_POST['office_id'];
             $effectivityDate = $_POST['effectivity_date'] ?? date('Y-m-d');
-            $doc = trim($_POST['accountability_document'] ?? '');
-            $ref = trim($_POST['accountability_reference'] ?? '');
+            $propertyNumber = trim($_POST['property_number'] ?? '');
 
             // If there is an existing active custody, end it and log transfer
             if ($existing) {
@@ -280,12 +298,14 @@ class AssetController {
             }
 
             // Create new custody
+            // NOTE: 'accountability_document' is intentionally left null here — it is no
+            // longer collected on the asset registration form 
             $custodyData = [
                 'asset_id' => $id,
                 'custodian_id' => $newCustodianId,
                 'office_id' => $newOfficeId,
-                'accountability_document' => $doc,
-                'accountability_reference' => $ref,
+                'accountability_document' => null,
+                'accountability_reference' => $propertyNumber,
                 'effectivity_date' => $effectivityDate,
                 'status' => 'active'
             ];
