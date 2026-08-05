@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 06, 2026 at 01:21 AM
+-- Generation Time: Aug 06, 2026 at 01:37 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -125,8 +125,7 @@ CREATE TABLE `asset_custodies` (
   `asset_id` int(11) NOT NULL,
   `custodian_id` int(11) NOT NULL,
   `office_id` int(11) NOT NULL,
-  `accountability_document` enum('PAR','PTR','ITR','Gate Pass') DEFAULT NULL,
-  `accountability_reference` varchar(50) DEFAULT NULL,
+  `property_number` varchar(50) NOT NULL,
   `effectivity_date` date NOT NULL,
   `end_date` date DEFAULT NULL,
   `status` enum('active','returned','transferred') NOT NULL DEFAULT 'active',
@@ -137,23 +136,23 @@ CREATE TABLE `asset_custodies` (
 -- Dumping data for table `asset_custodies`
 --
 
-INSERT INTO `asset_custodies` (`asset_custodies_id`, `asset_id`, `custodian_id`, `office_id`, `accountability_document`, `accountability_reference`, `effectivity_date`, `end_date`, `status`, `created_at`) VALUES
-(1, 1, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(2, 3, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(3, 5, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(4, 7, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(5, 9, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(6, 11, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(7, 13, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', '2026-07-31', '', '2026-07-13 06:19:01'),
-(8, 15, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(9, 17, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(10, 19, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(11, 21, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(12, 23, 2, 1, 'PAR', 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
-(16, 6, 5, 18, '', '', '2026-07-13', NULL, 'active', '2026-07-13 06:33:59'),
-(17, 10, 5, 11, '', '', '2026-07-13', NULL, 'active', '2026-07-13 06:34:14'),
-(18, 13, 23, 3, '', 'TRANSFER-20260731', '2026-07-31', NULL, 'active', '2026-07-31 09:49:00'),
-(19, 26, 6, 1, '', '', '2026-08-06', NULL, 'active', '2026-08-05 22:30:38');
+INSERT INTO `asset_custodies` (`asset_custodies_id`, `asset_id`, `custodian_id`, `office_id`, `property_number`, `effectivity_date`, `end_date`, `status`, `created_at`) VALUES
+(1, 1, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(2, 3, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(3, 5, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(4, 7, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(5, 9, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(6, 11, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(7, 13, 2, 1, 'PAR-2024-001', '2026-07-13', '2026-07-31', '', '2026-07-13 06:19:01'),
+(8, 15, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(9, 17, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(10, 19, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(11, 21, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(12, 23, 2, 1, 'PAR-2024-001', '2026-07-13', NULL, 'active', '2026-07-13 06:19:01'),
+(16, 6, 5, 18, '', '2026-07-13', NULL, 'active', '2026-07-13 06:33:59'),
+(17, 10, 5, 11, '', '2026-07-13', NULL, 'active', '2026-07-13 06:34:14'),
+(18, 13, 23, 3, 'TRANSFER-20260731', '2026-07-31', NULL, 'active', '2026-07-31 09:49:00'),
+(19, 26, 6, 1, '', '2026-08-06', NULL, 'active', '2026-08-05 22:30:38');
 
 -- --------------------------------------------------------
 
