@@ -102,6 +102,11 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
                     </a>
                 </li>
                 <li>
+                    <a class="nav-link <?= ($currentPage === 'employees') ? 'active' : '' ?>" href="index.php?page=employees">
+                        <i class="bi bi-person-badge"></i> Employee Management
+                    </a>
+                </li>
+                <li>
                     <a class="nav-link <?= ($currentPage === 'reports') ? 'active' : '' ?>" href="index.php?page=reports">
                         <i class="bi bi-file-earmark-text"></i> Reports
                     </a>

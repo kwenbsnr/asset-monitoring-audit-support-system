@@ -143,11 +143,13 @@ $assetId = $asset['asset_id'] ?? 0;
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>" 
                                                     data-office-id="<?= $p['office_id'] ?>"
+                                                    data-salary-grade="<?= (int)($p['salary_grade'] ?? 0) ?>"
                                                 <?= (isset($data['custodian_id']) && $data['custodian_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($p['full_name']) ?> (<?= htmlspecialchars($p['position']) ?>)
+                                                <?= htmlspecialchars($p['full_name']) ?> (<?= htmlspecialchars($p['position']) ?>) — SG <?= (int)($p['salary_grade'] ?? 0) ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <p class="mt-1 text-xs text-gray-500" id="sgWarning"></p>
                                 </div>
                                 <div>
                                     <label for="office_id" class="block text-sm font-medium text-gray-700">Office</label>
@@ -194,7 +196,7 @@ $assetId = $asset['asset_id'] ?? 0;
         <?php if ($isEdit && $assetId): ?>
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
                 <h5 class="font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">QR Code</h5>
-                <img src="index.php?page=assets&sub=qr&id=<?= $assetId ?>" alt="QR Code" class="mx-auto max-w-[200px] border border-gray-200 p-2 rounded">
+                <img src="index.php?page=assets&sub=qr&id=<?= $assetId ?>" alt="QR Code" class="mx-auto max-w-50 border border-gray-200 p-2 rounded">
                 <p class="text-xs text-gray-500 mt-3">
                     <i class="bi bi-info-circle"></i> 
                     The QR code is linked to this asset record.<br>
@@ -246,6 +248,48 @@ document.addEventListener('DOMContentLoaded', function() {
     // Office ↔ Custodian auto-fill
     const custodianSelect = document.getElementById('custodian_id');
     const officeSelect = document.getElementById('office_id');
+    const acquisitionCostInput = document.getElementById('acquisition_cost');
+    const sgWarning = document.getElementById('sgWarning');
+
+    // Fixed SG -> threshold table, mirrors app/Helpers/SalaryGradeHelper.php.
+    // Server-side validation (AssetController::save) is authoritative;
+    // this is a client-side heads-up only, same as custody/form.php and verify.php.
+    function sgThreshold(sg) {
+        if (sg >= 1 && sg <= 7) return 70000;
+        if (sg >= 8 && sg <= 10) return 500000;
+        if (sg >= 11 && sg <= 17) return 1000000;
+        if (sg >= 18 && sg <= 21) return 10000000;
+        if (sg >= 22 && sg <= 30) return Infinity;
+        return 0;
+    }
+
+    function checkSgThreshold() {
+        if (!sgWarning) return;
+        const selected = custodianSelect.options[custodianSelect.selectedIndex];
+        const sgRaw = selected ? selected.getAttribute('data-salary-grade') : null;
+        const costRaw = acquisitionCostInput ? acquisitionCostInput.value : null;
+        if (!sgRaw || !costRaw) {
+            sgWarning.textContent = '';
+            return;
+        }
+        const sg = parseInt(sgRaw, 10);
+        const cost = parseFloat(costRaw);
+        if (!cost) {
+            sgWarning.textContent = '';
+            return;
+        }
+        const threshold = sgThreshold(sg);
+        if (cost > threshold) {
+            sgWarning.textContent = 'Warning: this asset (₱' + cost.toLocaleString(undefined, {minimumFractionDigits: 2}) +
+                ') exceeds SG ' + sg + '\'s threshold' + (isFinite(threshold) ? ' of ₱' + threshold.toLocaleString() : '') + '. This assignment will be rejected on save.';
+            sgWarning.classList.add('text-red-600');
+            sgWarning.classList.remove('text-gray-500');
+        } else {
+            sgWarning.textContent = '';
+            sgWarning.classList.remove('text-red-600');
+        }
+    }
+
     if (custodianSelect && officeSelect) {
         const allOptions = Array.from(custodianSelect.options);
         function filterCustodians(officeId) {
@@ -262,10 +306,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     newOpt.value = opt.value;
                     newOpt.textContent = opt.textContent;
                     newOpt.setAttribute('data-office-id', optOffice);
+                    newOpt.setAttribute('data-salary-grade', opt.getAttribute('data-salary-grade'));
                     if (opt.selected) newOpt.selected = true;
                     custodianSelect.appendChild(newOpt);
                 }
             });
+            checkSgThreshold();
         }
         officeSelect.addEventListener('change', function() {
             filterCustodians(this.value);
@@ -279,8 +325,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     filterCustodians(officeId);
                 }
             }
+            checkSgThreshold();
         });
+        if (acquisitionCostInput) {
+            acquisitionCostInput.addEventListener('input', checkSgThreshold);
+        }
         if (officeSelect.value) filterCustodians(officeSelect.value);
+        checkSgThreshold();
     }
 });
 </script>

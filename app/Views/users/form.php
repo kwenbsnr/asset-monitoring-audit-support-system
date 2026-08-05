@@ -43,6 +43,11 @@ $title = $isEdit ? 'Edit User' : 'Add User';
             <!-- Personnel selection -->
             <div class="mt-4 border-t border-gray-200 pt-4">
                 <p class="font-medium text-gray-700 mb-2">Personnel</p>
+                <p class="text-xs text-gray-500 mb-2">
+                    Prefer selecting an existing employee profile from
+                    <a href="index.php?page=employees" class="text-blue-600 hover:underline">Employee Management</a>
+                    — it's the single source of truth for Salary Grade and employment status used by asset assignment rules.
+                </p>
                 <div class="flex gap-4">
                     <label class="inline-flex items-center">
                         <input type="radio" name="new_personnel" value="0" checked class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500" onchange="togglePersonnelFields()">
@@ -62,7 +67,7 @@ $title = $isEdit ? 'Edit User' : 'Add User';
                     <option value="">Select Personnel</option>
                     <?php foreach ($personnel as $p): ?>
                         <option value="<?= $p['personnel_id'] ?>" <?= (isset($data['personnel_id']) && $data['personnel_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($p['full_name']) ?> (<?= htmlspecialchars($p['position']) ?>)
+                            <?= htmlspecialchars($p['full_name']) ?> (<?= htmlspecialchars($p['position']) ?> — SG <?= (int)($p['salary_grade'] ?? 0) ?>)
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -94,6 +99,16 @@ $title = $isEdit ? 'Edit User' : 'Add User';
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div>
+                        <label for="salary_grade" class="block text-sm font-medium text-gray-700">Salary Grade *</label>
+                        <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="salary_grade" name="salary_grade">
+                            <option value="">Select Salary Grade</option>
+                            <?php for ($sg = 1; $sg <= 30; $sg++): ?>
+                                <option value="<?= $sg ?>" <?= (isset($data['salary_grade']) && (int)$data['salary_grade'] === $sg) ? 'selected' : '' ?>>SG <?= $sg ?></option>
+                            <?php endfor; ?>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Determines the maximum asset value this employee can be assigned.</p>
+                    </div>
                 </div>
             </div>
 
@@ -118,6 +133,7 @@ function togglePersonnelFields() {
     radios.forEach(r => { if (r.checked) value = r.value; });
     document.getElementById('existingPersonnelDiv').style.display = value === '0' ? 'block' : 'none';
     document.getElementById('newPersonnelDiv').style.display = value === '1' ? 'block' : 'none';
+    document.getElementById('salary_grade').required = (value === '1');
 }
 document.addEventListener('DOMContentLoaded', togglePersonnelFields);
 </script>

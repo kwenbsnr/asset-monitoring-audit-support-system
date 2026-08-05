@@ -115,6 +115,9 @@ class UserModel {
 
     /**
      * Create a new user (and optionally personnel).
+     * Personnel created inline here (via "Create new personnel" on the user
+     * form) now also requires salary_grade, same as Employee Management —
+     * both paths write to the same personnel table, so neither can bypass it.
      * @param array $data
      * @return int|false
      */
@@ -122,10 +125,11 @@ class UserModel {
         $personnelId = $data['personnel_id'] ?? 0;
         if (!$personnelId && !empty($data['full_name'])) {
             $stmt = $this->db->prepare("
-                INSERT INTO personnel (full_name, position, designation, office_id, is_active)
-                VALUES (?, ?, ?, ?, 1)
+                INSERT INTO personnel (full_name, position, designation, office_id, salary_grade, employment_status, is_active)
+                VALUES (?, ?, ?, ?, ?, 'active', 1)
             ");
-            $stmt->bind_param('sssi', $data['full_name'], $data['position'], $data['designation'], $data['office_id']);
+            $salaryGrade = (int)($data['salary_grade'] ?? 1);
+            $stmt->bind_param('sssii', $data['full_name'], $data['position'], $data['designation'], $data['office_id'], $salaryGrade);
             if (!$stmt->execute()) {
                 return false;
             }
@@ -153,11 +157,20 @@ class UserModel {
     public function updateUser($id, $data) {
         $personnelId = $data['personnel_id'] ?? 0;
         if ($personnelId) {
-            $stmt = $this->db->prepare("
-                UPDATE personnel SET full_name = ?, position = ?, designation = ?, office_id = ?
-                WHERE personnel_id = ?
-            ");
-            $stmt->bind_param('sssii', $data['full_name'], $data['position'], $data['designation'], $data['office_id'], $personnelId);
+            if (isset($data['salary_grade'])) {
+                $stmt = $this->db->prepare("
+                    UPDATE personnel SET full_name = ?, position = ?, designation = ?, office_id = ?, salary_grade = ?
+                    WHERE personnel_id = ?
+                ");
+                $salaryGrade = (int)$data['salary_grade'];
+                $stmt->bind_param('sssiii', $data['full_name'], $data['position'], $data['designation'], $data['office_id'], $salaryGrade, $personnelId);
+            } else {
+                $stmt = $this->db->prepare("
+                    UPDATE personnel SET full_name = ?, position = ?, designation = ?, office_id = ?
+                    WHERE personnel_id = ?
+                ");
+                $stmt->bind_param('sssii', $data['full_name'], $data['position'], $data['designation'], $data['office_id'], $personnelId);
+            }
             $stmt->execute();
         }
 
@@ -189,11 +202,13 @@ class UserModel {
     }
 
     /**
-     * Get all active personnel for dropdown.
+     * Get all active personnel for dropdown. Employment status is kept in
+     * sync with is_active by EmployeeModel, so this automatically excludes
+     * retired/transferred/inactive employees without any change here.
      * @return array
      */
     public function getPersonnelList() {
-        $result = $this->db->query("SELECT personnel_id, full_name, position FROM personnel WHERE is_active = 1 ORDER BY full_name");
+        $result = $this->db->query("SELECT personnel_id, full_name, position, salary_grade FROM personnel WHERE is_active = 1 ORDER BY full_name");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

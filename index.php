@@ -6,6 +6,7 @@ use App\Controllers\CustodyController;
 use App\Controllers\AuditController;
 use App\Controllers\ReportController;
 use App\Controllers\UserController;
+use App\Controllers\EmployeeController;
 
 define('APP_START', true);
 require_once __DIR__ . '/app/bootstrap.php';
@@ -118,6 +119,28 @@ switch ($page) {
                 break;
             case 'search_custodians':
                 $controller->searchCustodians();
+                break;
+        }
+        break;
+    case 'employees':
+        $controller = new EmployeeController();
+        $sub = isset($_GET['sub']) ? $_GET['sub'] : 'index';
+        switch ($sub) {
+            case 'index':
+            default:
+                $controller->index();
+                break;
+            case 'add':
+                $controller->add();
+                break;
+            case 'edit':
+                $controller->edit();
+                break;
+            case 'save':
+                $controller->save();
+                break;
+            case 'updateStatus':
+                $controller->updateStatus();
                 break;
         }
         break;

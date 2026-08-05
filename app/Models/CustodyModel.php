@@ -77,6 +77,20 @@ class CustodyModel {
     }
 
     /**
+     * Get a single asset's id/code/cost — used by the Salary Grade
+     * assignment-value validation in CustodyController::save().
+     * @param int $assetId
+     * @return array|null
+     */
+    public function getAssetById($assetId) {
+        $stmt = $this->db->prepare("SELECT asset_id, asset_code, acquisition_cost FROM assets WHERE asset_id = ?");
+        $stmt->bind_param('i', $assetId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    /**
      * Insert a new custody record.
      * @param array $data
      * @return bool
@@ -138,7 +152,7 @@ class CustodyModel {
      * @return array
      */
     public function getPersonnel() {
-        $result = $this->db->query("SELECT personnel_id, full_name, position, office_id FROM personnel WHERE is_active = 1 ORDER BY full_name");
+        $result = $this->db->query("SELECT personnel_id, full_name, position, office_id, salary_grade FROM personnel WHERE is_active = 1 ORDER BY full_name");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -156,7 +170,7 @@ class CustodyModel {
      * @return array
      */
     public function getAssets() {
-        $result = $this->db->query("SELECT asset_id, asset_code, description FROM assets WHERE status != 'inactive' ORDER BY asset_code");
+        $result = $this->db->query("SELECT asset_id, asset_code, description, acquisition_cost FROM assets WHERE status != 'inactive' ORDER BY asset_code");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

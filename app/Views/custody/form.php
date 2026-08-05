@@ -15,17 +15,18 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                 <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
             </div>
         <?php endif; ?>
-        <form method="POST" action="index.php?page=custody&sub=save">
+        <form method="POST" action="index.php?page=custody&sub=save" id="custodyForm">
             <?php if ($isEdit): ?>
                 <input type="hidden" name="custody_id" value="<?= $record['asset_custodies_id'] ?>">
             <?php endif; ?>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Asset *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="asset_id" required>
+                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="asset_id" id="asset_id" required>
                         <option value="">Select Asset</option>
                         <?php foreach ($assets as $a): ?>
-                            <option value="<?= $a['asset_id'] ?>" 
+                            <option value="<?= $a['asset_id'] ?>"
+                                data-cost="<?= htmlspecialchars($a['acquisition_cost'] ?? '0') ?>"
                                 <?= (isset($data['asset_id']) && $data['asset_id'] == $a['asset_id']) ? 'selected' : '' ?>
                                 <?= (isset($preSelectedAsset) && $preSelectedAsset == $a['asset_id']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($a['asset_code'] . ' - ' . $a['description']) ?>
@@ -40,11 +41,13 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                         <?php foreach ($personnel as $p): ?>
                             <option value="<?= $p['personnel_id'] ?>" 
                                     data-office-id="<?= $p['office_id'] ?>"
+                                    data-salary-grade="<?= (int)($p['salary_grade'] ?? 0) ?>"
                                     <?= (isset($data['custodian_id']) && $data['custodian_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?>
+                                <?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ') — SG ' . (int)($p['salary_grade'] ?? 0)) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <p class="mt-1 text-xs text-gray-500" id="sgWarning"></p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Office *</label>
@@ -93,8 +96,21 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
 document.addEventListener('DOMContentLoaded', function() {
     const custodianSelect = document.getElementById('custodian_id');
     const officeSelect = document.getElementById('office_id');
+    const assetSelect = document.getElementById('asset_id');
+    const sgWarning = document.getElementById('sgWarning');
 
     const allCustodianOptions = Array.from(custodianSelect.options);
+
+    // Fixed SG -> threshold table, mirrors app/Helpers/SalaryGradeHelper.php.
+    // Server-side validation is authoritative; this is a client-side heads-up only.
+    function sgThreshold(sg) {
+        if (sg >= 1 && sg <= 7) return 70000;
+        if (sg >= 8 && sg <= 10) return 500000;
+        if (sg >= 11 && sg <= 17) return 1000000;
+        if (sg >= 18 && sg <= 21) return 10000000;
+        if (sg >= 22 && sg <= 30) return Infinity;
+        return 0;
+    }
 
     function filterCustodiansByOffice(officeId) {
         custodianSelect.innerHTML = '';
@@ -111,10 +127,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 newOpt.value = opt.value;
                 newOpt.textContent = opt.textContent;
                 newOpt.setAttribute('data-office-id', optOfficeId);
+                newOpt.setAttribute('data-salary-grade', opt.getAttribute('data-salary-grade'));
                 if (opt.selected) newOpt.selected = true;
                 custodianSelect.appendChild(newOpt);
             }
         });
+        checkThreshold();
+    }
+
+    function checkThreshold() {
+        const costRaw = assetSelect.options[assetSelect.selectedIndex]?.getAttribute('data-cost');
+        const sgRaw = custodianSelect.options[custodianSelect.selectedIndex]?.getAttribute('data-salary-grade');
+        if (!costRaw || !sgRaw) {
+            sgWarning.textContent = '';
+            return;
+        }
+        const cost = parseFloat(costRaw);
+        const sg = parseInt(sgRaw, 10);
+        const threshold = sgThreshold(sg);
+        if (cost > threshold) {
+            sgWarning.textContent = 'Warning: this asset (₱' + cost.toLocaleString(undefined, {minimumFractionDigits: 2}) +
+                ') exceeds SG ' + sg + '\'s threshold' + (isFinite(threshold) ? ' of ₱' + threshold.toLocaleString() : '') + '. This assignment will be rejected on save.';
+            sgWarning.classList.add('text-red-600');
+            sgWarning.classList.remove('text-gray-500');
+        } else {
+            sgWarning.textContent = '';
+            sgWarning.classList.remove('text-red-600');
+        }
     }
 
     officeSelect.addEventListener('change', function() {
@@ -129,10 +168,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 officeSelect.value = officeId;
             }
         }
+        checkThreshold();
     });
+
+    assetSelect.addEventListener('change', checkThreshold);
 
     if (officeSelect.value) {
         filterCustodiansByOffice(officeSelect.value);
     }
+    checkThreshold();
 });
 </script>

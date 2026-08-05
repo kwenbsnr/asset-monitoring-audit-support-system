@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Models\CustodyModel;
+use App\Models\EmployeeModel;
 
 if (!defined('APP_START')) {
     http_response_code(403);
@@ -153,6 +154,19 @@ class CustodyController {
         if (empty($data['custodian_id'])) $errors[] = 'Custodian is required.';
         if (empty($data['office_id'])) $errors[] = 'Office is required.';
         if (empty($data['effectivity_date'])) $errors[] = 'Effectivity date is required.';
+
+        // ===== Salary Grade vs. asset value validation =====
+        // Only meaningful when this record is actively assigning a custodian.
+        if (empty($errors) && $data['status'] === 'active' && $data['asset_id'] && $data['custodian_id']) {
+            $asset = $this->custodyModel->getAssetById($data['asset_id']);
+            if ($asset) {
+                $employeeModel = new EmployeeModel();
+                $sgCheck = $employeeModel->validateAssetAssignment($data['custodian_id'], $asset['acquisition_cost']);
+                if ($sgCheck !== true) {
+                    $errors[] = $sgCheck;
+                }
+            }
+        }
 
         if (!empty($errors)) {
             $_SESSION['form_errors'] = $errors;

@@ -73,12 +73,17 @@ class UserController {
             'personnel_id' => (int)$_POST['personnel_id'],
         ];
 
+        $creatingNewPersonnel = isset($_POST['new_personnel']) && $_POST['new_personnel'] == 1;
+
         // If new personnel selected, get details
-        if (isset($_POST['new_personnel']) && $_POST['new_personnel'] == 1) {
+        if ($creatingNewPersonnel) {
             $data['full_name'] = trim($_POST['full_name']);
             $data['position'] = trim($_POST['position']);
             $data['designation'] = trim($_POST['designation']);
             $data['office_id'] = (int)$_POST['office_id'];
+            // Personnel created here writes to the same table as Employee
+            // Management, so Salary Grade is required here too.
+            $data['salary_grade'] = (int)($_POST['salary_grade'] ?? 0);
         } else {
             // Use existing personnel
             $personnel = $this->userModel->getPersonnelById($data['personnel_id']); // we need this method
@@ -87,6 +92,7 @@ class UserController {
                 $data['position'] = $personnel['position'];
                 $data['designation'] = $personnel['designation'];
                 $data['office_id'] = $personnel['office_id'];
+                $data['salary_grade'] = $personnel['salary_grade'];
             }
         }
 
@@ -100,6 +106,9 @@ class UserController {
         if (empty($data['role'])) $errors[] = 'Role is required.';
         if (!$id && empty($data['password'])) $errors[] = 'Password is required for new users.';
         if ($id === 0 && empty($data['personnel_id']) && empty($data['full_name'])) $errors[] = 'Personnel is required.';
+        if ($creatingNewPersonnel && (empty($data['salary_grade']) || $data['salary_grade'] < 1 || $data['salary_grade'] > 30)) {
+            $errors[] = 'A valid Salary Grade (1–30) is required for new personnel.';
+        }
 
         if (!empty($errors)) {
             $_SESSION['form_errors'] = $errors;

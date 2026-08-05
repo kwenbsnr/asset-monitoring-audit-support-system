@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use App\Models\CustodyModel;
 use App\Models\AssetModel;
+use App\Models\EmployeeModel;
 
 if (!defined('APP_START')) {
     http_response_code(403);
@@ -184,6 +185,20 @@ class AssetController {
         // PPE cost validation
         if ($data['acquisition_cost'] === null || $data['acquisition_cost'] < 50000) {
             $errors[] = 'Acquisition cost must be at least ₱50,000.00 for PPE registration.';
+        }
+
+        // ===== Salary Grade vs. asset value validation =====
+        // If a custodian is being assigned/reassigned right here, the asset's
+        // value must not exceed that custodian's Salary Grade threshold.
+        if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1') {
+            $newCustodianId = (int)($_POST['custodian_id'] ?? 0);
+            if ($newCustodianId && $data['acquisition_cost'] !== null) {
+                $employeeModel = new EmployeeModel();
+                $sgCheck = $employeeModel->validateAssetAssignment($newCustodianId, $data['acquisition_cost']);
+                if ($sgCheck !== true) {
+                    $errors[] = $sgCheck;
+                }
+            }
         }
 
         if (!empty($errors)) {
@@ -579,6 +594,20 @@ class AssetController {
             $_SESSION['flash'] = 'Office is required when changing custodian.';
             $_SESSION['flash_type'] = 'danger';
             return;
+        }
+
+        // ===== Salary Grade vs. asset value validation =====
+        if ($data['custodian_id'] > 0) {
+            $assetForCheck = $this->assetModel->getById($assetId);
+            if ($assetForCheck) {
+                $employeeModel = new EmployeeModel();
+                $sgCheck = $employeeModel->validateAssetAssignment($data['custodian_id'], $assetForCheck['acquisition_cost']);
+                if ($sgCheck !== true) {
+                    $_SESSION['flash'] = $sgCheck;
+                    $_SESSION['flash_type'] = 'danger';
+                    return;
+                }
+            }
         }
 
         // Update asset operational fields (condition, status, verification_status, inspection_remarks)
