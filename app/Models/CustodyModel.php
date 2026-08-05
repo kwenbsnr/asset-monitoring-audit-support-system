@@ -34,8 +34,7 @@ class CustodyModel {
                 ac.effectivity_date,
                 ac.end_date,
                 ac.status,
-                ac.accountability_document,
-                ac.accountability_reference
+                ac.property_number
             FROM asset_custodies ac
             LEFT JOIN assets a ON ac.asset_id = a.asset_id
             LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
@@ -98,17 +97,16 @@ class CustodyModel {
     public function create($data) {
         $stmt = $this->db->prepare("
             INSERT INTO asset_custodies (
-                asset_id, custodian_id, office_id, accountability_document,
-                accountability_reference, effectivity_date, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                asset_id, custodian_id, office_id, property_number,
+                effectivity_date, status
+            ) VALUES (?, ?, ?, ?, ?, ?)
         ");
         $stmt->bind_param(
-            'iiissss',
+            'iiisss',
             $data['asset_id'],
             $data['custodian_id'],
             $data['office_id'],
-            $data['accountability_document'],
-            $data['accountability_reference'],
+            $data['property_number'],
             $data['effectivity_date'],
             $data['status']
         );
@@ -126,19 +124,17 @@ class CustodyModel {
             UPDATE asset_custodies SET
                 custodian_id = ?,
                 office_id = ?,
-                accountability_document = ?,
-                accountability_reference = ?,
+                property_number = ?,
                 effectivity_date = ?,
                 end_date = ?,
                 status = ?
             WHERE asset_custodies_id = ?
         ");
         $stmt->bind_param(
-            'iisssssi',
+            'iissssi',
             $data['custodian_id'],
             $data['office_id'],
-            $data['accountability_document'],
-            $data['accountability_reference'],
+            $data['property_number'],
             $data['effectivity_date'],
             $data['end_date'],
             $data['status'],
@@ -175,7 +171,7 @@ class CustodyModel {
     }
 
     /**
-     * Search custody records by custodian name, asset code, description, office, or document reference.
+     * Search custody records by custodian name, asset code, description, office, or property number.
      * @param string $searchTerm
      * @return array
      */
@@ -194,8 +190,7 @@ class CustodyModel {
                 ac.effectivity_date,
                 ac.end_date,
                 ac.status,
-                ac.accountability_document,
-                ac.accountability_reference
+                ac.property_number
             FROM asset_custodies ac
             LEFT JOIN assets a ON ac.asset_id = a.asset_id
             LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
@@ -205,12 +200,11 @@ class CustodyModel {
                 a.asset_code LIKE ? OR
                 a.description LIKE ? OR
                 o.name LIKE ? OR
-                ac.accountability_document LIKE ? OR
-                ac.accountability_reference LIKE ?
+                ac.property_number LIKE ?
             ORDER BY ac.effectivity_date DESC
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('ssssss', $like, $like, $like, $like, $like, $like);
+        $stmt->bind_param('sssss', $like, $like, $like, $like, $like);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
@@ -268,7 +262,7 @@ class CustodyModel {
             SELECT 
                 a.asset_id, a.asset_code, a.description, a.brand, a.model,
                 a.serial_number, a.status, a.condition,
-                ac.effectivity_date, ac.accountability_document, ac.accountability_reference
+                ac.effectivity_date, ac.property_number
             FROM assets a
             INNER JOIN asset_custodies ac ON a.asset_id = ac.asset_id
             WHERE ac.custodian_id = ? AND ac.status = 'active'

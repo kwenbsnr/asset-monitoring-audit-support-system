@@ -1,4 +1,5 @@
-<?php if (!defined('APP_START')) exit;
+<?php if (!defined('APP_START')) exit; ?>
+<?php
 $data = $_SESSION['form_data'] ?? ($record ?? []);
 $errors = $_SESSION['form_errors'] ?? [];
 unset($_SESSION['form_errors'], $_SESSION['form_data']);
@@ -75,13 +76,9 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                         <option value="inactive" <?= (isset($data['status']) && $data['status'] == 'inactive') ? 'selected' : '' ?>>Inactive</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Accountability Document</label>
-                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="accountability_document" value="<?= htmlspecialchars($data['accountability_document'] ?? '') ?>">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Accountability Reference</label>
-                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="accountability_reference" value="<?= htmlspecialchars($data['accountability_reference'] ?? '') ?>">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Property Number *</label>
+                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="property_number" value="<?= htmlspecialchars($data['property_number'] ?? '') ?>" required>
                 </div>
             </div>
             <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">

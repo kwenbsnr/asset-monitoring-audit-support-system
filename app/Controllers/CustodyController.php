@@ -139,8 +139,7 @@ class CustodyController {
             'asset_id' => (int)$_POST['asset_id'],
             'custodian_id' => (int)$_POST['custodian_id'],
             'office_id' => (int)$_POST['office_id'],
-            'accountability_document' => trim($_POST['accountability_document'] ?? ''),
-            'accountability_reference' => trim($_POST['accountability_reference'] ?? ''),
+            'property_number' => trim($_POST['property_number'] ?? ''),
             'effectivity_date' => $_POST['effectivity_date'],
             'status' => $_POST['status'],
         ];
@@ -154,6 +153,7 @@ class CustodyController {
         if (empty($data['custodian_id'])) $errors[] = 'Custodian is required.';
         if (empty($data['office_id'])) $errors[] = 'Office is required.';
         if (empty($data['effectivity_date'])) $errors[] = 'Effectivity date is required.';
+        if ($data['property_number'] === '') $errors[] = 'Property number is required.';
 
         // ===== Salary Grade vs. asset value validation =====
         // Only meaningful when this record is actively assigning a custodian.
@@ -210,8 +210,7 @@ class CustodyController {
                 $data = [
                     'custodian_id' => $record['custodian_id'],
                     'office_id' => $record['office_id'],
-                    'accountability_document' => $record['accountability_document'],
-                    'accountability_reference' => $record['accountability_reference'],
+                    'property_number' => $record['property_number'],
                     'effectivity_date' => $record['effectivity_date'],
                     'end_date' => date('Y-m-d'),
                     'status' => 'inactive'

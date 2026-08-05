@@ -21,13 +21,13 @@ $alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-gre
         <?php endif; ?>
 
         <div class="flex flex-wrap items-center gap-3 mb-4">
-            <div class="flex-1 min-w-[200px]">
+            <div class="flex-1 min-w-50">
                 <form method="GET" action="index.php" class="flex gap-1">
                     <input type="hidden" name="page" value="custody">
                     <input type="hidden" name="sub" value="index">
                     <div class="flex flex-1">
                         <input type="text" class="flex-1 border border-gray-300 rounded-l px-3 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="search" 
-                               placeholder="Search by custodian, asset code, description, office, or document..." 
+                               placeholder="Search by custodian, asset code, description, office, or property number..." 
                                value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                         <button class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-r hover:bg-green-700" type="submit">
                             <i class="bi bi-search"></i> Search
@@ -55,7 +55,7 @@ $alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-gre
                         <th class="px-4 py-2 border-b text-left font-medium">Effectivity</th>
                         <th class="px-4 py-2 border-b text-left font-medium">End Date</th>
                         <th class="px-4 py-2 border-b text-left font-medium">Status</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Doc Ref</th>
+                        <th class="px-4 py-2 border-b text-left font-medium">Property No.</th>
                         <th class="px-4 py-2 border-b text-center font-medium">Actions</th>
                     </tr>
                 </thead>
@@ -71,7 +71,7 @@ $alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-gre
                                 <td class="px-4 py-2"><?= htmlspecialchars($r['effectivity_date']) ?></td>
                                 <td class="px-4 py-2"><?= htmlspecialchars($r['end_date'] ?? '—') ?></td>
                                 <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $r['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' ?>"><?= $r['status'] ?></span></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($r['accountability_document'] ?? '') ?></td>
+                                <td class="px-4 py-2"><?= htmlspecialchars($r['property_number'] ?? '') ?></td>
                                 <td class="px-4 py-2 text-center whitespace-nowrap">
                                     <a href="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>" class="px-2 py-1 text-yellow-600 border border-yellow-300 rounded hover:bg-yellow-50 text-xs"><i class="bi bi-pencil"></i></a>
                                     <a href="index.php?page=custody&sub=delete&id=<?= $r['asset_custodies_id'] ?>" class="px-2 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50 text-xs" onclick="return confirm('End this custody record?')"><i class="bi bi-x-circle"></i></a>

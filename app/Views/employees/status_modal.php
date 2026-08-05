@@ -11,7 +11,7 @@
             <div class="px-6 py-4">
                 <p class="text-sm text-gray-600 mb-3">Employee: <strong id="statusEmployeeName"></strong></p>
 
-                <div id="statusAssetWarning" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded mb-4 flex items-start gap-2">
+                <div id="statusAssetWarning" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded mb-4 items-start gap-2">
                     <i class="bi bi-exclamation-triangle text-yellow-600 mt-0.5"></i>
                     <div>
                         This employee currently has <strong id="statusAssetCount">0</strong> asset(s) under active custody.

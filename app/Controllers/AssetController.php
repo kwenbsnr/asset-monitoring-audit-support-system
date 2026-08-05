@@ -188,7 +188,7 @@ class AssetController {
         }
 
         // ===== Acquisition date validation =====
-        // Reject malformed or nonsensical dates
+        // Reject malformed or nonsensical dates (e.g. a 3-digit/typo year like "004")
         // instead of silently passing them to MySQL as NULL or a garbage DATE value.
         if (!empty($_POST['acquisition_date'])) {
             $rawDate = trim($_POST['acquisition_date']);
@@ -277,8 +277,7 @@ class AssetController {
                 $custodyModel->update($existing['asset_custodies_id'], [
                     'custodian_id' => $existing['custodian_id'],
                     'office_id' => $existing['office_id'],
-                    'accountability_document' => $existing['accountability_document'],
-                    'accountability_reference' => $existing['accountability_reference'],
+                    'property_number' => $existing['property_number'],
                     'effectivity_date' => $existing['effectivity_date'],
                     'end_date' => date('Y-m-d'),
                     'status' => 'inactive'
@@ -298,14 +297,11 @@ class AssetController {
             }
 
             // Create new custody
-            // NOTE: 'accountability_document' is intentionally left null here — it is no
-            // longer collected on the asset registration form 
             $custodyData = [
                 'asset_id' => $id,
                 'custodian_id' => $newCustodianId,
                 'office_id' => $newOfficeId,
-                'accountability_document' => null,
-                'accountability_reference' => $propertyNumber,
+                'property_number' => $propertyNumber,
                 'effectivity_date' => $effectivityDate,
                 'status' => 'active'
             ];
@@ -656,8 +652,7 @@ class AssetController {
                 $custodyModel->update($existing['asset_custodies_id'], [
                     'custodian_id' => $existing['custodian_id'],
                     'office_id' => $existing['office_id'],
-                    'accountability_document' => $existing['accountability_document'],
-                    'accountability_reference' => $existing['accountability_reference'],
+                    'property_number' => $existing['property_number'],
                     'effectivity_date' => $existing['effectivity_date'],
                     'end_date' => date('Y-m-d'),
                     'status' => 'inactive'
@@ -667,8 +662,7 @@ class AssetController {
                     'asset_id' => $assetId,
                     'custodian_id' => $data['custodian_id'],
                     'office_id' => $data['office_id'],
-                    'accountability_document' => 'INSPECTION',
-                    'accountability_reference' => 'TRANSFER-' . date('Ymd'),
+                    'property_number' => 'TRANSFER-' . date('Ymd'),
                     'effectivity_date' => date('Y-m-d'),
                     'status' => 'active'
                 ];
@@ -679,8 +673,7 @@ class AssetController {
                     'asset_id' => $assetId,
                     'custodian_id' => $data['custodian_id'],
                     'office_id' => $data['office_id'],
-                    'accountability_document' => 'INSPECTION',
-                    'accountability_reference' => 'ASSIGN-' . date('Ymd'),
+                    'property_number' => 'ASSIGN-' . date('Ymd'),
                     'effectivity_date' => date('Y-m-d'),
                     'status' => 'active'
                 ];
