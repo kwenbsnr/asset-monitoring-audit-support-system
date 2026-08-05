@@ -88,7 +88,9 @@ $assetId = $asset['asset_id'] ?? 0;
                         <div>
                             <label for="acquisition_date" class="block text-sm font-medium text-gray-700">Acquisition Date</label>
                             <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="acquisition_date" name="acquisition_date"
-                                   value="<?= htmlspecialchars($data['acquisition_date'] ?? '') ?>">
+                                   value="<?= htmlspecialchars($data['acquisition_date'] ?? '') ?>"
+                                   min="1990-01-01" max="<?= date('Y-m-d') ?>">
+                            <p class="text-xs text-gray-500 mt-1" id="dateWarning"></p>
                         </div>
                     </div>
 
@@ -137,8 +139,11 @@ $assetId = $asset['asset_id'] ?? 0;
                         <div id="custodianSection" style="<?= (isset($data['assign_custodian']) && $data['assign_custodian'] == '1') ? 'display:block;' : 'display:none;' ?>">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label for="custodian_id" class="block text-sm font-medium text-gray-700">Custodian</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="custodian_id" name="custodian_id">
+                                    <label for="custodianSearch" class="block text-sm font-medium text-gray-700">Custodian</label>
+                                    <input type="text" id="custodianSearch" autocomplete="off"
+                                           class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                           placeholder="Type a name to filter…">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="custodian_id" name="custodian_id" size="5">
                                         <option value="">Select Custodian</option>
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>" 
@@ -168,15 +173,10 @@ $assetId = $asset['asset_id'] ?? 0;
                                     <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="effectivity_date" name="effectivity_date" 
                                         value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>">
                                 </div>
-                                <div>
-                                    <label for="accountability_document" class="block text-sm font-medium text-gray-700">Accountability Document</label>
-                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="accountability_document" name="accountability_document" 
-                                        value="<?= htmlspecialchars($data['accountability_document'] ?? '') ?>" placeholder="e.g., PAR, ICS">
-                                </div>
                                 <div class="md:col-span-2">
-                                    <label for="accountability_reference" class="block text-sm font-medium text-gray-700">Reference Number</label>
-                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="accountability_reference" name="accountability_reference" 
-                                        value="<?= htmlspecialchars($data['accountability_reference'] ?? '') ?>">
+                                    <label for="property_number" class="block text-sm font-medium text-gray-700">Property Number *</label>
+                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="property_number" name="property_number" 
+                                        value="<?= htmlspecialchars($data['property_number'] ?? '') ?>">
                                 </div>
                             </div>
                         </div>
@@ -239,14 +239,41 @@ $assetId = $asset['asset_id'] ?? 0;
 document.addEventListener('DOMContentLoaded', function() {
     const toggle = document.getElementById('assignCustodianToggle');
     const section = document.getElementById('custodianSection');
+    const propertyNumberInput = document.getElementById('property_number');
+
+    function syncCustodianRequirement() {
+        const on = toggle.checked;
+        section.style.display = on ? 'block' : 'none';
+        if (propertyNumberInput) {
+            propertyNumberInput.required = on;
+        }
+    }
     if (toggle) {
-        toggle.addEventListener('change', function() {
-            section.style.display = this.checked ? 'block' : 'none';
+        toggle.addEventListener('change', syncCustodianRequirement);
+        syncCustodianRequirement(); // set correct state on load (e.g. after a validation error re-render)
+    }
+
+    // ===== Acquisition date sanity check (client-side heads-up; server-side is authoritative) =====
+    const acquisitionDateInput = document.getElementById('acquisition_date');
+    const dateWarning = document.getElementById('dateWarning');
+    if (acquisitionDateInput && dateWarning) {
+        acquisitionDateInput.addEventListener('input', function() {
+            if (!this.value) { dateWarning.textContent = ''; return; }
+            const year = parseInt(this.value.split('-')[0], 10);
+            const currentYear = new Date().getFullYear();
+            if (year < 1990 || year > currentYear) {
+                dateWarning.textContent = 'Year must be between 1990 and ' + currentYear + '.';
+                dateWarning.classList.add('text-red-600');
+            } else {
+                dateWarning.textContent = '';
+                dateWarning.classList.remove('text-red-600');
+            }
         });
     }
 
     // Office ↔ Custodian auto-fill
     const custodianSelect = document.getElementById('custodian_id');
+    const custodianSearch = document.getElementById('custodianSearch');
     const officeSelect = document.getElementById('office_id');
     const acquisitionCostInput = document.getElementById('acquisition_cost');
     const sgWarning = document.getElementById('sgWarning');
@@ -291,38 +318,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (custodianSelect && officeSelect) {
-        const allOptions = Array.from(custodianSelect.options);
-        function filterCustodians(officeId) {
+        const allOptions = Array.from(custodianSelect.options).filter(o => o.value !== '');
+
+        // Renders custodian_id's <option> list from allOptions, keeping only those
+        // that match BOTH the selected office (if any) and the typed search text (if any).
+        function renderCustodians(officeId, searchText) {
+            const currentValue = custodianSelect.value;
             custodianSelect.innerHTML = '';
             const placeholder = document.createElement('option');
             placeholder.value = '';
             placeholder.textContent = 'Select Custodian';
             custodianSelect.appendChild(placeholder);
+
+            const term = (searchText || '').trim().toLowerCase();
             allOptions.forEach(opt => {
-                if (opt.value === '') return;
                 const optOffice = opt.getAttribute('data-office-id');
-                if (officeId === '' || optOffice == officeId) {
+                const matchesOffice = (officeId === '' || optOffice == officeId);
+                const matchesSearch = (term === '' || opt.textContent.toLowerCase().includes(term));
+                if (matchesOffice && matchesSearch) {
                     const newOpt = document.createElement('option');
                     newOpt.value = opt.value;
                     newOpt.textContent = opt.textContent;
                     newOpt.setAttribute('data-office-id', optOffice);
                     newOpt.setAttribute('data-salary-grade', opt.getAttribute('data-salary-grade'));
-                    if (opt.selected) newOpt.selected = true;
+                    if (opt.value === currentValue) newOpt.selected = true;
                     custodianSelect.appendChild(newOpt);
                 }
             });
             checkSgThreshold();
         }
+
         officeSelect.addEventListener('change', function() {
-            filterCustodians(this.value);
+            renderCustodians(this.value, custodianSearch ? custodianSearch.value : '');
         });
+        if (custodianSearch) {
+            custodianSearch.addEventListener('input', function() {
+                renderCustodians(officeSelect.value, this.value);
+            });
+        }
         custodianSelect.addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
             if (selected && selected.value) {
                 const officeId = selected.getAttribute('data-office-id');
                 if (officeId) {
                     officeSelect.value = officeId;
-                    filterCustodians(officeId);
+                    renderCustodians(officeId, custodianSearch ? custodianSearch.value : '');
                 }
             }
             checkSgThreshold();
@@ -330,8 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (acquisitionCostInput) {
             acquisitionCostInput.addEventListener('input', checkSgThreshold);
         }
-        if (officeSelect.value) filterCustodians(officeSelect.value);
-        checkSgThreshold();
+        renderCustodians(officeSelect.value, '');
     }
 });
 </script>

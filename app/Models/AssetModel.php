@@ -506,8 +506,7 @@ class AssetModel {
                 p.full_name AS custodian_name,
                 p.position,
                 o.name AS office_name,
-                ac.accountability_document,
-                ac.accountability_reference
+                ac.property_number
             FROM asset_custodies ac
             LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
             LEFT JOIN offices o ON ac.office_id = o.office_id

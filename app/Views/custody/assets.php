@@ -31,7 +31,7 @@ $alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-gre
                         <th class="px-4 py-2 border-b text-left font-medium">Status</th>
                         <th class="px-4 py-2 border-b text-left font-medium">Condition</th>
                         <th class="px-4 py-2 border-b text-left font-medium">Effectivity</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Doc Ref</th>
+                        <th class="px-4 py-2 border-b text-left font-medium">Property No.</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,7 +47,7 @@ $alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-gre
                                 <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $a['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' ?>"><?= $a['status'] ?></span></td>
                                 <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $a['condition'] === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>"><?= $a['condition'] ?></span></td>
                                 <td class="px-4 py-2"><?= htmlspecialchars($a['effectivity_date']) ?></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($a['accountability_document'] ?? '') ?></td>
+                                <td class="px-4 py-2"><?= htmlspecialchars($a['property_number'] ?? '') ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

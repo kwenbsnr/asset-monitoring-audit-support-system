@@ -7,14 +7,14 @@
                 <i class="bi bi-qr-code-scan"></i> Find Asset
             </h5>
             <div class="flex flex-col items-center">
-                <div class="relative w-full max-w-[350px] aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
+                <div class="relative w-full max-w-87.5 aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
                     <div id="reader" class="w-full h-full"></div>
                     <div id="scanner-frame" class="absolute inset-0 pointer-events-none scanner-frame-idle">
                         <div id="scanner-line" class="scanner-line"></div>
                         <div id="scanner-checkmark" class="scanner-checkmark hidden">✓</div>
                     </div>
                 </div>
-                <div class="mt-4 w-full max-w-[350px] space-y-2">
+                <div class="mt-4 w-full max-w-87.5 space-y-2">
                     <button id="startScannerBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">
                         <i class="bi bi-camera"></i> Tap to scan QR code
                     </button>
@@ -26,8 +26,8 @@
                     </button>
                     <p class="text-xs text-gray-500 text-center"><i class="bi bi-info-circle"></i> Point the camera at an asset QR label.</p>
                 </div>
-                <hr class="my-4 w-full max-w-[350px] border-gray-300">
-                <div class="w-full max-w-[350px]">
+                <hr class="my-4 w-full max-w-87.5 border-gray-300">
+                <div class="w-full max-w-87.5">
                     <div class="text-xs text-gray-500 text-center mb-1">— or search manually —</div>
                     <div class="flex">
                         <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l px-3 py-2 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" placeholder="Asset code, serial number, or description...">
@@ -209,7 +209,7 @@ window.showAssetProfile = function(data) {
     if (custody.length === 0) {
         custodyTable.innerHTML = '<p class="text-gray-500 text-sm">No custody records found.</p>';
     } else {
-        let tableHtml = '<table class="w-full text-sm border border-gray-200"><thead class="bg-gray-100"><tr><th class="px-2 py-1 border">From</th><th class="px-2 py-1 border">To</th><th class="px-2 py-1 border">Custodian</th><th class="px-2 py-1 border">Office</th><th class="px-2 py-1 border">Status</th><th class="px-2 py-1 border">Document</th></tr></thead><tbody>';
+        let tableHtml = '<table class="w-full text-sm border border-gray-200"><thead class="bg-gray-100"><tr><th class="px-2 py-1 border">From</th><th class="px-2 py-1 border">To</th><th class="px-2 py-1 border">Custodian</th><th class="px-2 py-1 border">Office</th><th class="px-2 py-1 border">Status</th><th class="px-2 py-1 border">Property No.</th></tr></thead><tbody>';
         custody.forEach(c => {
             tableHtml += `<tr>
                 <td class="px-2 py-1 border">${c.effectivity_date || 'N/A'}</td>
@@ -217,7 +217,7 @@ window.showAssetProfile = function(data) {
                 <td class="px-2 py-1 border">${escapeHtml(c.custodian_name)} <br><span class="text-xs text-gray-500">${escapeHtml(c.position || '')}</span></td>
                 <td class="px-2 py-1 border">${escapeHtml(c.office_name)}</td>
                 <td class="px-2 py-1 border"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.custody_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${c.custody_status}</span></td>
-                <td class="px-2 py-1 border">${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><span class="text-xs text-gray-500">Ref: ' + escapeHtml(c.accountability_reference) + '</span>' : ''}</td>
+                <td class="px-2 py-1 border">${escapeHtml(c.property_number || '')}</td>
             </tr>`;
         });
         tableHtml += '</tbody></table>';
