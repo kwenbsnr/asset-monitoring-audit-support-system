@@ -39,6 +39,7 @@ $assetId = $asset['asset_id'] ?? 0;
                                 <option value="">Select Account</option>
                                 <?php foreach ($accounts as $acc): ?>
                                     <option value="<?= $acc['asset_accounts_id'] ?>"
+                                        data-code="<?= htmlspecialchars($acc['account_code']) ?>"
                                         <?= (isset($data['asset_accounts_id']) && $data['asset_accounts_id'] == $acc['asset_accounts_id']) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($acc['account_code'] . ' - ' . $acc['account_name']) ?>
                                     </option>
@@ -51,6 +52,7 @@ $assetId = $asset['asset_id'] ?? 0;
                         <label for="asset_name" class="block text-sm font-medium text-gray-700">Asset Name *</label>
                         <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_name" name="asset_name"
                                value="<?= htmlspecialchars($data['asset_name'] ?? '') ?>" required>
+                        <p class="mt-1 text-xs text-gray-500" id="accountSuggestionHint"></p>
                     </div>
 
                     <div class="mt-4">
@@ -89,7 +91,7 @@ $assetId = $asset['asset_id'] ?? 0;
                             <label for="acquisition_date" class="block text-sm font-medium text-gray-700">Acquisition Date</label>
                             <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="acquisition_date" name="acquisition_date"
                                    value="<?= htmlspecialchars($data['acquisition_date'] ?? '') ?>"
-                                   min="1990-01-01" max="<?= date('Y-m-d') ?>">
+                                   min="1990-01-01" max="<?= \date('Y-m-d') ?>">
                             <p class="text-xs text-gray-500 mt-1" id="dateWarning"></p>
                         </div>
                     </div>
@@ -171,7 +173,7 @@ $assetId = $asset['asset_id'] ?? 0;
                                 <div>
                                     <label for="effectivity_date" class="block text-sm font-medium text-gray-700">Effectivity Date</label>
                                     <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="effectivity_date" name="effectivity_date" 
-                                        value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>">
+                                        value="<?= htmlspecialchars($data['effectivity_date'] ?? \date('Y-m-d')) ?>">
                                 </div>
                                 <div class="md:col-span-2">
                                     <label for="property_number" class="block text-sm font-medium text-gray-700">Property Number *</label>
@@ -374,3 +376,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script src="public/js/asset-account-suggest.js"></script>
