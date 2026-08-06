@@ -208,7 +208,8 @@ $assetId = $asset['asset_id'] ?? 0;
                     <button class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="window.open('index.php?page=assets&sub=qr&id=<?= $assetId ?>&download=1')">
                         <i class="bi bi-download"></i> Download PNG
                     </button>
-                    <button class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" onclick="printQR(<?= $assetId ?>)">
+                    <button class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            onclick="printQR(<?= $assetId ?>, <?= json_encode($asset['asset_name'] ?? '') ?>, <?= json_encode($asset['asset_code'] ?? '') ?>, <?= json_encode($asset['serial_number'] ?? '') ?>, <?= json_encode($asset['brand'] ?? '') ?>, <?= json_encode($asset['model'] ?? '') ?>)">
                         <i class="bi bi-printer"></i> Print QR Label
                     </button>
                 </div>
@@ -223,14 +224,50 @@ $assetId = $asset['asset_id'] ?? 0;
 </div>
 
 <script>
-    function printQR(assetId) {
+    function printQR(assetId, assetName, assetCode, serialNumber, brand, model) {
+        function esc(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        let infoRows = '';
+        infoRows += '<div><span class="field-label">Code:</span> ' + esc(assetCode) + '</div>';
+        if (serialNumber) {
+            infoRows += '<div><span class="field-label">Serial No:</span> ' + esc(serialNumber) + '</div>';
+        }
+        const brandModel = [brand, model].filter(Boolean).join(' ').trim();
+        if (brandModel) {
+            infoRows += '<div><span class="field-label">Brand/Model:</span> ' + esc(brandModel) + '</div>';
+        }
+
         var win = window.open('', '_blank');
         win.document.write('<!DOCTYPE html><html><head><title>QR Label</title>');
-        win.document.write('<style>body { text-align: center; margin-top: 50px; } img { max-width: 300px; }</style>');
+        win.document.write('<style>');
+        win.document.write('body { font-family: Arial, sans-serif; padding: 30px; }');
+        win.document.write('.header { text-align: center; margin-bottom: 20px; }');
+        win.document.write('.qr-item { display: flex; align-items: stretch; gap: 14px; border: 1px solid #ccc; border-radius: 5px; padding: 14px; max-width: 420px; margin: 0 auto; }');
+        win.document.write('.qr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; font-size: 12px; line-height: 1.5; }');
+        win.document.write('.qr-info .asset-name { font-size: 15px; font-weight: bold; word-break: break-word; margin-bottom: 4px; }');
+        win.document.write('.qr-info .field-label { color: #666; font-weight: bold; }');
+        win.document.write('.qr-info .fallback-note { margin-top: 6px; font-size: 10.5px; font-style: italic; color: #888; }');
+        win.document.write('.qr-code-wrap { flex-shrink: 0; width: 130px; text-align: center; }');
+        win.document.write('.qr-code-wrap img { width: 120px; height: 120px; }');
+        win.document.write('.qr-code-wrap .code { font-size: 11px; font-weight: bold; margin-top: 4px; word-break: break-word; }');
+        win.document.write('</style>');
         win.document.write('</head><body>');
-        win.document.write('<h3>NIA Regional Office IX</h3>');
-        win.document.write('<p>Asset QR Code</p>');
-        win.document.write('<img src="index.php?page=assets&sub=qr&id=' + assetId + '">');
+        win.document.write('<div class="header"><h3>NIA Regional Office IX</h3><p>Asset QR Label</p></div>');
+        win.document.write('<div class="qr-item">');
+        win.document.write('<div class="qr-info">');
+        win.document.write('<div class="asset-name">' + esc(assetName || 'N/A') + '</div>');
+        win.document.write(infoRows);
+        win.document.write('<div class="fallback-note">If QR unreadable, search by Code or Serial No. in the system.</div>');
+        win.document.write('</div>');
+        win.document.write('<div class="qr-code-wrap">');
+        win.document.write('<img src="index.php?page=assets&sub=qr&id=' + assetId + '" alt="QR">');
+        win.document.write('<div class="code">' + esc(assetCode) + '</div>');
+        win.document.write('</div>');
+        win.document.write('</div>');
         win.document.write('</body></html>');
         win.document.close();
         win.onload = function() { win.print(); };

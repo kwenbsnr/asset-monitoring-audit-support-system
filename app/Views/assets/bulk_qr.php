@@ -7,13 +7,59 @@
     <link href="/asset-monitoring-audit-support-system/public/css/output.css" rel="stylesheet">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
-        .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        .qr-item { text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
-        .qr-item img { max-width: 150px; height: auto; }
-        .qr-item .code { font-size: 12px; margin-top: 5px; }
+        .qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .qr-item {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .qr-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .qr-info .asset-name {
+            font-size: 13px;
+            font-weight: bold;
+            word-break: break-word;
+            margin-bottom: 3px;
+        }
+        .qr-info .field-label {
+            color: #666;
+            font-weight: bold;
+        }
+        .qr-info .fallback-note {
+            margin-top: 4px;
+            font-size: 9.5px;
+            font-style: italic;
+            color: #888;
+        }
+        .qr-code-wrap {
+            flex-shrink: 0;
+            width: 110px;
+            text-align: center;
+        }
+        .qr-code-wrap img {
+            width: 100px;
+            height: 100px;
+        }
+        .qr-code-wrap .code {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 2px;
+            word-break: break-word;
+        }
         @media print {
             .no-print { display: none; }
-            .qr-grid { grid-template-columns: repeat(4, 1fr); }
+            .qr-grid { grid-template-columns: repeat(3, 1fr); }
+            .qr-item { break-inside: avoid; }
         }
     </style>
 </head>
@@ -26,8 +72,21 @@
     <div class="qr-grid">
         <?php foreach ($assets as $asset): ?>
             <div class="qr-item">
-                <img src="index.php?page=assets&sub=qr&id=<?= $asset['asset_id'] ?>" alt="QR">
-                <div class="code"><strong><?= htmlspecialchars($asset['asset_code']) ?></strong><br><?= htmlspecialchars($asset['asset_name']) ?></div>
+                <div class="qr-info">
+                    <div class="asset-name"><?= htmlspecialchars($asset['asset_name'] ?? 'N/A') ?></div>
+                    <div><span class="field-label">Code:</span> <?= htmlspecialchars($asset['asset_code']) ?></div>
+                    <?php if (!empty($asset['serial_number'])): ?>
+                        <div><span class="field-label">Serial No:</span> <?= htmlspecialchars($asset['serial_number']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($asset['brand']) || !empty($asset['model'])): ?>
+                        <div><span class="field-label">Brand/Model:</span> <?= htmlspecialchars(trim(($asset['brand'] ?? '') . ' ' . ($asset['model'] ?? ''))) ?></div>
+                    <?php endif; ?>
+                    <div class="fallback-note">If QR unreadable, search by Code or Serial No. in the system.</div>
+                </div>
+                <div class="qr-code-wrap">
+                    <img src="index.php?page=assets&sub=qr&id=<?= $asset['asset_id'] ?>" alt="QR">
+                    <div class="code"><?= htmlspecialchars($asset['asset_code']) ?></div>
+                </div>
             </div>
         <?php endforeach; ?>
     </div>
