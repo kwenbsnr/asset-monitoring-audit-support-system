@@ -2,36 +2,36 @@
 <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
     <!-- LEFT -->
     <div class="md:col-span-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full p-4">
-            <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4 flex items-center gap-2">
-                <i class="bi bi-qr-code-scan"></i> Find Asset
+        <div class="card-panel h-full p-4">
+            <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-3 mb-4 flex items-center gap-2">
+                <span class="page-icon" style="width:30px;height:30px;font-size:0.85rem;"><i class="bi bi-qr-code-scan"></i></span> Find Asset
             </h5>
             <div class="flex flex-col items-center">
-                <div class="relative w-full max-w-[350px] aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
+                <div class="relative w-full max-w-87.5 aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
                     <div id="reader" class="w-full h-full"></div>
                     <div id="scanner-frame" class="absolute inset-0 pointer-events-none scanner-frame-idle">
                         <div id="scanner-line" class="scanner-line"></div>
                         <div id="scanner-checkmark" class="scanner-checkmark hidden">✓</div>
                     </div>
                 </div>
-                <div class="mt-4 w-full max-w-[350px] space-y-2">
-                    <button id="startScannerBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">
+                <div class="mt-4 w-full max-w-87.5 space-y-2">
+                    <button id="startScannerBtn" class="w-full btn-app btn-app-primary hidden">
                         <i class="bi bi-camera"></i> Tap to scan QR code
                     </button>
-                    <button id="stopScannerBtn" class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 hidden">
+                    <button id="stopScannerBtn" class="w-full btn-app btn-app-danger hidden">
                         <i class="bi bi-stop-circle"></i> Stop Camera
                     </button>
-                    <button id="switchCameraBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 hidden">
+                    <button id="switchCameraBtn" class="w-full btn-app btn-app-outline hidden">
                         <i class="bi bi-arrow-repeat"></i> Switch Camera
                     </button>
                     <p class="text-xs text-gray-500 text-center"><i class="bi bi-info-circle"></i> Point the camera at an asset QR label.</p>
                 </div>
-                <hr class="my-4 w-full max-w-[350px] border-gray-300">
-                <div class="w-full max-w-[350px]">
+                <hr class="my-4 w-full max-w-87.5 border-gray-300">
+                <div class="w-full max-w-87.5">
                     <div class="text-xs text-gray-500 text-center mb-1">— or search manually —</div>
                     <div class="flex">
-                        <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l px-3 py-2 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" placeholder="Asset code, serial number, or description...">
-                        <button id="manualSearchBtn" class="px-4 py-2 bg-blue-600 text-white rounded-r hover:bg-blue-700">
+                        <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" placeholder="Asset code, serial number, or description...">
+                        <button id="manualSearchBtn" class="btn-app btn-app-primary" style="border-radius:0 8px 8px 0;">
                             <i class="bi bi-search"></i> Search
                         </button>
                     </div>
@@ -43,12 +43,13 @@
 
     <!-- RIGHT -->
     <div class="md:col-span-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-            <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                <h5 class="font-bold text-gray-800 flex items-center gap-2">
-                    <i class="bi bi-file-earmark-text"></i> Asset Verification
-                </h5>
-                <button id="scanAnotherBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 hidden">
+        <div class="card-panel h-full flex flex-col">
+            <div class="card-panel-header">
+                <div class="flex items-center gap-3">
+                    <span class="page-icon"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="page-title">Asset Verification</span>
+                </div>
+                <button id="scanAnotherBtn" class="btn-app btn-app-sm btn-app-outline hidden">
                     <i class="bi bi-arrow-counterclockwise"></i> Scan Another Asset
                 </button>
             </div>
@@ -64,10 +65,10 @@
                         <h6 class="font-semibold text-gray-800 border-b pb-2 mb-3">Asset Information (View‑only)</h6>
                         <div id="assetInfo" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm mb-4"></div>
                         <div id="actionButtons" class="flex gap-2 mb-4">
-                            <button type="submit" name="mark_verified" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                            <button type="submit" name="mark_verified" class="btn-app btn-app-primary">
                                 <i class="bi bi-check-circle"></i> Mark as Verified
                             </button>
-                            <button type="button" id="showUpdateBtn" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                            <button type="button" id="showUpdateBtn" class="btn-app btn-app-gold">
                                 <i class="bi bi-pencil"></i> Update Asset Details
                             </button>
                         </div>
@@ -76,7 +77,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                                 <div>
                                     <label for="condition" class="block text-sm font-medium text-gray-700">Condition</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="condition" name="condition">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="condition" name="condition">
                                         <option value="good">Good</option>
                                         <option value="fair">Fair</option>
                                         <option value="poor">Poor</option>
@@ -86,7 +87,7 @@
                                 </div>
                                 <div>
                                     <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="status" name="status">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="status" name="status">
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
                                         <option value="missing">Missing</option>
@@ -95,7 +96,7 @@
                                 </div>
                                 <div>
                                     <label for="verification_status" class="block text-sm font-medium text-gray-700">Verification Status</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="verification_status" name="verification_status">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="verification_status" name="verification_status">
                                         <option value="pending">Pending</option>
                                         <option value="verified">Verified</option>
                                         <option value="discrepancy">Discrepancy</option>
@@ -103,7 +104,7 @@
                                 </div>
                                 <div>
                                     <label for="custodian_id" class="block text-sm font-medium text-gray-700">Accountable Custodian</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="custodian_id" name="custodian_id">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="custodian_id" name="custodian_id">
                                         <option value="">Select Custodian</option>
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>"><?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?></option>
@@ -112,7 +113,7 @@
                                 </div>
                                 <div>
                                     <label for="office_id" class="block text-sm font-medium text-gray-700">Office</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="office_id" name="office_id">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="office_id" name="office_id">
                                         <option value="">Select Office</option>
                                         <?php foreach ($offices as $o): ?>
                                             <option value="<?= $o['office_id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
@@ -121,14 +122,14 @@
                                 </div>
                                 <div class="md:col-span-2">
                                     <label for="inspection_remarks" class="block text-sm font-medium text-gray-700">Inspection Remarks</label>
-                                    <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
+                                    <textarea class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
                                 </div>
                             </div>
                             <div class="flex gap-2 mt-4">
-                                <button type="submit" name="update_asset" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                <button type="submit" name="update_asset" class="btn-app btn-app-primary">
                                     <i class="bi bi-save"></i> Save Updates
                                 </button>
-                                <button type="button" id="cancelUpdateBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                                <button type="button" id="cancelUpdateBtn" class="btn-app btn-app-outline">Cancel</button>
                             </div>
                         </div>
                     </form>
@@ -160,21 +161,21 @@ window.showAssetProfile = function(data) {
     // Populate view-only fields
     const infoDiv = document.getElementById('assetInfo');
     infoDiv.innerHTML = `
-        <div class="col-md-4"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
-        <div class="col-md-4"><strong>Property Number:</strong> ${escapeHtml(asset.asset_code)}</div>
-        <div class="col-md-4"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
-        <div class="col-md-4"><strong>Description:</strong> ${escapeHtml(asset.description || 'N/A')}</div>
-        <div class="col-md-4"><strong>Classification:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
-        <div class="col-md-4"><strong>Account Code:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
-        <div class="col-md-3"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
-        <div class="col-md-3"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
-        <div class="col-md-3"><strong>Serial Number:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
-        <div class="col-md-3"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
-        <div class="col-md-3"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
-        <div class="col-md-3"><strong>Supplier:</strong> N/A</div>
-        <div class="col-md-3"><strong>Funding Source:</strong> N/A</div>
-        <div class="col-md-3"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
-        <div class="col-md-3"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
+        <div><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
+        <div><strong>Property Number:</strong> ${escapeHtml(asset.asset_code)}</div>
+        <div><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
+        <div><strong>Description:</strong> ${escapeHtml(asset.description || 'N/A')}</div>
+        <div><strong>Classification:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
+        <div><strong>Account Code:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
+        <div><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
+        <div><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
+        <div><strong>Serial Number:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
+        <div><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
+        <div><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
+        <div><strong>Supplier:</strong> N/A</div>
+        <div><strong>Funding Source:</strong> N/A</div>
+        <div><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
+        <div><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
     `;
 
     // Populate editable fields (hidden initially)

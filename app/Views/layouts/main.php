@@ -26,14 +26,10 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
 <!-- Toast container -->
 <div class="fixed top-4 right-4 z-1100 flex flex-col gap-2" id="toastContainer">
     <?php if (isset($_SESSION['flash'])): ?>
-        <div class="flex items-center p-4 rounded-lg shadow-lg text-white 
-             <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'bg-green-600' : 'bg-red-600' ?> 
-             border-0 max-w-sm">
-            <div class="flex-1 text-sm font-medium">
-                <?= htmlspecialchars($_SESSION['flash']) ?>
-            </div>
-            <button type="button" class="ml-4 text-white hover:text-gray-200 text-xl leading-none" 
-                    onclick="this.parentElement.remove()">
+        <div class="toast-app <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'toast-app-success' : 'toast-app-danger' ?>">
+            <i class="bi <?= ($_SESSION['flash_type'] ?? 'success') === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' ?> toast-app-icon"></i>
+            <div class="toast-app-msg"><?= htmlspecialchars($_SESSION['flash']) ?></div>
+            <button type="button" class="toast-app-close" onclick="this.closest('.toast-app').remove()">
                 &times;
             </button>
         </div>
@@ -133,9 +129,9 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
 
     <!-- Main content -->
     <div class="flex-1 flex flex-col overflow-y-auto bg-gray-50">
-        <div class="md:hidden p-4 bg-white shadow-sm flex items-center gap-3">
-            <button id="sidebarToggle" class="text-2xl text-gray-700 hover:text-blue-600">
-                <i class="bi bi-list"></i>
+        <div class="md:hidden px-4 py-3 bg-white border-b border-gray-200 flex items-center gap-3">
+            <button id="sidebarToggle" class="btn-app btn-app-icon btn-app-ghost">
+                <i class="bi bi-list text-xl"></i>
             </button>
             <span class="font-semibold text-gray-800">NIA Asset System</span>
         </div>
@@ -146,6 +142,7 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
     </div>
 </div>
 
+<script src="/asset-monitoring-audit-support-system/public/js/modal.js"></script>
 <script src="/asset-monitoring-audit-support-system/public/js/scanner.js"></script>
 
 <script>
@@ -159,10 +156,11 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
             });
         }
 
-        const toasts = document.querySelectorAll('#toastContainer > div');
-        toasts.forEach(toast => {
+        document.querySelectorAll('#toastContainer > .toast-app').forEach(toast => {
             setTimeout(() => {
-                if (toast) toast.remove();
+                if (!toast) return;
+                toast.classList.add('is-leaving');
+                setTimeout(() => toast.remove(), 180);
             }, 4000);
         });
     });

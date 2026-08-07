@@ -2,9 +2,9 @@
 <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
     <!-- LEFT: Scanner / Search -->
     <div class="md:col-span-4">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full p-4">
-            <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4 flex items-center gap-2">
-                <i class="bi bi-qr-code-scan"></i> Find Asset
+        <div class="card-panel h-full p-4">
+            <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-3 mb-4 flex items-center gap-2">
+                <span class="page-icon" style="width:30px;height:30px;font-size:0.85rem;"><i class="bi bi-qr-code-scan"></i></span> Find Asset
             </h5>
             <div class="flex flex-col items-center">
                 <div class="relative w-full max-w-87.5 aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
@@ -15,13 +15,13 @@
                     </div>
                 </div>
                 <div class="mt-4 w-full max-w-87.5 space-y-2">
-                    <button id="startScannerBtn" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 hidden">
+                    <button id="startScannerBtn" class="w-full btn-app btn-app-primary hidden">
                         <i class="bi bi-camera"></i> Tap to scan QR code
                     </button>
-                    <button id="stopScannerBtn" class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 hidden">
+                    <button id="stopScannerBtn" class="w-full btn-app btn-app-danger hidden">
                         <i class="bi bi-stop-circle"></i> Stop Camera
                     </button>
-                    <button id="switchCameraBtn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 hidden">
+                    <button id="switchCameraBtn" class="w-full btn-app btn-app-outline hidden">
                         <i class="bi bi-arrow-repeat"></i> Switch Camera
                     </button>
                     <p class="text-xs text-gray-500 text-center"><i class="bi bi-info-circle"></i> Point the camera at an asset QR label.</p>
@@ -30,8 +30,8 @@
                 <div class="w-full max-w-87.5">
                     <div class="text-xs text-gray-500 text-center mb-1">— or search manually —</div>
                     <div class="flex">
-                        <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l px-3 py-2 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" placeholder="Asset code, serial number, or description...">
-                        <button id="manualSearchBtn" class="px-4 py-2 bg-blue-600 text-white rounded-r hover:bg-blue-700">
+                        <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" placeholder="Asset code, serial number, or description...">
+                        <button id="manualSearchBtn" class="btn-app btn-app-primary" style="border-radius:0 8px 8px 0;">
                             <i class="bi bi-search"></i> Search
                         </button>
                     </div>
@@ -43,12 +43,13 @@
 
     <!-- RIGHT: Asset Profile + Actions -->
     <div class="md:col-span-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-            <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                <h5 class="font-bold text-gray-800 flex items-center gap-2">
-                    <i class="bi bi-file-earmark-text"></i> Asset Verification
-                </h5>
-                <button id="scanAnotherBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 hidden">
+        <div class="card-panel h-full flex flex-col">
+            <div class="card-panel-header">
+                <div class="flex items-center gap-3">
+                    <span class="page-icon"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="page-title">Asset Verification</span>
+                </div>
+                <button id="scanAnotherBtn" class="btn-app btn-app-sm btn-app-outline hidden">
                     <i class="bi bi-arrow-counterclockwise"></i> Scan Another Asset
                 </button>
             </div>
@@ -81,10 +82,10 @@
                         </div>
 
                         <div id="actionButtons" class="flex gap-2 mb-4">
-                            <button type="submit" name="mark_verified" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                            <button type="submit" name="mark_verified" class="btn-app btn-app-primary">
                                 <i class="bi bi-check-circle"></i> Mark as Verified
                             </button>
-                            <button type="button" id="showUpdateBtn" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                            <button type="button" id="showUpdateBtn" class="btn-app btn-app-gold">
                                 <i class="bi bi-pencil"></i> Update Asset Details
                             </button>
                         </div>
@@ -94,7 +95,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                                 <div>
                                     <label for="condition" class="block text-sm font-medium text-gray-700">Condition</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="condition" name="condition">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="condition" name="condition">
                                         <option value="good">Good</option>
                                         <option value="fair">Fair</option>
                                         <option value="poor">Poor</option>
@@ -104,7 +105,7 @@
                                 </div>
                                 <div>
                                     <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="status" name="status">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="status" name="status">
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
                                         <option value="missing">Missing</option>
@@ -113,7 +114,7 @@
                                 </div>
                                 <div>
                                     <label for="verification_status" class="block text-sm font-medium text-gray-700">Verification Status</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="verification_status" name="verification_status">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="verification_status" name="verification_status">
                                         <option value="pending">Pending</option>
                                         <option value="verified">Verified</option>
                                         <option value="discrepancy">Discrepancy</option>
@@ -121,7 +122,7 @@
                                 </div>
                                 <div>
                                     <label for="custodian_id" class="block text-sm font-medium text-gray-700">Accountable Custodian</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="custodian_id" name="custodian_id">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="custodian_id" name="custodian_id">
                                         <option value="">Select Custodian</option>
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>" data-office-id="<?= $p['office_id'] ?>">
@@ -133,14 +134,14 @@
                                 </div>
                                 <div class="md:col-span-2">
                                     <label for="inspection_remarks" class="block text-sm font-medium text-gray-700">Inspection Remarks</label>
-                                    <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
+                                    <textarea class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
                                 </div>
                             </div>
                             <div class="flex gap-2 mt-4">
-                                <button type="submit" name="update_asset" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                <button type="submit" name="update_asset" class="btn-app btn-app-primary">
                                     <i class="bi bi-save"></i> Save Updates
                                 </button>
-                                <button type="button" id="cancelUpdateBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</button>
+                                <button type="button" id="cancelUpdateBtn" class="btn-app btn-app-outline">Cancel</button>
                             </div>
                         </div>
                     </form>
@@ -184,11 +185,11 @@ window.showAssetProfile = function(data) {
         <div class="md:col-span-1"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
         <div class="md:col-span-1"><strong>Supplier:</strong> N/A</div>
         <div class="md:col-span-1"><strong>Funding Source:</strong> N/A</div>
-        <div class="md:col-span-1"><strong>Status:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${asset.status}</span></div>
-        <div class="md:col-span-1"><strong>Condition:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.condition === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${asset.condition}</span></div>
+        <div class="md:col-span-1"><strong>Status:</strong> <span class="badge-app ${asset.status === 'active' ? 'badge-app-success' : 'badge-app-neutral'}">${asset.status}</span></div>
+        <div class="md:col-span-1"><strong>Condition:</strong> <span class="badge-app ${asset.condition === 'good' ? 'badge-app-success' : 'badge-app-warning'}">${asset.condition}</span></div>
         <div class="md:col-span-1"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
         <div class="md:col-span-1"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
-        <div class="md:col-span-1"><strong>Verification Status:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.verification_status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${asset.verification_status || 'pending'}</span></div>
+        <div class="md:col-span-1"><strong>Verification Status:</strong> <span class="badge-app ${asset.verification_status === 'verified' ? 'badge-app-success' : 'badge-app-neutral'}">${asset.verification_status || 'pending'}</span></div>
         <div class="md:col-span-1"><strong>Last Verified:</strong> ${asset.verified_at ? new (window.Date)(asset.verified_at).toLocaleString() : 'Never'}</div>
         <div class="md:col-span-1"><strong>Verified By:</strong> ${asset.verified_by_username || 'N/A'}</div>
     `;
@@ -209,18 +210,18 @@ window.showAssetProfile = function(data) {
     if (custody.length === 0) {
         custodyTable.innerHTML = '<p class="text-gray-500 text-sm">No custody records found.</p>';
     } else {
-        let tableHtml = '<table class="w-full text-sm border border-gray-200"><thead class="bg-gray-100"><tr><th class="px-2 py-1 border">From</th><th class="px-2 py-1 border">To</th><th class="px-2 py-1 border">Custodian</th><th class="px-2 py-1 border">Office</th><th class="px-2 py-1 border">Status</th><th class="px-2 py-1 border">Property No.</th></tr></thead><tbody>';
+        let tableHtml = '<div class="table-app-wrap"><table class="table-app"><thead><tr><th>From</th><th>To</th><th>Custodian</th><th>Office</th><th>Status</th><th>Property No.</th></tr></thead><tbody>';
         custody.forEach(c => {
             tableHtml += `<tr>
-                <td class="px-2 py-1 border">${c.effectivity_date || 'N/A'}</td>
-                <td class="px-2 py-1 border">${c.end_date || 'Current'}</td>
-                <td class="px-2 py-1 border">${escapeHtml(c.custodian_name)} <br><span class="text-xs text-gray-500">${escapeHtml(c.position || '')}</span></td>
-                <td class="px-2 py-1 border">${escapeHtml(c.office_name)}</td>
-                <td class="px-2 py-1 border"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.custody_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${c.custody_status}</span></td>
-                <td class="px-2 py-1 border">${escapeHtml(c.property_number || '')}</td>
+                <td>${c.effectivity_date || 'N/A'}</td>
+                <td>${c.end_date || 'Current'}</td>
+                <td>${escapeHtml(c.custodian_name)} <br><span class="text-xs text-gray-500">${escapeHtml(c.position || '')}</span></td>
+                <td>${escapeHtml(c.office_name)}</td>
+                <td><span class="badge-app ${c.custody_status === 'active' ? 'badge-app-success' : 'badge-app-neutral'}">${c.custody_status}</span></td>
+                <td>${escapeHtml(c.property_number || '')}</td>
             </tr>`;
         });
-        tableHtml += '</tbody></table>';
+        tableHtml += '</tbody></table></div>';
         custodyTable.innerHTML = tableHtml;
     }
     custodyContainer.style.display = 'block';
@@ -230,18 +231,18 @@ window.showAssetProfile = function(data) {
     if (transfers.length === 0) {
         transferTable.innerHTML = '<p class="text-gray-500 text-sm">No transfer records found.</p>';
     } else {
-        let tableHtml = '<table class="w-full text-sm border border-gray-200"><thead class="bg-gray-100"><tr><th class="px-2 py-1 border">Transfer #</th><th class="px-2 py-1 border">Date</th><th class="px-2 py-1 border">From</th><th class="px-2 py-1 border">To</th><th class="px-2 py-1 border">Status</th><th class="px-2 py-1 border">Remarks</th></tr></thead><tbody>';
+        let tableHtml = '<div class="table-app-wrap"><table class="table-app"><thead><tr><th>Transfer #</th><th>Date</th><th>From</th><th>To</th><th>Status</th><th>Remarks</th></tr></thead><tbody>';
         transfers.forEach(t => {
             tableHtml += `<tr>
-                <td class="px-2 py-1 border">${escapeHtml(t.transfer_number)}</td>
-                <td class="px-2 py-1 border">${escapeHtml(t.transfer_date)}</td>
-                <td class="px-2 py-1 border">${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
-                <td class="px-2 py-1 border">${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
-                <td class="px-2 py-1 border"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(t.status)}</span></td>
-                <td class="px-2 py-1 border">${escapeHtml(t.remarks || '')}</td>
+                <td>${escapeHtml(t.transfer_number)}</td>
+                <td>${escapeHtml(t.transfer_date)}</td>
+                <td>${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
+                <td>${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
+                <td><span class="badge-app ${t.status === 'approved' ? 'badge-app-success' : 'badge-app-warning'}">${escapeHtml(t.status)}</span></td>
+                <td>${escapeHtml(t.remarks || '')}</td>
             </tr>`;
         });
-        tableHtml += '</tbody></table>';
+        tableHtml += '</tbody></table></div>';
         transferTable.innerHTML = tableHtml;
     }
     transferContainer.style.display = 'block';

@@ -23,13 +23,14 @@ if (!function_exists('js_attr')) {
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Left column: Form -->
     <div class="md:col-span-2">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="border-b border-gray-200 px-6 py-4">
-                <h4 class="text-xl font-bold text-gray-800"><?= $title ?></h4>
+        <div class="card-panel">
+            <div class="card-panel-header" style="justify-content:flex-start;">
+                <span class="page-icon"><i class="bi bi-<?= $isEdit ? 'pencil-square' : 'plus-circle' ?>"></i></span>
+                <span class="page-title"><?= $title ?></span>
             </div>
-            <div class="p-6">
+            <div class="card-panel-body">
                 <?php if (!empty($errors)): ?>
-                    <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded mb-4">
+                    <div class="alert-app alert-app-danger" style="align-items:flex-start;">
                         <ul class="list-disc list-inside"><?php foreach ($errors as $err) echo '<li>'.htmlspecialchars($err).'</li>'; ?></ul>
                     </div>
                 <?php endif; ?>
@@ -197,8 +198,8 @@ if (!function_exists('js_attr')) {
                     </div>
 
                     <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-                        <a href="index.php?page=assets&sub=browse" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</a>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><?= $isEdit ? 'Update' : 'Create' ?> Asset</button>
+                        <a href="index.php?page=assets&sub=browse" class="btn-app btn-app-outline">Cancel</a>
+                        <button type="submit" class="btn-app btn-app-primary"><?= $isEdit ? 'Update' : 'Create' ?> Asset</button>
                     </div>
                 </form>
             </div>
@@ -208,20 +209,20 @@ if (!function_exists('js_attr')) {
     <!-- Right column: QR Preview -->
     <div class="md:col-span-1">
         <?php if ($isEdit && $assetId): ?>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="card-panel p-6 text-center">
                 <h5 class="font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">QR Code</h5>
-                <img src="index.php?page=assets&sub=qr&id=<?= $assetId ?>" alt="QR Code" class="mx-auto max-w-50 border border-gray-200 p-2 rounded">
+                <img src="index.php?page=assets&sub=qr&id=<?= $assetId ?>" alt="QR Code" class="mx-auto max-w-50 border border-gray-200 p-2 rounded-lg">
                 <p class="text-xs text-gray-500 mt-3">
                     <i class="bi bi-info-circle"></i> 
                     The QR code is linked to this asset record.<br>
                     Print and affix it to the physical asset.
                 </p>
                 <div class="mt-4 space-y-2">
-                    <button class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    <button class="w-full btn-app btn-app-outline-primary"
                             onclick="downloadQRLabel(<?= $assetId ?>, <?= js_attr($asset['asset_name'] ?? '') ?>, <?= js_attr($asset['asset_code'] ?? '') ?>, <?= js_attr($asset['serial_number'] ?? '') ?>, <?= js_attr($asset['brand'] ?? '') ?>, <?= js_attr($asset['model'] ?? '') ?>, <?= js_attr($asset['description'] ?? '') ?>, <?= js_attr($asset['account_code'] ?? '') ?>)">
                         <i class="bi bi-download"></i> Download PNG
                     </button>
-                    <button class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    <button class="w-full btn-app btn-app-primary"
                             onclick="printQR(<?= $assetId ?>, <?= js_attr($asset['asset_name'] ?? '') ?>, <?= js_attr($asset['asset_code'] ?? '') ?>, <?= js_attr($asset['serial_number'] ?? '') ?>, <?= js_attr($asset['brand'] ?? '') ?>, <?= js_attr($asset['model'] ?? '') ?>, <?= js_attr($asset['description'] ?? '') ?>, <?= js_attr($asset['account_code'] ?? '') ?>)">
                         <i class="bi bi-printer"></i> Print QR Label
                     </button>

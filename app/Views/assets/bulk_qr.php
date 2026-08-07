@@ -15,16 +15,48 @@ if (!function_exists('js_attr')) {
     <meta charset="UTF-8">
     <title>Bulk QR Codes</title>
     <link href="/asset-monitoring-audit-support-system/public/css/output.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f4f7f4; }
+        .qr-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .qr-toolbar h2 {
+            margin: 0 0 20px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #243C25;
+        }
+        .qr-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color .15s ease, border-color .15s ease;
+        }
+        .qr-btn-primary { background: #15803d; border-color: #15803d; color: #fff; }
+        .qr-btn-primary:hover { background: #146534; }
+        .qr-btn-outline { background: #fff; border-color: #d1d5db; color: #1f2937; }
+        .qr-btn-outline:hover { background: #f9fafb; }
         .qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .qr-item {
             display: flex;
             align-items: stretch;
             gap: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(16,24,24,0.06);
         }
         .qr-info {
             flex: 1;
@@ -40,6 +72,7 @@ if (!function_exists('js_attr')) {
             font-weight: bold;
             word-break: break-word;
             margin-bottom: 3px;
+            color: #182919;
         }
         .qr-info .field-label {
             color: #666;
@@ -59,38 +92,44 @@ if (!function_exists('js_attr')) {
         .qr-code-wrap img {
             width: 100px;
             height: 100px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 4px;
+            background: #fff;
         }
         .qr-code-wrap .code {
             font-size: 10px;
             font-weight: bold;
-            margin-top: 2px;
+            margin-top: 4px;
             word-break: break-word;
         }
         .qr-download-btn {
             margin-top: 6px;
             font-size: 9.5px;
-            background: #2563eb;
+            background: #15803d;
             color: #fff;
             border: none;
-            border-radius: 3px;
-            padding: 3px 6px;
+            border-radius: 5px;
+            padding: 4px 6px;
             cursor: pointer;
             width: 100%;
+            transition: background-color .15s ease;
         }
         .qr-download-btn:hover {
-            background: #1d4ed8;
+            background: #146534;
         }
         @media print {
+            body { background: #fff; padding: 0; }
             .no-print { display: none; }
             .qr-grid { grid-template-columns: repeat(3, 1fr); }
-            .qr-item { break-inside: avoid; }
+            .qr-item { break-inside: avoid; box-shadow: none; }
         }
     </style>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom:20px;">
-        <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Print</button>
-        <a href="index.php?page=assets&sub=browse" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Back</a>
+    <div class="no-print qr-toolbar">
+        <button onclick="window.print()" class="qr-btn qr-btn-primary"><i class="bi bi-printer"></i> Print</button>
+        <a href="index.php?page=assets&sub=browse" class="qr-btn qr-btn-outline"><i class="bi bi-arrow-left"></i> Back</a>
     </div>
     <h2>QR Codes for Selected Assets</h2>
     <div class="qr-grid">

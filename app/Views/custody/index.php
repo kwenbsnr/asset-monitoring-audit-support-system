@@ -1,21 +1,22 @@
 <?php if (!defined('APP_START')) exit;
 $flashType = $_SESSION['flash_type'] ?? 'success';
-$alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+$alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger';
 ?>
-<div class="bg-white rounded-lg shadow-sm border border-gray-200">
-    <div class="border-b border-gray-200 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-        <h4 class="text-xl font-bold text-green-700 flex items-center gap-2">
-            <i class="bi bi-people"></i> Custody Records
-        </h4>
-        <a href="index.php?page=custody&sub=add" class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700">
+<div class="card-panel">
+    <div class="card-panel-header">
+        <div class="flex items-center gap-3">
+            <span class="page-icon"><i class="bi bi-people"></i></span>
+            <span class="page-title">Custody Records</span>
+        </div>
+        <a href="index.php?page=custody&sub=add" class="btn-app btn-app-primary">
             <i class="bi bi-plus-circle"></i> Assign Custody
         </a>
     </div>
-    <div class="p-6">
+    <div class="card-panel-body">
         <?php if (isset($_SESSION['flash'])): ?>
-            <div class="mb-4 p-3 rounded border <?= $alertClass ?> flex justify-between items-center">
+            <div class="alert-app <?= $alertClass ?>">
                 <span><?= htmlspecialchars($_SESSION['flash']) ?></span>
-                <button type="button" class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.remove()">&times;</button>
+                <button type="button" class="alert-app-close" onclick="this.closest('.alert-app').remove()">&times;</button>
             </div>
             <?php unset($_SESSION['flash'], $_SESSION['flash_type']); ?>
         <?php endif; ?>
@@ -26,55 +27,52 @@ $alertClass = $flashType === 'success' ? 'bg-green-100 border-green-400 text-gre
                     <input type="hidden" name="page" value="custody">
                     <input type="hidden" name="sub" value="index">
                     <div class="flex flex-1">
-                        <input type="text" class="flex-1 border border-gray-300 rounded-l px-3 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500" name="search" 
-                               placeholder="Search by custodian, asset code, description, office, or property number..." 
+                        <input type="text" class="flex-1 border border-gray-300 rounded-l-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="search"
+                               placeholder="Search by custodian, asset code, description, office, or property number..."
                                value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-                        <button class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-r hover:bg-green-700" type="submit">
+                        <button class="btn-app btn-app-primary" style="border-radius:0;" type="submit">
                             <i class="bi bi-search"></i> Search
                         </button>
                         <?php if (!empty($_GET['search'])): ?>
-                            <a href="index.php?page=custody" class="px-3 py-1.5 bg-gray-300 text-gray-800 text-sm rounded-r hover:bg-gray-400">
+                            <a href="index.php?page=custody" class="btn-app btn-app-outline" style="border-radius:0 8px 8px 0;">
                                 <i class="bi bi-x-circle"></i> Clear
                             </a>
                         <?php endif; ?>
                     </div>
                 </form>
             </div>
-            <a href="index.php?page=custody&sub=add" class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                <i class="bi bi-plus-circle"></i> Assign Custody
-            </a>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm border border-gray-200">
-                <thead class="bg-gray-100 text-gray-700">
+        <div class="table-app-wrap">
+            <table class="table-app">
+                <thead>
                     <tr>
-                        <th class="px-4 py-2 border-b text-left font-medium">Asset</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Custodian</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Office</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Effectivity</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">End Date</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Status</th>
-                        <th class="px-4 py-2 border-b text-left font-medium">Property No.</th>
-                        <th class="px-4 py-2 border-b text-center font-medium">Actions</th>
+                        <th>Asset</th>
+                        <th>Custodian</th>
+                        <th>Office</th>
+                        <th>Effectivity</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Property No.</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($records)): ?>
-                        <tr><td colspan="8" class="text-center py-4 text-gray-500">No custody records found.</td></tr>
+                        <tr><td colspan="8"><div class="table-empty">No custody records found.</div></td></tr>
                     <?php else: ?>
                         <?php foreach ($records as $r): ?>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2"><?= htmlspecialchars($r['asset_code'] ?? 'N/A') ?></td>
-                                <td class="px-4 py-2 font-medium"><?= htmlspecialchars($r['custodian_name']) ?></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($r['office_name']) ?></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($r['effectivity_date']) ?></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($r['end_date'] ?? '—') ?></td>
-                                <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $r['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' ?>"><?= $r['status'] ?></span></td>
-                                <td class="px-4 py-2"><?= htmlspecialchars($r['property_number'] ?? '') ?></td>
-                                <td class="px-4 py-2 text-center whitespace-nowrap">
-                                    <a href="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>" class="px-2 py-1 text-yellow-600 border border-yellow-300 rounded hover:bg-yellow-50 text-xs"><i class="bi bi-pencil"></i></a>
-                                    <a href="index.php?page=custody&sub=delete&id=<?= $r['asset_custodies_id'] ?>" class="px-2 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50 text-xs" onclick="return confirm('End this custody record?')"><i class="bi bi-x-circle"></i></a>
+                            <tr>
+                                <td><?= htmlspecialchars($r['asset_code'] ?? 'N/A') ?></td>
+                                <td class="font-medium"><?= htmlspecialchars($r['custodian_name']) ?></td>
+                                <td><?= htmlspecialchars($r['office_name']) ?></td>
+                                <td><?= htmlspecialchars($r['effectivity_date']) ?></td>
+                                <td><?= htmlspecialchars($r['end_date'] ?? '—') ?></td>
+                                <td><span class="badge-app <?= $r['status'] === 'active' ? 'badge-app-success' : 'badge-app-neutral' ?>"><?= $r['status'] ?></span></td>
+                                <td><?= htmlspecialchars($r['property_number'] ?? '') ?></td>
+                                <td class="text-center whitespace-nowrap">
+                                    <a href="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline" style="color:#b45309;border-color:#fde68a;" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <a href="index.php?page=custody&sub=delete&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline-danger" title="End Custody" onclick="return confirm('End this custody record?')"><i class="bi bi-x-circle"></i></a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
