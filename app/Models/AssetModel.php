@@ -8,6 +8,30 @@ if (!defined('APP_START')) {
     exit('Direct access not allowed.');
 }
 
+/**
+ * Thrown when a save would violate a unique constraint (asset_code,
+ * qr_code_ref, serial_number). Carries a friendly, field-specific message
+ * so controllers can show it to the user instead of a fatal error.
+ */
+class DuplicateEntryException extends \RuntimeException {
+    private string $field;
+    private string $value;
+
+    public function __construct(string $message, string $field, string $value) {
+        parent::__construct($message);
+        $this->field = $field;
+        $this->value = $value;
+    }
+
+    public function getField(): string {
+        return $this->field;
+    }
+
+    public function getValue(): string {
+        return $this->value;
+    }
+}
+
 class AssetModel {
     /** @var \mysqli */
     private $db;
@@ -56,6 +80,41 @@ class AssetModel {
     public function getAssetAccounts() {
         $result = $this->db->query("SELECT asset_accounts_id, account_code, account_name FROM asset_accounts ORDER BY account_code");
         return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Friendly labels for columns that carry a unique constraint.
+     * @param string $column
+     * @return string
+     */
+    private function duplicateFieldLabel(string $column): string {
+        $labels = [
+            'asset_code'    => 'Asset Code',
+            'qr_code_ref'   => 'QR Code Reference',
+            'serial_number' => 'Serial Number',
+        ];
+        return $labels[$column] ?? ucwords(str_replace('_', ' ', $column));
+    }
+
+    /**
+     * Convert a MySQL "Duplicate entry" exception into a
+     * DuplicateEntryException carrying a friendly, field-specific message.
+     * @param \mysqli_sql_exception $e
+     * @return DuplicateEntryException
+     */
+    private function toDuplicateEntryException(\mysqli_sql_exception $e): DuplicateEntryException {
+        $value = '';
+        $column = '';
+        if (preg_match("/Duplicate entry '(.*)' for key '([^']+)'/", $e->getMessage(), $m)) {
+            $value = $m[1];
+            $parts = explode('.', $m[2]);
+            $column = end($parts);
+        }
+        $label = $this->duplicateFieldLabel($column ?: 'value');
+        $message = $value !== ''
+            ? sprintf("%s '%s' is already used by another asset. Please enter a unique %s.", $label, $value, $label)
+            : sprintf('This %s is already used by another asset.', $label);
+        return new DuplicateEntryException($message, $column, $value);
     }
 
     // ===== Asset methods =====
@@ -143,10 +202,17 @@ class AssetModel {
             $data['condition'],
             $data['remarks']
         );
-        if ($stmt->execute()) {
-            return $this->db->insert_id;
+        try {
+            if ($stmt->execute()) {
+                return $this->db->insert_id;
+            }
+            return false;
+        } catch (\mysqli_sql_exception $e) {
+            if ((int)$e->getCode() === 1062) {
+                throw $this->toDuplicateEntryException($e);
+            }
+            throw $e;
         }
-        return false;
     }
 
     /**
@@ -188,7 +254,14 @@ class AssetModel {
             $data['remarks'],
             $id
         );
-        return $stmt->execute();
+        try {
+            return $stmt->execute();
+        } catch (\mysqli_sql_exception $e) {
+            if ((int)$e->getCode() === 1062) {
+                throw $this->toDuplicateEntryException($e);
+            }
+            throw $e;
+        }
     }
 
     /**

@@ -227,16 +227,34 @@ class AssetController {
             exit;
         }
 
-        if ($id) {
-            $success = $this->assetModel->update($id, $data);
-        } else {
-            $newId = $this->assetModel->create($data);
-            if ($newId) {
-                $success = true;
-                $id = $newId;
+        try {
+            if ($id) {
+                $success = $this->assetModel->update($id, $data);
             } else {
-                $success = false;
+                $newId = $this->assetModel->create($data);
+                if ($newId) {
+                    $success = true;
+                    $id = $newId;
+                } else {
+                    $success = false;
+                }
             }
+        } catch (\App\Models\DuplicateEntryException $e) {
+            // A unique field (asset_code, qr_code_ref, or serial_number) collided
+            // with an existing asset — show it the same way as a validation error.
+            $_SESSION['form_errors'] = [$e->getMessage()];
+            $_SESSION['form_data'] = $data;
+            $_SESSION['flash'] = $e->getMessage();
+            $_SESSION['flash_type'] = 'danger';
+            header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
+            exit;
+        } catch (\mysqli_sql_exception $e) {
+            // Any other unexpected database error — fail gracefully instead of a fatal error.
+            $_SESSION['form_data'] = $data;
+            $_SESSION['flash'] = 'A database error occurred while saving the asset. Please try again.';
+            $_SESSION['flash_type'] = 'danger';
+            header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
+            exit;
         }
 
         if (!$success) {
