@@ -56,6 +56,20 @@
             margin-top: 2px;
             word-break: break-word;
         }
+        .qr-download-btn {
+            margin-top: 6px;
+            font-size: 9.5px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .qr-download-btn:hover {
+            background: #1d4ed8;
+        }
         @media print {
             .no-print { display: none; }
             .qr-grid { grid-template-columns: repeat(3, 1fr); }
@@ -86,10 +100,15 @@
                 <div class="qr-code-wrap">
                     <img src="index.php?page=assets&sub=qr&id=<?= $asset['asset_id'] ?>" alt="QR">
                     <div class="code"><?= htmlspecialchars($asset['asset_code']) ?></div>
+                    <button type="button" class="qr-download-btn no-print"
+                            onclick="downloadQRLabel(<?= $asset['asset_id'] ?>, <?= json_encode($asset['asset_name'] ?? '') ?>, <?= json_encode($asset['asset_code'] ?? '') ?>, <?= json_encode($asset['serial_number'] ?? '') ?>, <?= json_encode($asset['brand'] ?? '') ?>, <?= json_encode($asset['model'] ?? '') ?>, <?= json_encode($asset['description'] ?? '') ?>, <?= json_encode($asset['account_code'] ?? '') ?>)">
+                        <i class="bi bi-download"></i> PNG
+                    </button>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
+    <script src="public/js/qr-label.js"></script>
     <script>
         window.onload = function() { window.print(); }
     </script>
