@@ -68,6 +68,9 @@ switch ($page) {
             case 'search_json':
                 $controller->searchJson();
                 break;
+            case 'custodian_assets_json':
+                $controller->custodianAssetsJson();
+                break;
             case 'qr':
                 $controller->qr();
                 break;
