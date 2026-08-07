@@ -488,26 +488,6 @@ class AssetController {
     }
 
     /**
-     * Return assets for a custodian as JSON (for popover).
-     */
-    public function custodianAssetsJson() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Unauthorized']);
-            return;
-        }
-        $custodianId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if (!$custodianId) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Custodian ID required']);
-            return;
-        }
-        $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
-        header('Content-Type: application/json');
-        echo json_encode($assets);
-    }
-
-    /**
      * Bulk print QR codes for selected assets.
      */
     public function bulkQr() {
