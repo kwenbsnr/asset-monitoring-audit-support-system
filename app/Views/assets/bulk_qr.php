@@ -1,4 +1,14 @@
-<?php if (!defined('APP_START')) exit; ?>
+<?php
+if (!defined('APP_START')) exit;
+// json_encode() escapes quotes for JavaScript, not for an HTML attribute —
+// a literal " from json_encode() would otherwise terminate the onclick="..."
+// attribute early and leave the browser trying to parse a truncated script.
+if (!function_exists('js_attr')) {
+    function js_attr($value) {
+        return htmlspecialchars(json_encode($value), ENT_QUOTES, 'UTF-8');
+    }
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -101,7 +111,7 @@
                     <img src="index.php?page=assets&sub=qr&id=<?= $asset['asset_id'] ?>" alt="QR">
                     <div class="code"><?= htmlspecialchars($asset['asset_code']) ?></div>
                     <button type="button" class="qr-download-btn no-print"
-                            onclick="downloadQRLabel(<?= $asset['asset_id'] ?>, <?= json_encode($asset['asset_name'] ?? '') ?>, <?= json_encode($asset['asset_code'] ?? '') ?>, <?= json_encode($asset['serial_number'] ?? '') ?>, <?= json_encode($asset['brand'] ?? '') ?>, <?= json_encode($asset['model'] ?? '') ?>, <?= json_encode($asset['description'] ?? '') ?>, <?= json_encode($asset['account_code'] ?? '') ?>)">
+                            onclick="downloadQRLabel(<?= $asset['asset_id'] ?>, <?= js_attr($asset['asset_name'] ?? '') ?>, <?= js_attr($asset['asset_code'] ?? '') ?>, <?= js_attr($asset['serial_number'] ?? '') ?>, <?= js_attr($asset['brand'] ?? '') ?>, <?= js_attr($asset['model'] ?? '') ?>, <?= js_attr($asset['description'] ?? '') ?>, <?= js_attr($asset['account_code'] ?? '') ?>)">
                         <i class="bi bi-download"></i> PNG
                     </button>
                 </div>

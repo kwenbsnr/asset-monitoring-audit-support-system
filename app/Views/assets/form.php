@@ -7,6 +7,18 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
 $isEdit = $isEdit ?? false;
 $title = $isEdit ? 'Edit Asset' : 'Add New Asset';
 $assetId = $asset['asset_id'] ?? 0;
+
+// json_encode() escapes quotes for JavaScript, not for an HTML attribute —
+// a literal " from json_encode() would otherwise terminate the onclick="..."
+// attribute early and leave the browser trying to parse a truncated script.
+// This wraps json_encode() output with htmlspecialchars() so it's safe to
+// embed inside a double-quoted HTML attribute regardless of what characters
+// (quotes, ampersands, etc.) the underlying asset data contains.
+if (!function_exists('js_attr')) {
+    function js_attr($value) {
+        return htmlspecialchars(json_encode($value), ENT_QUOTES, 'UTF-8');
+    }
+}
 ?>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Left column: Form -->
@@ -206,11 +218,11 @@ $assetId = $asset['asset_id'] ?? 0;
                 </p>
                 <div class="mt-4 space-y-2">
                     <button class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            onclick="downloadQRLabel(<?= $assetId ?>, <?= json_encode($asset['asset_name'] ?? '') ?>, <?= json_encode($asset['asset_code'] ?? '') ?>, <?= json_encode($asset['serial_number'] ?? '') ?>, <?= json_encode($asset['brand'] ?? '') ?>, <?= json_encode($asset['model'] ?? '') ?>, <?= json_encode($asset['description'] ?? '') ?>, <?= json_encode($asset['account_code'] ?? '') ?>)">
+                            onclick="downloadQRLabel(<?= $assetId ?>, <?= js_attr($asset['asset_name'] ?? '') ?>, <?= js_attr($asset['asset_code'] ?? '') ?>, <?= js_attr($asset['serial_number'] ?? '') ?>, <?= js_attr($asset['brand'] ?? '') ?>, <?= js_attr($asset['model'] ?? '') ?>, <?= js_attr($asset['description'] ?? '') ?>, <?= js_attr($asset['account_code'] ?? '') ?>)">
                         <i class="bi bi-download"></i> Download PNG
                     </button>
                     <button class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                            onclick="printQR(<?= $assetId ?>, <?= json_encode($asset['asset_name'] ?? '') ?>, <?= json_encode($asset['asset_code'] ?? '') ?>, <?= json_encode($asset['serial_number'] ?? '') ?>, <?= json_encode($asset['brand'] ?? '') ?>, <?= json_encode($asset['model'] ?? '') ?>, <?= json_encode($asset['description'] ?? '') ?>, <?= json_encode($asset['account_code'] ?? '') ?>)">
+                            onclick="printQR(<?= $assetId ?>, <?= js_attr($asset['asset_name'] ?? '') ?>, <?= js_attr($asset['asset_code'] ?? '') ?>, <?= js_attr($asset['serial_number'] ?? '') ?>, <?= js_attr($asset['brand'] ?? '') ?>, <?= js_attr($asset['model'] ?? '') ?>, <?= js_attr($asset['description'] ?? '') ?>, <?= js_attr($asset['account_code'] ?? '') ?>)">
                         <i class="bi bi-printer"></i> Print QR Label
                     </button>
                 </div>
