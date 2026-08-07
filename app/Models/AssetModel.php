@@ -498,7 +498,7 @@ class AssetModel {
      * @param int $officeId
      * @return array
      */
-    public function getCustodiansByOfficeForEncoder(int $officeId) {
+    public function getCustodiansByOfficeForEncoder(int $officeId, int $limit, int $offset) {
         $sql = "
             SELECT DISTINCT 
                 p.personnel_id,
@@ -509,12 +509,33 @@ class AssetModel {
             INNER JOIN asset_custodies ac ON p.personnel_id = ac.custodian_id
             WHERE ac.office_id = ? AND ac.status = 'active'
             ORDER BY p.full_name
+            LIMIT ? OFFSET ?
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('i', $officeId);
+        $stmt->bind_param('iii', $officeId, $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Count distinct custodians in an office (for Assets-by-Office pagination).
+     * @param int $officeId
+     * @return int
+     */
+    public function countCustodiansByOfficeForEncoder(int $officeId) {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(DISTINCT p.personnel_id)
+            FROM personnel p
+            INNER JOIN asset_custodies ac ON p.personnel_id = ac.custodian_id
+            WHERE ac.office_id = ? AND ac.status = 'active'
+        ");
+        $stmt->bind_param('i', $officeId);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+        return (int)$count;
     }
 
     /**

@@ -465,8 +465,13 @@ class AssetController {
             $viewFile = __DIR__ . '/../Views/assets/custodian_assets.php';
             require_once __DIR__ . '/../Views/layouts/main.php';
         } elseif ($officeId) {
-            // Show custodians in this office
-            $custodians = $this->assetModel->getCustodiansByOfficeForEncoder($officeId);
+            // Show custodians in this office, 20 per page
+            $page = isset($_GET['page_num']) ? max(1, (int)$_GET['page_num']) : 1;
+            $limit = 20;
+            $offset = ($page - 1) * $limit;
+            $totalCustodians = $this->assetModel->countCustodiansByOfficeForEncoder($officeId);
+            $totalPages = (int)ceil($totalCustodians / $limit);
+            $custodians = $this->assetModel->getCustodiansByOfficeForEncoder($officeId, $limit, $offset);
             $office = $this->assetModel->getOfficeById($officeId);
             $pageTitle = 'Custodians - ' . ($office ? $office['name'] : '');
             $currentPage = 'assets_by_office';
