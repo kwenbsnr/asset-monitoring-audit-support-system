@@ -948,3 +948,10 @@ body.login-page {
 @media (prefers-reduced-motion: reduce) {
     .toast-app { animation: none; }
 }
+
+/* ---------- Report preview fragment (injected via AJAX innerHTML) ---------- */
+.report-preview-meta {
+    color: var(--nia-muted);
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+}

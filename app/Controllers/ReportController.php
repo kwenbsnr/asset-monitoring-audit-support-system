@@ -183,14 +183,54 @@ class ReportController {
     }
 
     /**
-     * Build report HTML for preview/PDF.
+     * Build just the meta + table markup shared by every HTML rendering
+     * of a report (standalone document for PDF, and the inline AJAX
+     * preview fragment). Keeping this in one place means the two can
+     * never drift out of sync on headers/rows again.
+     * @param array  $data
+     * @param string $reportType
+     * @param string $metaClass   CSS class for the "Generated:" line
+     * @param string $wrapClass   CSS class for the div wrapping <table>
+     * @param string $tableClass  CSS class(es) for the <table> element
+     * @param string $emptyClass  CSS class for the "no records" cell
+     * @return string
+     */
+    private function buildReportTableFragment($data, $reportType, $metaClass, $wrapClass, $tableClass, $emptyClass) {
+        $headers = $this->getReportHeaders($reportType);
+        $html = '<p class="' . $metaClass . '"><strong>Generated:</strong> ' . date('Y-m-d H:i') . '</p>';
+        $html .= '<div class="' . $wrapClass . '"><table class="' . $tableClass . '"><thead><tr>';
+        foreach ($headers as $h) {
+            $html .= '<th>' . htmlspecialchars($h) . '</th>';
+        }
+        $html .= '</tr></thead><tbody>';
+        if (empty($data)) {
+            $html .= '<tr><td colspan="' . count($headers) . '" class="' . $emptyClass . '">No records found.</td></tr>';
+        } else {
+            foreach ($data as $row) {
+                $html .= '<tr>';
+                foreach (array_keys($headers) as $key) {
+                    $value = $row[$key] ?? '';
+                    $html .= '<td>' . htmlspecialchars($value) . '</td>';
+                }
+                $html .= '</tr>';
+            }
+        }
+        $html .= '</tbody></table></div>';
+        return $html;
+    }
+
+    /**
+     * Build a full standalone HTML document for PDF rendering (Dompdf
+     * needs its own inline <style> — it does not load external
+     * stylesheets), and for the plain preview()/print route.
      * @param array  $data
      * @param string $reportType
      * @param string $title
      * @return string
      */
     public function buildReportHtml($data, $reportType, $title) {
-        $headers = $this->getReportHeaders($reportType);
+        $fragment = '<h2>' . htmlspecialchars($title) . '</h2>'
+            . $this->buildReportTableFragment($data, $reportType, 'report-meta', 'report-table-wrap', 'report-table', 'report-empty');
         $html = '<!DOCTYPE html><html><head><title>' . htmlspecialchars($title) . '</title>';
         $html .= '<style>
             body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; margin: 20px; }
@@ -203,27 +243,29 @@ class ReportController {
             .report-empty { text-align: center; color: #6b7280; padding: 16px; }
         </style>';
         $html .= '</head><body>';
-        $html .= '<h2>' . htmlspecialchars($title) . '</h2>';
-        $html .= '<p class="report-meta"><strong>Generated:</strong> ' . date('Y-m-d H:i') . '</p>';
-        $html .= '<table class="report-table"><thead><tr>';
-        foreach ($headers as $h) {
-            $html .= '<th>' . htmlspecialchars($h) . '</th>';
-        }
-        $html .= '</tr></thead><tbody>';
-        if (empty($data)) {
-            $html .= '<tr><td colspan="' . count($headers) . '" class="report-empty">No records found.</td></tr>';
-        } else {
-            foreach ($data as $row) {
-                $html .= '<tr>';
-                foreach (array_keys($headers) as $key) {
-                    $value = $row[$key] ?? '';
-                    $html .= '<td>' . htmlspecialchars($value) . '</td>';
-                }
-                $html .= '</tr>';
-            }
-        }
-        $html .= '</tbody></table></body></html>';
+        $html .= $fragment;
+        $html .= '</body></html>';
         return $html;
+    }
+
+    /**
+     * Build the report fragment for the inline AJAX preview panel in
+     * Views/reports/index.php. This is injected via .innerHTML, so it
+     * must NOT be a full document (no <!DOCTYPE>/<html>/<head>/<style> —
+     * browsers won't parse those correctly from an innerHTML assignment).
+     * It reuses the app's own .table-app design-system classes instead,
+     * which are already loaded globally via public/css/style.css, so the
+     * preview matches every other table in the app automatically.
+     * @param array  $data
+     * @param string $reportType
+     * @param string $title
+     * @return string
+     */
+    public function buildReportPreviewHtml($data, $reportType, $title) {
+        // $title is unused here — the preview panel already shows the
+        // title in its own banner (see #previewTitle in reports/index.php);
+        // repeating it inside the fragment would duplicate it.
+        return $this->buildReportTableFragment($data, $reportType, 'report-preview-meta', 'table-app-wrap', 'table-app', 'table-empty');
     }
 
     /**
@@ -427,7 +469,7 @@ class ReportController {
         $_SESSION['report_type'] = $reportType;
         $_SESSION['report_title'] = $title;
 
-        $html = $this->buildReportHtml($data, $reportType, $title);
+        $html = $this->buildReportPreviewHtml($data, $reportType, $title);
         echo json_encode(['html' => $html, 'title' => $title]);
         exit;
     }
