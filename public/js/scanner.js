@@ -284,9 +284,9 @@ function showAssetProfile(data) {
                         </a>`;
     }
 
-    // -------- Dispose Button (only for active assets and asset_inspector/admin) --------
+    // -------- Dispose Button (only for active assets and inspection_officer/admin) --------
     let disposeForm = '';
-    if (asset.status === 'active' && (window.userRole === 'asset_inspector' || window.userRole === 'admin')) {
+    if (asset.status === 'active' && (window.userRole === 'inspection_officer' || window.userRole === 'admin')) {
         disposeForm = `
             <form method="POST" action="index.php?page=assets&sub=dispose" class="inline-block ml-2" id="disposeFormScan_${asset.asset_id}">
                 <input type="hidden" name="asset_id" value="${asset.asset_id}">

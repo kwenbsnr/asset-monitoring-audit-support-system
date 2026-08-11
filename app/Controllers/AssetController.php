@@ -14,7 +14,7 @@ class AssetController {
     private $assetModel;
 
     public function __construct() {
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'asset_inspector', 'admin'])) {
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'inspection_officer', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -384,11 +384,11 @@ class AssetController {
 }
 
     /**
-     * Dispose an asset (mark as disposed) – only for asset_inspector and admin.
+     * Dispose an asset (mark as disposed) – only for inspection_officer and admin.
      */
     public function dispose() {
-        // Only asset_inspector and admin can dispose
-        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+        // Only inspection_officer and admin can dispose
+        if (!in_array($_SESSION['role'], ['inspection_officer', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -547,8 +547,8 @@ class AssetController {
      * POST: updates operational fields.
      */
     public function verify() {
-        // Only asset_inspector and admin can access
-        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+        // Only inspection_officer and admin can access
+        if (!in_array($_SESSION['role'], ['inspection_officer', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -602,7 +602,7 @@ class AssetController {
      * Save inspection updates (POST handler).
      */
     private function saveInspection() {
-        if (!in_array($_SESSION['role'], ['asset_inspector', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['inspection_officer', 'admin'])) {
             http_response_code(403);
             exit('Unauthorized');
         }
@@ -614,7 +614,7 @@ class AssetController {
             return;
         }
 
-        // Allowed fields for inspector
+        // Allowed fields for inspection officer
         $data = [
             'condition' => $_POST['condition'] ?? 'good',
             'status' => $_POST['status'] ?? 'active',
