@@ -14,7 +14,7 @@ class AssetController {
     private $assetModel;
 
     public function __construct() {
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'inspection_officer', 'admin'])) {
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['asset_manager', 'inspection_officer', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -101,9 +101,9 @@ class AssetController {
     }
 
     // ===== Add / Edit / Save / Delete =====
-    // Only encoder and admin can add assets
+    // Only asset_manager and admin can add assets
     public function add() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -120,10 +120,10 @@ class AssetController {
     }
 
     /**
-     * Edit asset – accessible to encoder and admin.
+     * Edit asset – accessible to asset_manager and admin.
      */
     public function edit() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -152,7 +152,7 @@ class AssetController {
     }
 
     public function save() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -448,7 +448,7 @@ class AssetController {
      * View assets by office – shows office cards, then custodians, then assets.
      */
     public function byOffice() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -458,7 +458,7 @@ class AssetController {
 
         if ($custodianId) {
             // Show assets for a specific custodian (popover or modal)
-            $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
+            $assets = $this->assetModel->getAssetsByCustodianForAssetManager($custodianId);
             $custodian = $this->assetModel->getPersonnelById($custodianId);
             $pageTitle = 'Assets of ' . ($custodian ? $custodian['full_name'] : '');
             $currentPage = 'assets_by_office';
@@ -469,9 +469,9 @@ class AssetController {
             $page = isset($_GET['page_num']) ? max(1, (int)$_GET['page_num']) : 1;
             $limit = 20;
             $offset = ($page - 1) * $limit;
-            $totalCustodians = $this->assetModel->countCustodiansByOfficeForEncoder($officeId);
+            $totalCustodians = $this->assetModel->countCustodiansByOfficeForAssetManager($officeId);
             $totalPages = (int)ceil($totalCustodians / $limit);
-            $custodians = $this->assetModel->getCustodiansByOfficeForEncoder($officeId, $limit, $offset);
+            $custodians = $this->assetModel->getCustodiansByOfficeForAssetManager($officeId, $limit, $offset);
             $office = $this->assetModel->getOfficeById($officeId);
             $pageTitle = 'Custodians - ' . ($office ? $office['name'] : '');
             $currentPage = 'assets_by_office';
@@ -492,7 +492,7 @@ class AssetController {
      * in Views/assets/office_custodians.php).
      */
     public function custodianAssetsJson() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             http_response_code(403);
             echo json_encode(['error' => 'Unauthorized']);
             return;
@@ -503,7 +503,7 @@ class AssetController {
             echo json_encode(['error' => 'Custodian ID required']);
             return;
         }
-        $assets = $this->assetModel->getAssetsByCustodianForEncoder($custodianId);
+        $assets = $this->assetModel->getAssetsByCustodianForAssetManager($custodianId);
         header('Content-Type: application/json');
         echo json_encode($assets);
     }
@@ -512,7 +512,7 @@ class AssetController {
      * Bulk print QR codes for selected assets.
      */
     public function bulkQr() {
-        if (!in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             header('Location: index.php');
             exit;
         }

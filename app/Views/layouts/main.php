@@ -2,7 +2,7 @@
 // Main layout
 $roleLabels = [
     'admin'           => 'System Administrator',
-    'encoder'         => 'Data Encoder',
+    'asset_manager'   => 'Asset Manager',
     'inspection_officer' => 'Inspection Officer',
 ];
 $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_SESSION['role']));
@@ -55,7 +55,7 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
                 </a>
             </li>
 
-            <?php if ($_SESSION['role'] === 'encoder'): ?>
+            <?php if ($_SESSION['role'] === 'asset_manager'): ?>
                 <li>
                     <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
                         <i class="bi bi-plus-circle"></i> Register Asset

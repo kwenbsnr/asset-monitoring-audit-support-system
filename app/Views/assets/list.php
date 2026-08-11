@@ -128,10 +128,10 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                                 data-id="<?= $asset['asset_id'] ?>" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </button>
-                                        <?php if (in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
+                                        <?php if (in_array($_SESSION['role'], ['asset_manager', 'admin'])): ?>
                                             <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
                                         <?php endif; ?>
-                                        <?php if ($asset['status'] === 'active' && in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
+                                        <?php if ($asset['status'] === 'active' && in_array($_SESSION['role'], ['asset_manager', 'admin'])): ?>
                                             <?php if (empty($asset['active_custody_id'])): ?>
                                                 <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline-primary" title="Assign Custodian">
                                                     <i class="bi bi-person-plus"></i>

@@ -468,10 +468,10 @@ class AssetModel {
         return $result->fetch_assoc();
     }
 
-    // ===== New methods for Assets by Office (Encoder) =====
+    // ===== New methods for Assets by Office (Asset Manager) =====
 
     /**
-     * Get offices with asset and custodian counts (for Encoder).
+     * Get offices with asset and custodian counts (for Asset Manager).
      * @return array
      */
     public function getOfficesWithData() {
@@ -494,11 +494,11 @@ class AssetModel {
     }
 
     /**
-     * Get custodians (personnel) for a specific office (for Encoder).
+     * Get custodians (personnel) for a specific office (for Asset Manager).
      * @param int $officeId
      * @return array
      */
-    public function getCustodiansByOfficeForEncoder(int $officeId, int $limit, int $offset) {
+    public function getCustodiansByOfficeForAssetManager(int $officeId, int $limit, int $offset) {
         $sql = "
             SELECT DISTINCT 
                 p.personnel_id,
@@ -523,7 +523,7 @@ class AssetModel {
      * @param int $officeId
      * @return int
      */
-    public function countCustodiansByOfficeForEncoder(int $officeId) {
+    public function countCustodiansByOfficeForAssetManager(int $officeId) {
         $stmt = $this->db->prepare("
             SELECT COUNT(DISTINCT p.personnel_id)
             FROM personnel p
@@ -539,11 +539,11 @@ class AssetModel {
     }
 
     /**
-     * Get assets for a custodian (for Encoder).
+     * Get assets for a custodian (for Asset Manager).
      * @param int $custodianId
      * @return array
      */
-    public function getAssetsByCustodianForEncoder(int $custodianId) {
+    public function getAssetsByCustodianForAssetManager(int $custodianId) {
         $sql = "
             SELECT 
                 a.asset_id,

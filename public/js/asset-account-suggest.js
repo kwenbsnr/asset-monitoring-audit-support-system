@@ -2,7 +2,7 @@
  * asset-account-suggest.js
  *
  * Progressive-enhancement feature for Views/assets/form.php.
- * As the Data Encoder types the Asset Name, suggests the most likely
+ * As the Asset Manager types the Asset Name, suggests the most likely
  * Asset Account (from the fixed 12-account list in `asset_accounts`)
  * and auto-fills the Account dropdown if it's still blank.
  *

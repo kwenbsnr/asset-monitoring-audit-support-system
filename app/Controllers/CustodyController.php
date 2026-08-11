@@ -14,9 +14,9 @@ class CustodyController {
     private $custodyModel;
 
     public function __construct() {
-        // Allow encoder and admin to access custody (view, add, edit)
+        // Allow asset_manager and admin to access custody (view, add, edit)
         // Delete is restricted to admin in the delete method itself.
-        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['encoder', 'admin'])) {
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
             header('Location: index.php');
             exit;
         }
@@ -77,7 +77,7 @@ class CustodyController {
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
-    // ===== Add / Edit / Save (allowed for encoder and admin) =====
+    // ===== Add / Edit / Save (allowed for asset_manager and admin) =====
     public function add() {
         $assetId = isset($_GET['asset_id']) ? (int)$_GET['asset_id'] : 0;
         $personnel = $this->custodyModel->getPersonnel();

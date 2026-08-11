@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 06, 2026 at 01:37 AM
+-- Generation Time: Aug 11, 2026 at 09:47 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -81,7 +81,11 @@ INSERT INTO `assets` (`asset_id`, `asset_code`, `asset_name`, `qr_code_ref`, `de
 (23, 'AST-023', 'Executive Office Desk', 'QR-bd3813917e8211f195d61068382e09fc', 'Wooden executive desk', 'Woodcraft', 'Executive', 'SN-023-987', 25000, '2023-08-01', 'active', 'good', 'pending', NULL, NULL, NULL, 'CEO office', NULL, '2026-07-13 06:19:01', '2026-07-13 06:19:01', 12),
 (24, 'AST-024', 'Steel Filing Cabinet', 'QR-bd3814ab7e8211f195d61068382e09fc', '4‑drawer filing cabinet', 'Steelco', '4‑drawer', 'SN-024-123', 12000, '2023-09-10', 'active', 'good', 'pending', NULL, NULL, NULL, 'Document storage', NULL, '2026-07-13 06:19:01', '2026-07-13 06:19:01', 12),
 (25, 'ASST 456', 'ink', 'QR-6A72EC33D4FB9', '', 'brother', '', '010101', 50000, '2026-08-07', 'active', 'good', 'pending', NULL, NULL, NULL, '', NULL, '2026-08-05 07:54:27', '2026-08-05 07:54:27', 6),
-(26, 'm', 'k', 'QR-6A73B98E754D0', ',', 'm', 'm', 'm', 70000, '0004-02-05', 'active', 'good', 'pending', NULL, NULL, NULL, 's', NULL, '2026-08-05 22:30:38', '2026-08-05 22:30:38', 2);
+(26, 'm', 'k', 'QR-6A73B98E754D0', ',', 'm', 'm', 'm', 70000, '0004-02-05', 'active', 'good', 'pending', NULL, NULL, NULL, 's', NULL, '2026-08-05 22:30:38', '2026-08-05 22:30:38', 2),
+(27, '2', 'table', 'QR-6A73DC4A0C94E', 'h', 'j', 'j', 'k', 78777, '2000-08-09', 'active', 'good', 'pending', NULL, NULL, NULL, 'jkn', NULL, '2026-08-06 00:58:50', '2026-08-06 00:58:50', 12),
+(31, 'n', 'tractor', 'QR-6A73E0AD5F7F9', '', 'm', ',', 'po', 69000, '2021-12-31', 'active', 'good', 'pending', NULL, NULL, NULL, '', NULL, '2026-08-06 01:17:33', '2026-08-06 01:17:33', 3),
+(34, 'ASST 4563', 'tractor', 'QR-6A754F9C79ED7', '', 'm', '3', '3982hj', 5644444, '1990-03-22', 'active', 'good', 'pending', NULL, NULL, NULL, '', NULL, '2026-08-07 03:23:08', '2026-08-07 03:23:08', 3),
+(37, 'ASST 45632', 'printer', 'QR-6A755B30306D5', '', 's', 's', '3982hj1', 56453, '2005-12-31', 'active', 'good', 'pending', NULL, NULL, NULL, '', NULL, '2026-08-07 04:12:32', '2026-08-07 04:12:32', 6);
 
 -- --------------------------------------------------------
 
@@ -383,7 +387,7 @@ CREATE TABLE `users` (
   `personnel_id` int(11) NOT NULL,
   `username` varchar(80) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `role` enum('admin','encoder','asset_inspector') NOT NULL,
+  `role` enum('admin','asset_manager','inspection_officer') NOT NULL,
   `is_active` tinyint(4) DEFAULT 1,
   `last_login` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -394,9 +398,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`users_id`, `personnel_id`, `username`, `password_hash`, `role`, `is_active`, `last_login`, `created_at`) VALUES
-(1, 1, 'admin', '$2y$10$AR8kpRmwIEkmFtoQ40aqLe2VZh4gb1SAmynr7hn7uUZxTgfX5DlKO', 'admin', 1, '2026-08-05 22:24:36', '2026-07-04 04:54:18'),
-(2, 2, 'supply_officer', '$2y$10$BoC/diZ4Z/a32pSH9fLHguiX0qCvHJpL1actmOG61vcifO3HAjh6K', 'encoder', 1, '2026-08-05 22:26:38', '2026-07-04 04:54:18'),
-(3, 3, 'inspector', '$2y$10$BoC/diZ4Z/a32pSH9fLHguiX0qCvHJpL1actmOG61vcifO3HAjh6K', 'asset_inspector', 1, '2026-08-05 22:25:07', '2026-07-04 04:54:18');
+(1, 1, 'admin', '$2y$10$AR8kpRmwIEkmFtoQ40aqLe2VZh4gb1SAmynr7hn7uUZxTgfX5DlKO', 'admin', 1, '2026-08-10 03:47:00', '2026-07-04 04:54:18'),
+(2, 2, 'supply_officer', '$2y$10$BoC/diZ4Z/a32pSH9fLHguiX0qCvHJpL1actmOG61vcifO3HAjh6K', 'asset_manager', 1, '2026-08-10 03:46:13', '2026-07-04 04:54:18'),
+(3, 3, 'inspector', '$2y$10$BoC/diZ4Z/a32pSH9fLHguiX0qCvHJpL1actmOG61vcifO3HAjh6K', 'inspection_officer', 1, '2026-08-05 22:25:07', '2026-07-04 04:54:18');
 
 --
 -- Indexes for dumped tables
@@ -515,7 +519,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `assets`
 --
 ALTER TABLE `assets`
-  MODIFY `asset_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `asset_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `asset_accounts`
