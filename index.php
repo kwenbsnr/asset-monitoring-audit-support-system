@@ -59,6 +59,9 @@ switch ($page) {
             case 'save':
                 $controller->save();
                 break;
+            case 'dispose':
+                $controller->dispose();
+                break;
             case 'details':
                 $controller->details();
                 break;

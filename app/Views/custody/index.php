@@ -30,11 +30,11 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                         <input type="text" class="flex-1 border border-gray-300 rounded-l-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="search"
                                placeholder="Search by custodian, asset code, description, office, or property number..."
                                value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-                        <button class="btn-app btn-app-primary" style="border-radius:0;" type="submit">
+                        <button class="btn-app btn-app-primary btn-app-join-mid" type="submit">
                             <i class="bi bi-search"></i> Search
                         </button>
                         <?php if (!empty($_GET['search'])): ?>
-                            <a href="index.php?page=custody" class="btn-app btn-app-outline" style="border-radius:0 8px 8px 0;">
+                            <a href="index.php?page=custody" class="btn-app btn-app-outline btn-app-join-r">
                                 <i class="bi bi-x-circle"></i> Clear
                             </a>
                         <?php endif; ?>
@@ -71,7 +71,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                 <td><span class="badge-app <?= $r['status'] === 'active' ? 'badge-app-success' : 'badge-app-neutral' ?>"><?= $r['status'] ?></span></td>
                                 <td><?= htmlspecialchars($r['property_number'] ?? '') ?></td>
                                 <td class="text-center whitespace-nowrap">
-                                    <a href="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline" style="color:#b45309;border-color:#fde68a;" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <a href="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
                                     <a href="index.php?page=custody&sub=delete&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline-danger" title="End Custody" onclick="return confirm('End this custody record?')"><i class="bi bi-x-circle"></i></a>
                                 </td>
                             </tr>

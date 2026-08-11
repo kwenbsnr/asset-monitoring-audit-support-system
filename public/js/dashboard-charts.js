@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: statusLabels,
                 datasets: [{
                     data: statusData,
-                    backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#6c757d', '#dc3545'],
+                    backgroundColor: ['#16a34a', '#2563eb', '#FBBF24', '#6b7280', '#dc2626'],
                     borderWidth: 0
                 }]
             },
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Assets',
                     data: accountData,
-                    backgroundColor: '#0d6efd',
+                    backgroundColor: '#15803d',
                     borderRadius: 4
                 }]
             },
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Assets',
                     data: officeData,
-                    backgroundColor: '#198754',
+                    backgroundColor: '#2563eb',
                     borderRadius: 4
                 }]
             },

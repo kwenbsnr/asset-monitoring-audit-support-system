@@ -12,7 +12,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
             <input type="hidden" name="page" value="custody">
             <input type="hidden" name="sub" value="search_custodians">
             <input type="text" class="border border-gray-300 rounded-l-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="q" placeholder="Search custodian name..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
-            <button class="btn-app btn-app-primary" style="border-radius:0 8px 8px 0;" type="submit"><i class="bi bi-search"></i></button>
+            <button class="btn-app btn-app-primary btn-app-join-r" type="submit"><i class="bi bi-search"></i></button>
         </form>
     </div>
     <div class="card-panel-body">

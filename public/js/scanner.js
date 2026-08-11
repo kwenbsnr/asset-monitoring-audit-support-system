@@ -274,12 +274,12 @@ function showAssetProfile(data) {
     let actionButton = '';
     if (hasActiveCustody) {
         const transferUrl = `index.php?page=custody&sub=edit&id=${activeCustody.asset_custodies_id}`;
-        actionButton = `<a href="${transferUrl}" class="inline-block px-3 py-1.5 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600">
+        actionButton = `<a href="${transferUrl}" class="btn-app btn-app-gold">
                             <i class="bi bi-arrow-left-right"></i> Transfer Custodian
                         </a>`;
     } else {
         const assignUrl = `index.php?page=custody&sub=add&asset_id=${asset.asset_id}`;
-        actionButton = `<a href="${assignUrl}" class="inline-block px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+        actionButton = `<a href="${assignUrl}" class="btn-app btn-app-primary">
                             <i class="bi bi-person-plus"></i> Assign Custodian
                         </a>`;
     }
@@ -291,7 +291,7 @@ function showAssetProfile(data) {
             <form method="POST" action="index.php?page=assets&sub=dispose" class="inline-block ml-2" id="disposeFormScan_${asset.asset_id}">
                 <input type="hidden" name="asset_id" value="${asset.asset_id}">
                 <input type="hidden" name="disposal_reason" id="disposal_reason_scan_${asset.asset_id}">
-                <button type="button" class="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700" onclick="const reason = prompt('Reason for disposal:'); if(reason && reason.trim() !== '') { document.getElementById('disposal_reason_scan_${asset.asset_id}').value = reason.trim(); document.getElementById('disposeFormScan_${asset.asset_id}').submit(); } else if(reason !== null) { alert('Reason is required.'); }">
+                <button type="button" class="btn-app btn-app-danger" onclick="const reason = prompt('Reason for disposal:'); if(reason && reason.trim() !== '') { document.getElementById('disposal_reason_scan_${asset.asset_id}').value = reason.trim(); document.getElementById('disposeFormScan_${asset.asset_id}').submit(); } else if(reason !== null) { alert('Reason is required.'); }">
                     <i class="bi bi-trash"></i> Dispose
                 </button>
             </form>
@@ -311,8 +311,8 @@ function showAssetProfile(data) {
             <div><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
             <div><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
             <div><strong>Account:</strong> ${escapeHtml(asset.account_code + ' - ' + asset.account_name)}</div>
-            <div><strong>Status:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${escapeHtml(asset.status)}</span></div>
-            <div><strong>Condition:</strong> <span class="px-2 py-0.5 rounded-full text-xs font-medium ${asset.condition === 'good' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${escapeHtml(asset.condition)}</span></div>
+            <div><strong>Status:</strong> <span class="badge-app ${asset.status === 'active' ? 'badge-app-success' : 'badge-app-neutral'}">${escapeHtml(asset.status)}</span></div>
+            <div><strong>Condition:</strong> <span class="badge-app ${asset.condition === 'good' ? 'badge-app-success' : 'badge-app-warning'}">${escapeHtml(asset.condition)}</span></div>
             <div class="col-span-2"><strong>Remarks:</strong> ${escapeHtml(asset.remarks || 'N/A')}</div>
             <div><strong>Date Created:</strong> ${asset.created_at || 'N/A'}</div>
             <div><strong>Last Updated:</strong> ${asset.updated_at || 'N/A'}</div>
@@ -327,28 +327,27 @@ function showAssetProfile(data) {
                 <div><strong>Position:</strong> ${escapeHtml(activeCustody.position || 'N/A')}</div>
                 <div><strong>Office:</strong> ${escapeHtml(activeCustody.office_name)}</div>
                 <div><strong>Effectivity:</strong> ${activeCustody.effectivity_date}</div>
-                <div><strong>Accountability Doc:</strong> ${escapeHtml(activeCustody.accountability_document || 'N/A')}</div>
-                <div><strong>Reference:</strong> ${escapeHtml(activeCustody.accountability_reference || 'N/A')}</div>
+                <div class="col-span-2"><strong>Property No.:</strong> ${escapeHtml(activeCustody.property_number || 'N/A')}</div>
             </div>
         `;
     } else {
-        html += `<div class="bg-gray-100 border border-gray-300 text-gray-600 p-3 rounded mt-3"><i class="bi bi-info-circle"></i> No active custodian assigned.</div>`;
+        html += `<div class="empty-state mt-3"><i class="bi bi-info-circle"></i> No active custodian assigned.</div>`;
     }
 
     html += `<h6 class="font-semibold text-gray-800 border-b border-gray-200 pb-2 mt-3">Custody History</h6>`;
     if (custody.length === 0) {
         html += `<p class="text-gray-500">No custody records found.</p>`;
     } else {
-        html += `<div class="overflow-x-auto"><table class="w-full text-sm border border-gray-200">`;
-        html += `<thead class="bg-gray-100 text-gray-700"><tr><th class="px-2 py-1 border-b text-left font-medium">From</th><th class="px-2 py-1 border-b text-left font-medium">To</th><th class="px-2 py-1 border-b text-left font-medium">Custodian</th><th class="px-2 py-1 border-b text-left font-medium">Office</th><th class="px-2 py-1 border-b text-left font-medium">Status</th><th class="px-2 py-1 border-b text-left font-medium">Document</th></tr></thead><tbody>`;
+        html += `<div class="table-app-wrap"><table class="table-app">`;
+        html += `<thead><tr><th>From</th><th>To</th><th>Custodian</th><th>Office</th><th>Status</th><th>Property No.</th></tr></thead><tbody>`;
         custody.forEach(c => {
-            html += `<tr class="border-b hover:bg-gray-50">
-                <td class="px-2 py-1">${c.effectivity_date || 'N/A'}</td>
-                <td class="px-2 py-1">${c.end_date || 'Current'}</td>
-                <td class="px-2 py-1">${escapeHtml(c.custodian_name)} <br><small class="text-gray-500">${escapeHtml(c.position || '')}</small></td>
-                <td class="px-2 py-1">${escapeHtml(c.office_name)}</td>
-                <td class="px-2 py-1"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${c.custody_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${escapeHtml(c.custody_status)}</span></td>
-                <td class="px-2 py-1">${escapeHtml(c.accountability_document || '')} ${c.accountability_reference ? '<br><small class="text-gray-500">Ref: ' + escapeHtml(c.accountability_reference) + '</small>' : ''}</td>
+            html += `<tr>
+                <td>${c.effectivity_date || 'N/A'}</td>
+                <td>${c.end_date || 'Current'}</td>
+                <td>${escapeHtml(c.custodian_name)} <br><small class="text-gray-500">${escapeHtml(c.position || '')}</small></td>
+                <td>${escapeHtml(c.office_name)}</td>
+                <td><span class="badge-app ${c.custody_status === 'active' ? 'badge-app-success' : 'badge-app-neutral'}">${escapeHtml(c.custody_status)}</span></td>
+                <td>${escapeHtml(c.property_number || '')}</td>
             </tr>`;
         });
         html += `</tbody></table></div>`;

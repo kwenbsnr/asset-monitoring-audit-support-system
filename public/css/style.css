@@ -1,150 +1,7 @@
-/* ===== Global – gradient ===== */
-body.login-page {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    background: linear-gradient(145deg, #182919 0%, #243C25 50%, #345635 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.login-container {
-    width: 100%;
-    max-width: 440px;
-    padding: 20px;
-}
-
-/* ===== Card – bright, opaque ===== */
-.login-card {
-    background: #ffffff;
-    border-radius: 24px;
-    padding: 45px 35px 35px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    transition: transform 0.2s ease;
-}
-
-.login-card:hover {
-    transform: translateY(-3px);
-}
-
-/* ===== Logo & Headings ===== */
-.logo-placeholder {
-    max-width: 130px;
-    height: auto;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-}
-
-.login-card h4 {
-    color: #022E23;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
-
-.login-card .subtitle {
-    color: #044031;
-    font-weight: 500;
-    font-size: 0.95rem;
-    opacity: 0.8;
-}
-
-/* ===== Decorative divider ===== */
-.divider {
-    display: flex;
-    align-items: center;
-    margin: 18px 0 24px;
-}
-.divider::before,
-.divider::after {
-    content: '';
-    flex: 1;
-    height: 2px;
-    background: linear-gradient(to right, transparent, #D1EEB8, transparent);
-}
-.divider .dot {
-    width: 8px;
-    height: 8px;
-    background: #FBBF24;
-    border-radius: 50%;
-    margin: 0 12px;
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
-}
-
-/* ===== Form elements ===== */
-.login-card .form-label {
-    color: #022E23;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.login-card .form-control {
-    background: #f8faf8;
-    border: 2px solid #d4dfd4;
-    color: #022E23;
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 1rem;
-    transition: 0.25s;
-}
-
-.login-card .form-control:focus {
-    background: #ffffff;
-    border-color: #FBBF24;
-    box-shadow: 0 0 0 5px rgba(251, 191, 36, 0.2);
-    color: #022E23;
-}
-
-.login-card .form-control::placeholder {
-    color: #9bb59b;
-}
-
-/* ===== Gold button ===== */
-.btn-login {
-    background: linear-gradient(135deg, #FBBF24 0%, #f5a623 100%);
-    border: none;
-    padding: 14px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    border-radius: 12px;
-    transition: 0.3s;
-    color: #022E23;
-    font-size: 1.05rem;
-    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
-}
-
-.btn-login:hover {
-    background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
-    transform: scale(1.02);
-    box-shadow: 0 6px 24px rgba(251, 191, 36, 0.5);
-}
-
-/* ===== Footer ===== */
-.login-card .footer-text {
-    color: #5c7a5c;
-    font-size: 0.85rem;
-}
-
-/* ===== Alert ===== */
-.login-card .alert {
-    border-radius: 12px;
-    background-color: #fef2f2;
-    border-color: #fecaca;
-    color: #991b1b;
-}
-
-/* ===== Existing styles ===== */
-/* ... (keep all previous login styles) ... */
-
-/* ===== New Sidebar Styles ===== */
-.wrapper {
-    display: flex;
-    width: 100%;
-    align-items: stretch;
-    min-height: 100vh;
-}
+/* ===== Sidebar Styles =====
+   Note: the outer layout wrapper is built with plain Tailwind utility
+   classes directly in layouts/main.php (`flex h-screen overflow-hidden`),
+   not a `.wrapper` class — nothing here needs one. */
 
 /* Sidebar */
 .sidebar {
@@ -158,10 +15,6 @@ body.login-page {
     flex-direction: column;
     padding: 0;
     height: 100%;
-}
-
-.sidebar.active {
-    margin-left: -260px;
 }
 
 /* Header: logo + system name + role, all centered */
@@ -253,97 +106,19 @@ body.login-page {
     border-left-color: #f87171;
 }
 
-/* Page content */
-#content {
-    width: 100%;
-    padding: 0;
-    background: #f4f7f4;
-}
-
-/* Responsive */
+/* Responsive: on mobile the sidebar is taken out of flow and slid on/off
+   screen by the `-translate-x-full` / `md:translate-x-0` Tailwind classes
+   already on the <nav> in layouts/main.php (toggled via JS). This block
+   only needs to make it overlay the content instead of push it — it must
+   NOT also set margin-left, or that permanently cancels out the slide-in
+   transform and the mobile menu button stops working. */
 @media (max-width: 768px) {
     .sidebar {
-        margin-left: -260px;
         position: absolute;
         height: 100%;
         z-index: 999;
     }
-    .sidebar.active {
-        margin-left: 0;
-    }
 }
-
-/* Stats cards with left border accent */
-.stats-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    transition: transform 0.2s, box-shadow 0.2s;
-    border-left: 5px solid #345735;
-    height: 100%;
-}
-
-.stats-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
-}
-
-.stats-card .stats-icon {
-    font-size: 2rem;
-    opacity: 0.3;
-    float: right;
-}
-
-.stats-card .stats-number {
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    line-height: 1.2;
-}
-
-.stats-card .stats-label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #6c757d;
-    margin-top: 4px;
-}
-
-/* Color variants for left border */
-.stats-card.border-success {
-    border-left-color: #28a745;
-}
-.stats-card.border-primary {
-    border-left-color: #0d6efd;
-}
-.stats-card.border-warning {
-    border-left-color: #ffc107;
-}
-.stats-card.border-danger {
-    border-left-color: #dc3545;
-}
-.stats-card.border-info {
-    border-left-color: #0dcaf0;
-}
-.stats-card.border-dark {
-    border-left-color: #212529;
-}
-.stats-card.border-secondary {
-    border-left-color: #6c757d;
-}
-
-
-
-/* Scanner and search: full-width on mobile, fixed on desktop */
-.scanner-wrapper .btn,
-.scanner-wrapper .input-group {
-    max-width: 336px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-
-
 
 /* Scanner Frame */
 .scanner-frame-idle {
@@ -532,6 +307,15 @@ body.login-page {
     flex-shrink: 0;
 }
 
+/* Smaller variant for sub-section headers inside a card (as opposed to
+   the top-level page header), e.g. the two panel titles on the Reports
+   page or the "Find Asset" panel on the scan screen. */
+.page-icon-sm {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+}
+
 .page-title {
     font-size: 1.15rem;
     font-weight: 700;
@@ -565,6 +349,9 @@ body.login-page {
     gap: 12px;
     background: linear-gradient(180deg, #fbfdfb 0%, #ffffff 100%);
 }
+/* For headers with only a title (no trailing action/link), so the title
+   doesn't get pushed apart from nothing by justify-content: space-between. */
+.card-panel-header-solo { justify-content: flex-start; }
 
 .card-panel-body {
     padding: 24px;
@@ -593,6 +380,12 @@ body.login-page {
     box-shadow: 0 0 0 3px rgba(52, 86, 53, 0.28);
 }
 .btn-app-sm { padding: 6px 12px; font-size: 0.78rem; }
+
+/* Modifiers for a button that sits directly against an input with no gap
+   (search-box + submit pattern) — pair with the input's rounded-l-lg /
+   rounded-none Tailwind classes so the group reads as one joined pill. */
+.btn-app-join-r   { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.btn-app-join-mid { border-radius: 0; }
 
 .btn-app-primary {
     background: var(--nia-green-700);
@@ -624,6 +417,13 @@ body.login-page {
 }
 .btn-app-outline-primary:hover { background: var(--nia-forest-100); }
 
+.btn-app-info {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+.btn-app-info:hover { background: #1d4ed8; border-color: #1d4ed8; }
+
 .btn-app-ghost {
     background: transparent;
     border-color: transparent;
@@ -644,6 +444,13 @@ body.login-page {
     color: #dc2626;
 }
 .btn-app-outline-danger:hover { background: #fef2f2; }
+
+.btn-app-outline-warning {
+    background: #fff;
+    border-color: #fde68a;
+    color: #b45309;
+}
+.btn-app-outline-warning:hover { background: #fffbeb; }
 
 .btn-app-icon {
     width: 34px;
@@ -677,6 +484,7 @@ body.login-page {
 .badge-app-warning  { background: #fef3c7; color: #b45309; }
 .badge-app-danger   { background: #fee2e2; color: #b91c1c; }
 .badge-app-neutral  { background: #f1f5f1; color: #4b5f4c; }
+.badge-app-purple   { background: #e0e7ff; color: #4338ca; }
 
 /* ---------- Tile cards (grid items: offices/categories/accounts) ---------- */
 .tile-card {
@@ -771,9 +579,14 @@ body.login-page {
     border: 1px solid transparent;
     margin-bottom: 16px;
 }
+/* For longer, wrapped, multi-line messages (e.g. validation error lists),
+   so the icon/content aligns to the top of the box instead of its center. */
+.alert-app-top { align-items: flex-start; }
+
 .alert-app-success { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
 .alert-app-danger   { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
 .alert-app-info     { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.alert-app-warning  { background: #fffbeb; border-color: #fde68a; color: #92400e; }
 .alert-app-close {
     background: none;
     border: none;

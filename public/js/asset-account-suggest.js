@@ -225,7 +225,7 @@
 
             var applyBtn = document.createElement('button');
             applyBtn.type = 'button';
-            applyBtn.className = 'text-blue-600 hover:text-blue-800 underline';
+            applyBtn.className = 'text-green-700 hover:text-green-800 underline font-medium';
             applyBtn.textContent = 'Apply suggestion';
             applyBtn.addEventListener('click', function () {
                 applySuggestion(match);

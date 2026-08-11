@@ -24,13 +24,13 @@ if (!function_exists('js_attr')) {
     <!-- Left column: Form -->
     <div class="md:col-span-2">
         <div class="card-panel">
-            <div class="card-panel-header" style="justify-content:flex-start;">
+            <div class="card-panel-header card-panel-header-solo">
                 <span class="page-icon"><i class="bi bi-<?= $isEdit ? 'pencil-square' : 'plus-circle' ?>"></i></span>
                 <span class="page-title"><?= $title ?></span>
             </div>
             <div class="card-panel-body">
                 <?php if (!empty($errors)): ?>
-                    <div class="alert-app alert-app-danger" style="align-items:flex-start;">
+                    <div class="alert-app alert-app-danger alert-app-top">
                         <ul class="list-disc list-inside"><?php foreach ($errors as $err) echo '<li>'.htmlspecialchars($err).'</li>'; ?></ul>
                     </div>
                 <?php endif; ?>
@@ -43,12 +43,12 @@ if (!function_exists('js_attr')) {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="asset_code" class="block text-sm font-medium text-gray-700">Asset Code *</label>
-                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_code" name="asset_code"
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="asset_code" name="asset_code"
                                    value="<?= htmlspecialchars($data['asset_code'] ?? '') ?>" required>
                         </div>
                         <div>
                             <label for="asset_accounts_id" class="block text-sm font-medium text-gray-700">Account *</label>
-                            <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_accounts_id" name="asset_accounts_id" required>
+                            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="asset_accounts_id" name="asset_accounts_id" required>
                                 <option value="">Select Account</option>
                                 <?php foreach ($accounts as $acc): ?>
                                     <option value="<?= $acc['asset_accounts_id'] ?>"
@@ -63,30 +63,30 @@ if (!function_exists('js_attr')) {
 
                     <div class="mt-4">
                         <label for="asset_name" class="block text-sm font-medium text-gray-700">Asset Name *</label>
-                        <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="asset_name" name="asset_name"
+                        <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="asset_name" name="asset_name"
                                value="<?= htmlspecialchars($data['asset_name'] ?? '') ?>" required>
                         <p class="mt-1 text-xs text-gray-500" id="accountSuggestionHint"></p>
                     </div>
 
                     <div class="mt-4">
                         <label for="description" class="block text-sm font-medium text-gray-700">Additional Description</label>
-                        <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="description" name="description" rows="2"><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
+                        <textarea class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="description" name="description" rows="2"><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
                             <label for="brand" class="block text-sm font-medium text-gray-700">Brand</label>
-                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="brand" name="brand"
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="brand" name="brand"
                                    value="<?= htmlspecialchars($data['brand'] ?? '') ?>">
                         </div>
                         <div>
                             <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
-                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="model" name="model"
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="model" name="model"
                                    value="<?= htmlspecialchars($data['model'] ?? '') ?>">
                         </div>
                         <div>
                             <label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
-                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="serial_number" name="serial_number"
+                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="serial_number" name="serial_number"
                                    value="<?= htmlspecialchars($data['serial_number'] ?? '') ?>">
                         </div>
                     </div>
@@ -94,7 +94,7 @@ if (!function_exists('js_attr')) {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                             <label for="acquisition_cost" class="block text-sm font-medium text-gray-700">Acquisition Cost (₱) *</label>
-                            <input type="number" step="0.01" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="acquisition_cost" name="acquisition_cost"
+                            <input type="number" step="0.01" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="acquisition_cost" name="acquisition_cost"
                                 value="<?= htmlspecialchars($data['acquisition_cost'] ?? '') ?>"
                                 min="50000" required
                                 placeholder="Minimum ₱50,000.00">
@@ -102,7 +102,7 @@ if (!function_exists('js_attr')) {
                         </div>
                         <div>
                             <label for="acquisition_date" class="block text-sm font-medium text-gray-700">Acquisition Date</label>
-                            <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="acquisition_date" name="acquisition_date"
+                            <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="acquisition_date" name="acquisition_date"
                                    value="<?= htmlspecialchars($data['acquisition_date'] ?? '') ?>"
                                    min="1990-01-01" max="<?= \date('Y-m-d') ?>">
                             <p class="text-xs text-gray-500 mt-1" id="dateWarning"></p>
@@ -113,7 +113,7 @@ if (!function_exists('js_attr')) {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                            <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="status" name="status">
+                            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="status" name="status">
                                 <?php foreach ($statusOptions as $opt): ?>
                                     <option value="<?= $opt ?>"
                                         <?= (isset($data['status']) && $data['status'] == $opt) ? 'selected' : '' ?>>
@@ -124,7 +124,7 @@ if (!function_exists('js_attr')) {
                         </div>
                         <div>
                             <label for="condition" class="block text-sm font-medium text-gray-700">Condition</label>
-                            <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="condition" name="condition">
+                            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="condition" name="condition">
                                 <?php foreach ($conditionOptions as $opt): ?>
                                     <option value="<?= $opt ?>"
                                         <?= (isset($data['condition']) && $data['condition'] == $opt) ? 'selected' : '' ?>>
@@ -138,7 +138,7 @@ if (!function_exists('js_attr')) {
 
                     <div class="mt-4">
                         <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
-                        <textarea class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="remarks" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
+                        <textarea class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="remarks" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
                     </div>
 
                     <!-- Optional Custodian Assignment -->
@@ -156,9 +156,9 @@ if (!function_exists('js_attr')) {
                                 <div>
                                     <label for="custodianSearch" class="block text-sm font-medium text-gray-700">Custodian</label>
                                     <input type="text" id="custodianSearch" autocomplete="off"
-                                           class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                           class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition"
                                            placeholder="Type a name to filter…">
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="custodian_id" name="custodian_id" size="5">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="custodian_id" name="custodian_id" size="5">
                                         <option value="">Select Custodian</option>
                                         <?php foreach ($personnel as $p): ?>
                                             <option value="<?= $p['personnel_id'] ?>" 
@@ -173,7 +173,7 @@ if (!function_exists('js_attr')) {
                                 </div>
                                 <div>
                                     <label for="office_id" class="block text-sm font-medium text-gray-700">Office</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="office_id" name="office_id">
+                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="office_id" name="office_id">
                                         <option value="">Select Office</option>
                                         <?php foreach ($offices as $o): ?>
                                             <option value="<?= $o['office_id'] ?>" 
@@ -185,12 +185,12 @@ if (!function_exists('js_attr')) {
                                 </div>
                                 <div>
                                     <label for="effectivity_date" class="block text-sm font-medium text-gray-700">Effectivity Date</label>
-                                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="effectivity_date" name="effectivity_date" 
+                                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="effectivity_date" name="effectivity_date" 
                                         value="<?= htmlspecialchars($data['effectivity_date'] ?? \date('Y-m-d')) ?>">
                                 </div>
                                 <div class="md:col-span-2">
                                     <label for="property_number" class="block text-sm font-medium text-gray-700">Property Number *</label>
-                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" id="property_number" name="property_number" 
+                                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="property_number" name="property_number" 
                                         value="<?= htmlspecialchars($data['property_number'] ?? '') ?>">
                                 </div>
                             </div>

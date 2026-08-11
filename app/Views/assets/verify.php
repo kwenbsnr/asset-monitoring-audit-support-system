@@ -4,7 +4,7 @@
     <div class="md:col-span-4">
         <div class="card-panel h-full p-4">
             <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-3 mb-4 flex items-center gap-2">
-                <span class="page-icon" style="width:30px;height:30px;font-size:0.85rem;"><i class="bi bi-qr-code-scan"></i></span> Find Asset
+                <span class="page-icon page-icon-sm"><i class="bi bi-qr-code-scan"></i></span> Find Asset
             </h5>
             <div class="flex flex-col items-center">
                 <div class="relative w-full max-w-87.5 aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
@@ -31,7 +31,7 @@
                     <div class="text-xs text-gray-500 text-center mb-1">— or search manually —</div>
                     <div class="flex">
                         <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" placeholder="Asset code, serial number, or description...">
-                        <button id="manualSearchBtn" class="btn-app btn-app-primary" style="border-radius:0 8px 8px 0;">
+                        <button id="manualSearchBtn" class="btn-app btn-app-primary btn-app-join-r">
                             <i class="bi bi-search"></i> Search
                         </button>
                     </div>

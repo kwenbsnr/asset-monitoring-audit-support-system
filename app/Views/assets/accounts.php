@@ -15,7 +15,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                 <input type="hidden" name="sub" value="list_all">
                 <div class="flex">
                     <input type="text" class="border border-gray-300 rounded-l-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="search" placeholder="Search all assets..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-                    <button class="btn-app btn-app-primary" style="border-radius:0 8px 8px 0;" type="submit"><i class="bi bi-search"></i></button>
+                    <button class="btn-app btn-app-primary btn-app-join-r" type="submit"><i class="bi bi-search"></i></button>
                 </div>
             </form>
             <a href="index.php?page=assets&sub=list_all" class="btn-app btn-app-outline-primary"><i class="bi bi-list-ul"></i> All Assets</a>

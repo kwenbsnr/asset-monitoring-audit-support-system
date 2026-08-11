@@ -8,13 +8,13 @@ $isEdit = $isEdit ?? false;
 $title = $isEdit ? 'Edit User' : 'Add User';
 ?>
 <div class="card-panel">
-    <div class="card-panel-header" style="justify-content:flex-start;">
+    <div class="card-panel-header card-panel-header-solo">
         <span class="page-icon"><i class="bi bi-<?= $isEdit ? 'pencil-square' : 'person-plus' ?>"></i></span>
         <span class="page-title"><?= $title ?></span>
     </div>
     <div class="card-panel-body">
         <?php if (!empty($errors)): ?>
-            <div class="alert-app alert-app-danger" style="align-items:flex-start;">
+            <div class="alert-app alert-app-danger alert-app-top">
                 <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
             </div>
         <?php endif; ?>

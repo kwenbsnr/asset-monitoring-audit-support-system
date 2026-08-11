@@ -18,7 +18,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                 <?php endif; ?>
                 <div class="flex">
                     <input type="text" class="border border-gray-300 rounded-l-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="search" placeholder="Search..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-                    <button class="btn-app btn-app-primary" style="border-radius:0 8px 8px 0;" type="submit"><i class="bi bi-search"></i></button>
+                    <button class="btn-app btn-app-primary btn-app-join-r" type="submit"><i class="bi bi-search"></i></button>
                     <?php if (!empty($_GET['search'])): ?>
                         <a href="?page=assets&sub=<?= isset($_GET['account_id']) ? 'browse&account_id=' . (int)$_GET['account_id'] : 'list_all' ?>" class="btn-app btn-app-outline ml-1"><i class="bi bi-x-circle"></i></a>
                     <?php endif; ?>
@@ -129,7 +129,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                             <i class="bi bi-eye"></i>
                                         </button>
                                         <?php if (in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
-                                            <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline" style="color:#b45309;border-color:#fde68a;" title="Edit"><i class="bi bi-pencil"></i></a>
+                                            <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
                                         <?php endif; ?>
                                         <?php if ($asset['status'] === 'active' && in_array($_SESSION['role'], ['encoder', 'admin'])): ?>
                                             <?php if (empty($asset['active_custody_id'])): ?>

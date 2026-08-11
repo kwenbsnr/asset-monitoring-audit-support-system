@@ -6,13 +6,14 @@ unset($_SESSION['form_errors'], $_SESSION['form_data']);
 $isEdit = $isEdit ?? false;
 $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
 ?>
-<div class="bg-white rounded-lg shadow-sm border border-gray-200">
-    <div class="border-b border-gray-200 px-6 py-4">
-        <h4 class="text-xl font-bold text-gray-800"><?= $title ?></h4>
+<div class="card-panel">
+    <div class="card-panel-header card-panel-header-solo">
+        <span class="page-icon"><i class="bi bi-<?= $isEdit ? 'pencil-square' : 'person-plus' ?>"></i></span>
+        <span class="page-title"><?= $title ?></span>
     </div>
-    <div class="p-6">
+    <div class="card-panel-body">
         <?php if (!empty($errors)): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 p-3 rounded mb-4">
+            <div class="alert-app alert-app-danger alert-app-top">
                 <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
             </div>
         <?php endif; ?>
@@ -23,7 +24,7 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Asset *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="asset_id" id="asset_id" required>
+                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="asset_id" id="asset_id" required>
                         <option value="">Select Asset</option>
                         <?php foreach ($assets as $a): ?>
                             <option value="<?= $a['asset_id'] ?>"
@@ -37,7 +38,7 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Custodian *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="custodian_id" id="custodian_id" required>
+                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="custodian_id" id="custodian_id" required>
                         <option value="">Select Custodian</option>
                         <?php foreach ($personnel as $p): ?>
                             <option value="<?= $p['personnel_id'] ?>" 
@@ -52,7 +53,7 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Office *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="office_id" id="office_id" required>
+                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="office_id" id="office_id" required>
                         <option value="">Select Office</option>
                         <?php foreach ($offices as $o): ?>
                             <option value="<?= $o['office_id'] ?>" <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
@@ -63,27 +64,27 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Effectivity Date *</label>
-                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="effectivity_date" value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>" required>
+                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="effectivity_date" value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>" required>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>">
+                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Status</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="status">
+                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="status">
                         <option value="active" <?= (isset($data['status']) && $data['status'] == 'active') ? 'selected' : '' ?>>Active</option>
                         <option value="inactive" <?= (isset($data['status']) && $data['status'] == 'inactive') ? 'selected' : '' ?>>Inactive</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Property Number *</label>
-                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-green-500 focus:border-green-500" name="property_number" value="<?= htmlspecialchars($data['property_number'] ?? '') ?>" required>
+                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="property_number" value="<?= htmlspecialchars($data['property_number'] ?? '') ?>" required>
                 </div>
             </div>
             <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-                <a href="index.php?page=custody" class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Cancel</a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><?= $isEdit ? 'Update' : 'Save' ?></button>
+                <a href="index.php?page=custody" class="btn-app btn-app-outline">Cancel</a>
+                <button type="submit" class="btn-app btn-app-primary"><?= $isEdit ? 'Update' : 'Save' ?></button>
             </div>
         </form>
     </div>

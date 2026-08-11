@@ -9,7 +9,7 @@
                 <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="alert-app" style="background:#fffbeb;border-color:#fde68a;color:#92400e;">
+                <div class="alert-app alert-app-warning">
                     <span>
                         <i class="bi bi-exclamation-triangle mr-1"></i>
                         <strong>Warning:</strong> This action will mark the asset as <strong>disposed</strong>.

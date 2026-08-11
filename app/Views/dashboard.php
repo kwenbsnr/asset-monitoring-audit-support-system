@@ -6,7 +6,7 @@
         <span class="page-icon" style="width:46px;height:46px;font-size:1.2rem;"><i class="bi bi-speedometer2"></i></span>
         <div>
             <h1 class="text-xl font-bold text-gray-800">Dashboard</h1>
-            <div class="text-xs text-gray-500">Overview of asset holdings and recent activity</div>
+            <div class="page-subtitle">Overview of asset holdings and recent activity</div>
         </div>
     </div>
     <div class="text-sm text-gray-500 text-right">
