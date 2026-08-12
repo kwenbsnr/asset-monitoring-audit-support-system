@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/kwenbsnr/asset-monitoring-audit-support-system#readme",
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "postcss": "^8.5.25",
     "tailwindcss": "^4.3.3"
