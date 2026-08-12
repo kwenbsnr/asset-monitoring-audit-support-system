@@ -29,7 +29,9 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                     <i class="bi bi-arrow-left"></i> Back to Accounts
                 </a>
             <?php endif; ?>
-            <a href="index.php?page=assets&sub=add" class="btn-app btn-app-primary"><i class="bi bi-plus-circle"></i> Add</a>
+            <?php if (in_array($_SESSION['role'], ['asset_manager', 'admin'])): ?>
+                <a href="index.php?page=assets&sub=add" class="btn-app btn-app-primary"><i class="bi bi-plus-circle"></i> Add</a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -54,22 +56,27 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="index.php?page=assets&sub=bulk_qr" id="bulkQrForm">
-            <div class="flex flex-wrap items-center justify-between mb-3">
-                <div class="flex gap-2">
-                    <button type="submit" class="btn-app btn-app-outline-primary" onclick="return confirm('Print QR codes for selected assets?')">
-                        <i class="bi bi-printer"></i> Print Selected QR
-                    </button>
-                    <button type="button" class="btn-app btn-app-outline" onclick="toggleAllCheckboxes()">Select All</button>
+        <?php $canBulkQr = in_array($_SESSION['role'], ['asset_manager', 'admin']); ?>
+        <?= $canBulkQr ? '<form method="POST" action="index.php?page=assets&sub=bulk_qr" id="bulkQrForm">' : '<div>' ?>
+            <?php if ($canBulkQr): ?>
+                <div class="flex flex-wrap items-center justify-between mb-3">
+                    <div class="flex gap-2">
+                        <button type="submit" class="btn-app btn-app-outline-primary" onclick="return confirm('Print QR codes for selected assets?')">
+                            <i class="bi bi-printer"></i> Print Selected QR
+                        </button>
+                        <button type="button" class="btn-app btn-app-outline" onclick="toggleAllCheckboxes()">Select All</button>
+                    </div>
+                    <span class="text-sm text-gray-500" id="selectedCount">0 selected</span>
                 </div>
-                <span class="text-sm text-gray-500" id="selectedCount">0 selected</span>
-            </div>
+            <?php endif; ?>
 
             <div class="table-app-wrap">
                 <table class="table-app">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
+                            <?php if ($canBulkQr): ?>
+                                <th><input type="checkbox" id="selectAll" onclick="toggleAllCheckboxes()"></th>
+                            <?php endif; ?>
                             <th>Asset Code</th>
                             <th>Asset Name</th>
                             <th>Brand / Model</th>
@@ -85,7 +92,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                     <tbody>
                         <?php if (empty($assets)): ?>
                             <tr>
-                                <td colspan="11">
+                                <td colspan="<?= $canBulkQr ? 11 : 10 ?>">
                                     <div class="table-empty">
                                     <?php if (!empty($_GET['search'])): ?>
                                         No assets found matching "<strong><?= htmlspecialchars($_GET['search']) ?></strong>".
@@ -98,7 +105,9 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                         <?php else: ?>
                             <?php foreach ($assets as $asset): ?>
                                 <tr>
-                                    <td><input type="checkbox" name="asset_ids[]" value="<?= $asset['asset_id'] ?>" class="asset-checkbox"></td>
+                                    <?php if ($canBulkQr): ?>
+                                        <td><input type="checkbox" name="asset_ids[]" value="<?= $asset['asset_id'] ?>" class="asset-checkbox"></td>
+                                    <?php endif; ?>
                                     <td class="font-medium text-gray-800"><?= htmlspecialchars($asset['asset_code']) ?></td>
                                     <td><?= htmlspecialchars($asset['asset_name']) ?></td>
                                     <td><?= htmlspecialchars($asset['brand'] ?? '') ?> <?= htmlspecialchars($asset['model'] ?? '') ?></td>
@@ -168,7 +177,7 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                     </tbody>
                 </table>
             </div>
-        </form>
+        <?= $canBulkQr ? '</form>' : '</div>' ?>
     </div>
 </div>
 
@@ -333,8 +342,10 @@ function toggleAllCheckboxes() {
 }
 
 function updateSelectedCount() {
+    const countEl = document.getElementById('selectedCount');
+    if (!countEl) return;
     const checked = document.querySelectorAll('.asset-checkbox:checked').length;
-    document.getElementById('selectedCount').textContent = checked + ' selected';
+    countEl.textContent = checked + ' selected';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
