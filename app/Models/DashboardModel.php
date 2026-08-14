@@ -71,9 +71,10 @@ class DashboardModel {
     }
 
     /**
-     * Get recent audit logs (last 5).
+     * Get recent audit logs.
+     * @param int $limit
      */
-    public function getRecentAudit() {
+    public function getRecentAudit($limit = 5) {
         $sql = "
             SELECT 
                 at.action_type,
@@ -85,9 +86,12 @@ class DashboardModel {
             LEFT JOIN users u ON at.performed_by = u.users_id
             LEFT JOIN assets a ON at.asset_id = a.asset_id
             ORDER BY at.performed_at DESC
-            LIMIT 5
+            LIMIT ?
         ";
-        $result = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -154,6 +158,32 @@ class DashboardModel {
     }
 
     /**
+     * Get user counts grouped by role, with active/inactive breakdown.
+     */
+    public function getUserCounts() {
+        $sql = "SELECT role, COUNT(*) AS total, SUM(is_active) AS active FROM users GROUP BY role";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get count of assets with damaged condition.
+     */
+    public function getDamagedAssetsCount() {
+        $result = $this->db->query("SELECT COUNT(*) AS total FROM assets WHERE `condition` = 'damaged'");
+        return $result->fetch_assoc()['total'] ?? 0;
+    }
+
+    /**
+     * Get report counts grouped by status (draft/submitted).
+     */
+    public function getReportStatusCounts() {
+        $sql = "SELECT status, COUNT(*) AS count FROM asset_reports GROUP BY status";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
      * Get asset condition distribution.
      */
     public function getConditionCounts() {
@@ -179,9 +209,10 @@ class DashboardModel {
     }
 
     /**
-     * Get recent assets added (last 10) – uses asset_name.
+     * Get recent assets added – uses asset_name.
+     * @param int $limit
      */
-    public function getRecentAssets() {
+    public function getRecentAssets($limit = 10) {
         $sql = "
             SELECT 
                 a.asset_id,
@@ -200,9 +231,12 @@ class DashboardModel {
             LEFT JOIN offices o ON acust.office_id = o.office_id
             WHERE a.status != 'inactive'
             ORDER BY a.created_at DESC
-            LIMIT 10
+            LIMIT ?
         ";
-        $result = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('i', $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

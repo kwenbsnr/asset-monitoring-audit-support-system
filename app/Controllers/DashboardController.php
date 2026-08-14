@@ -21,41 +21,67 @@ class DashboardController {
     }
 
     public function index() {
+        switch ($_SESSION['role']) {
+            case 'admin':
+                $this->adminDashboard();
+                break;
+            case 'inspection_officer':
+                $this->inspectionOfficerDashboard();
+                break;
+            case 'asset_manager':
+            default:
+                $this->assetManagerDashboard();
+                break;
+        }
+    }
+
+    /**
+     * Admin: system oversight — users, audit trail, flagged assets, reports.
+     * No asset-registration or field-verification data here; that's not their job.
+     */
+    private function adminDashboard() {
+        $totalAssets = $this->dashboardModel->getTotalAssets();
+        $totalOffices = $this->dashboardModel->getTotalOffices();
+        $totalAccounts = $this->dashboardModel->getTotalAccounts();
+
+        $userCounts = $this->dashboardModel->getUserCounts();
+        $totalUsers = 0;
+        $activeUsers = 0;
+        foreach ($userCounts as $row) {
+            $totalUsers += (int)$row['total'];
+            $activeUsers += (int)$row['active'];
+        }
+
+        $missingAssets = $this->dashboardModel->getMissingAssets();
+        $damagedAssets = $this->dashboardModel->getDamagedAssetsCount();
+        $disposedAssets = $this->dashboardModel->getAssetsForDisposal();
+
+        $reportStatusCounts = $this->dashboardModel->getReportStatusCounts();
+        $draftReports = 0;
+        $submittedReports = 0;
+        foreach ($reportStatusCounts as $row) {
+            if ($row['status'] === 'draft') $draftReports = (int)$row['count'];
+            if ($row['status'] === 'submitted') $submittedReports = (int)$row['count'];
+        }
+
+        $recentAudit = $this->dashboardModel->getRecentAudit(12);
+
+        $pageTitle = 'Dashboard';
+        $currentPage = 'dashboard';
+        $viewFile = __DIR__ . '/../Views/dashboard/admin.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    /**
+     * Asset Manager: registration & inventory operations.
+     * No user management, audit trail, or reports data here.
+     */
+    private function assetManagerDashboard() {
         $totalAssets = $this->dashboardModel->getTotalAssets();
         $activeInactive = $this->dashboardModel->getActiveInactiveCounts();
         $activeAssets = $activeInactive['active'] ?? 0;
-        $statusCounts = $this->dashboardModel->getAssetStatusCounts();
-        $accountCounts = $this->dashboardModel->getAssetAccountCounts(); // changed from categories
+
         $conditionCounts = $this->dashboardModel->getConditionCounts();
-        $assetsByOffice = $this->dashboardModel->getAssetsByOffice();
-        $recentAssets = $this->dashboardModel->getRecentAssets();
-        $recentActivity = $this->dashboardModel->getRecentActivity(10);
-        $alerts = $this->dashboardModel->getAlerts();
-
-        $totalAccounts = $this->dashboardModel->getTotalAccounts(); // changed from categories
-        $totalOffices = $this->dashboardModel->getTotalOffices();
-        $assetsUnderCustody = $this->dashboardModel->getAssetsUnderCustody();
-        $missingAssets = $this->dashboardModel->getMissingAssets();
-        $assetsForDisposal = $this->dashboardModel->getAssetsForDisposal();
-        $recentTransfers = $this->dashboardModel->getRecentTransfersCount();
-
-        // Chart data: status
-        $statusLabels = [];
-        $statusData = [];
-        foreach ($statusCounts as $row) {
-            $statusLabels[] = ucfirst($row['status']);
-            $statusData[] = (int)$row['count'];
-        }
-
-        // Chart data: accounts (instead of categories)
-        $accountLabels = [];
-        $accountData = [];
-        foreach ($accountCounts as $row) {
-            if ($row['account'] === null) continue;
-            $accountLabels[] = $row['account'];
-            $accountData[] = (int)$row['count'];
-        }
-
         $conditionLabels = [];
         $conditionData = [];
         foreach ($conditionCounts as $row) {
@@ -63,16 +89,32 @@ class DashboardController {
             $conditionData[] = (int)$row['count'];
         }
 
-        $officeLabels = [];
-        $officeData = [];
-        foreach ($assetsByOffice as $row) {
-            $officeLabels[] = $row['office'];
-            $officeData[] = (int)$row['count'];
-        }
+        $recentAssets = $this->dashboardModel->getRecentAssets(10);
 
         $pageTitle = 'Dashboard';
         $currentPage = 'dashboard';
-        $viewFile = __DIR__ . '/../Views/dashboard.php';
+        $viewFile = __DIR__ . '/../Views/dashboard/asset_manager.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    /**
+     * Inspection Officer: verification workflow.
+     * Kept deliberately light — no charts, no financials, no user/report data.
+     */
+    private function inspectionOfficerDashboard() {
+        $conditionCounts = $this->dashboardModel->getConditionCounts();
+        $flaggedConditions = ['poor' => 0, 'damaged' => 0, 'obsolete' => 0];
+        foreach ($conditionCounts as $row) {
+            if (isset($flaggedConditions[$row['condition']])) {
+                $flaggedConditions[$row['condition']] = (int)$row['count'];
+            }
+        }
+
+        $recentAssets = $this->dashboardModel->getRecentAssets(5);
+
+        $pageTitle = 'Dashboard';
+        $currentPage = 'dashboard';
+        $viewFile = __DIR__ . '/../Views/dashboard/inspection_officer.php';
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 }

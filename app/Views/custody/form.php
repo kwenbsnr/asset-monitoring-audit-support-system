@@ -67,15 +67,17 @@ $title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
                     <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="effectivity_date" value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>">
+                    <label class="block text-sm font-medium text-gray-700">Date Returned / Relieved of Accountability</label>
+                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="end_date" id="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>">
+                    <p class="mt-1 text-xs text-gray-500">Leave blank while the custodian still has this asset. Fill this in only when the item has actually been returned or the custodian has been relieved of accountability — this is not a due date.</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Status</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="status">
+                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="status" id="status">
                         <option value="active" <?= (isset($data['status']) && $data['status'] == 'active') ? 'selected' : '' ?>>Active</option>
                         <option value="inactive" <?= (isset($data['status']) && $data['status'] == 'inactive') ? 'selected' : '' ?>>Inactive</option>
                     </select>
+                    <p class="mt-1 text-xs text-gray-500">Automatically set to Inactive when a return date is entered above.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Property Number *</label>
@@ -96,6 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const officeSelect = document.getElementById('office_id');
     const assetSelect = document.getElementById('asset_id');
     const sgWarning = document.getElementById('sgWarning');
+    const endDateInput = document.getElementById('end_date');
+    const statusSelect = document.getElementById('status');
 
     const allCustodianOptions = Array.from(custodianSelect.options);
 
@@ -153,6 +157,19 @@ document.addEventListener('DOMContentLoaded', function() {
             sgWarning.classList.remove('text-red-600');
         }
     }
+
+    // Keep Status in sync with the return date so the two fields can't
+    // silently disagree: entering a return date means custody has ended.
+    endDateInput.addEventListener('change', function() {
+        if (this.value) {
+            statusSelect.value = 'inactive';
+        }
+    });
+    statusSelect.addEventListener('change', function() {
+        if (this.value === 'active') {
+            endDateInput.value = '';
+        }
+    });
 
     officeSelect.addEventListener('change', function() {
         filterCustodiansByOffice(this.value);
