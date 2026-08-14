@@ -162,8 +162,10 @@ class AssetController {
         }
 
         $id = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
+        // Note: asset_code is NOT read from $_POST. It's generated server-side
+        // (AssetModel::generateAssetCode) from the account + year on create,
+        // and is immutable on update — see AssetModel::update().
         $data = [
-            'asset_code' => trim($_POST['asset_code']),
             'asset_name' => trim($_POST['asset_name']),
             'description' => trim($_POST['description'] ?? ''),
             'brand' => trim($_POST['brand'] ?? ''),
@@ -178,7 +180,6 @@ class AssetController {
         ];
 
         $errors = [];
-        if (empty($data['asset_code'])) $errors[] = 'Asset code is required.';
         if (empty($data['asset_name'])) $errors[] = 'Asset name is required.';
         if (empty($data['asset_accounts_id'])) $errors[] = 'Account is required.';
         
@@ -377,11 +378,57 @@ class AssetController {
         \App\Helpers\QRGenerator::output($content, $download);
     }
 
+    /**
+     * Scan Asset – QR scan + manual search + inline verify/update.
+     * Available to asset_manager and admin (not inspection_officer,
+     * which now uses the dynamic worklist in verify() instead).
+     * GET: shows scanner/search and asset details.
+     * POST: updates operational fields (shared with verify()).
+     */
     public function scan() {
-    // Redirect to the verification page
-    header('Location: index.php?page=assets&sub=verify');
-    exit;
-}
+        if (!in_array($_SESSION['role'], ['asset_manager', 'admin'])) {
+            header('Location: index.php');
+            exit;
+        }
+
+        $assetId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $qr = isset($_GET['qr']) ? trim($_GET['qr']) : null;
+        $asset = null;
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
+
+        if ($assetId) {
+            $asset = $this->assetModel->getById($assetId);
+        } elseif ($qr) {
+            $asset = $this->assetModel->getByQrCode($qr);
+        }
+
+        if ($asset) {
+            $custodyModel = new CustodyModel();
+            $activeCustody = $custodyModel->getActiveCustody($asset['asset_id']);
+            $asset['custodian_id'] = $activeCustody['custodian_id'] ?? 0;
+            $asset['office_id'] = $activeCustody['office_id'] ?? 0;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->saveInspection();
+            if ($this->isAjaxRequest()) {
+                $this->respondInspectionJson();
+                return;
+            }
+            if (isset($_POST['asset_id'])) {
+                header('Location: index.php?page=assets&sub=scan&id=' . (int)$_POST['asset_id']);
+            } else {
+                header('Location: index.php?page=assets&sub=scan');
+            }
+            exit;
+        }
+
+        $pageTitle = 'Scan Asset';
+        $currentPage = 'scan';
+        $viewFile = __DIR__ . '/../Views/assets/scan.php';
+        require_once __DIR__ . '/../Views/layouts/main.php';
+    }
 
     /**
      * Dispose an asset (mark as disposed) – only for inspection_officer and admin.
@@ -542,56 +589,32 @@ class AssetController {
     }
 
     /**
-     * Verify asset – main page for asset inspection.
-     * GET: shows scanner/search and asset details.
-     * POST: updates operational fields.
+     * Verify Asset – dynamic worklist for the Inspection Officer.
+     * GET: renders the filter bar / custodian-grouped worklist shell;
+     *      the rows themselves are loaded via verifyWorklistJson().
+     * POST: updates operational fields for one asset (from the row modal).
      */
     public function verify() {
-        // Only inspection_officer and admin can access
-        if (!in_array($_SESSION['role'], ['inspection_officer', 'admin'])) {
+        // Only inspection_officer can access. (asset_manager/admin now use
+        // the Scan Asset page instead – see scan().)
+        if (!in_array($_SESSION['role'], ['inspection_officer'])) {
             header('Location: index.php');
             exit;
         }
 
-        $assetId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        $qr = isset($_GET['qr']) ? trim($_GET['qr']) : null;
-        $asset = null;
-        $personnel = $this->assetModel->getPersonnel();
-        $offices = $this->assetModel->getOffices();
-
-        // If ID or QR provided, load the asset
-        if ($assetId) {
-            $asset = $this->assetModel->getById($assetId);
-        } elseif ($qr) {
-            $asset = $this->assetModel->getByQrCode($qr);
-        }
-
-        // If asset found, get active custody
-        if ($asset) {
-            $custodyModel = new CustodyModel();
-            $activeCustody = $custodyModel->getActiveCustody($asset['asset_id']);
-            if ($activeCustody) {
-                $asset['custodian_id'] = $activeCustody['custodian_id'];
-                $asset['office_id'] = $activeCustody['office_id'];
-            } else {
-                $asset['custodian_id'] = 0;
-                $asset['office_id'] = 0;
-            }
-        }
-
-        // Handle POST update
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->saveInspection();
-            // After save, reload the same asset
-            if (isset($_POST['asset_id'])) {
-                header('Location: index.php?page=assets&sub=verify&id=' . (int)$_POST['asset_id']);
-            } else {
-                header('Location: index.php?page=assets&sub=verify');
+            if ($this->isAjaxRequest()) {
+                $this->respondInspectionJson();
+                return;
             }
+            header('Location: index.php?page=assets&sub=verify');
             exit;
         }
 
-        // Prepare view data
+        $personnel = $this->assetModel->getPersonnel();
+        $offices = $this->assetModel->getOffices();
+        $accounts = $this->assetModel->getAssetAccounts();
         $pageTitle = 'Verify Asset';
         $currentPage = 'verify';
         $viewFile = __DIR__ . '/../Views/assets/verify.php';
@@ -599,10 +622,68 @@ class AssetController {
     }
 
     /**
+     * AJAX: filtered + paginated worklist rows for the Verify Asset page.
+     * GET params: search, account_id, custodian, office_id, page.
+     */
+    public function verifyWorklistJson() {
+        if (!in_array($_SESSION['role'], ['inspection_officer'])) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        $filters = [];
+        if (!empty($_GET['account_id'])) $filters['account_id'] = (int)$_GET['account_id'];
+        if (!empty($_GET['custodian'])) $filters['custodian'] = trim($_GET['custodian']);
+        if (!empty($_GET['office_id'])) $filters['office_id'] = (int)$_GET['office_id'];
+
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $pageSize = 20;
+        $offset = ($page - 1) * $pageSize;
+
+        $total = $this->assetModel->countVerificationWorklist($search, $filters);
+        $rows = $this->assetModel->getVerificationWorklist($search, $filters, $pageSize, $offset);
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'rows' => $rows,
+            'total' => $total,
+            'page' => $page,
+            'page_size' => $pageSize,
+        ]);
+    }
+
+    /**
+     * True if the current request was sent via fetch()/XHR (not a plain form submit).
+     * @return bool
+     */
+    private function isAjaxRequest() {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    /**
+     * Echo the result of saveInspection() as JSON (used by the Verify Asset
+     * worklist modal and, optionally, the Scan Asset page) instead of the
+     * classic flash + redirect flow.
+     */
+    private function respondInspectionJson() {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => empty($_SESSION['flash_type']) || $_SESSION['flash_type'] !== 'danger',
+            'message' => $_SESSION['flash'] ?? '',
+        ]);
+        unset($_SESSION['flash'], $_SESSION['flash_type']);
+    }
+
+    /**
      * Save inspection updates (POST handler).
      */
     private function saveInspection() {
-        if (!in_array($_SESSION['role'], ['inspection_officer', 'admin'])) {
+        // inspection_officer (worklist modal) and asset_manager/admin (Scan Asset page)
+        if (!in_array($_SESSION['role'], ['inspection_officer', 'asset_manager', 'admin'])) {
             http_response_code(403);
             exit('Unauthorized');
         }

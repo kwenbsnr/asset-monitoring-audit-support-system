@@ -42,11 +42,6 @@ if (!function_exists('js_attr')) {
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="asset_code" class="block text-sm font-medium text-gray-700">Asset Code *</label>
-                            <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="asset_code" name="asset_code"
-                                   value="<?= htmlspecialchars($data['asset_code'] ?? '') ?>" required>
-                        </div>
-                        <div>
                             <label for="asset_accounts_id" class="block text-sm font-medium text-gray-700">Account *</label>
                             <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="asset_accounts_id" name="asset_accounts_id" required>
                                 <option value="">Select Account</option>
@@ -58,6 +53,16 @@ if (!function_exists('js_attr')) {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Asset Code</label>
+                            <?php if ($isEdit): ?>
+                                <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-600 font-mono" value="<?= htmlspecialchars($asset['asset_code'] ?? '') ?>" readonly disabled>
+                                <p class="mt-1 text-xs text-gray-500">Asset codes are fixed once assigned and can't be edited.</p>
+                            <?php else: ?>
+                                <input type="text" id="assetCodePreview" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-500 font-mono" value="Select an account to preview" readonly disabled>
+                                <p class="mt-1 text-xs text-gray-500">Auto-generated as YEAR-ACCOUNT-#### when you save.</p>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -241,6 +246,22 @@ if (!function_exists('js_attr')) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ===== Asset code preview (Add mode only — actual code is generated =====
+    // ===== server-side on save; this is a heads-up, not the real value.  =====
+    const accountSelectForCode = document.getElementById('asset_accounts_id');
+    const codePreview = document.getElementById('assetCodePreview');
+    if (accountSelectForCode && codePreview) {
+        const updateCodePreview = function() {
+            const opt = accountSelectForCode.options[accountSelectForCode.selectedIndex];
+            const accountCode = opt ? opt.getAttribute('data-code') : null;
+            codePreview.value = accountCode
+                ? new Date().getFullYear() + '-' + accountCode + '-####'
+                : 'Select an account to preview';
+        };
+        accountSelectForCode.addEventListener('change', updateCodePreview);
+        updateCodePreview(); // set correct state on load (e.g. after a validation error re-render)
+    }
+
     const toggle = document.getElementById('assignCustodianToggle');
     const section = document.getElementById('custodianSection');
     const propertyNumberInput = document.getElementById('property_number');

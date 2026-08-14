@@ -174,11 +174,85 @@ class AssetModel {
     }
 
     /**
-     * Insert a new asset.
+     * Build the next asset code for a given account/year: YEAR-ACCOUNTCODE-SEQ,
+     * e.g. "2026-07-010-0001". Sequence is 4-digit, zero-padded, and resets
+     * per account per year. Never trust a client-supplied asset code — this
+     * is the only place asset codes are produced.
+     *
+     * @param int      $accountId
+     * @param int|null $year Defaults to the current year.
+     * @return string
+     */
+    public function generateAssetCode(int $accountId, ?int $year = null): string {
+        $year = $year ?: (int)date('Y');
+        $account = $this->getAccountById($accountId);
+        if (!$account) {
+            throw new \InvalidArgumentException('Invalid asset account.');
+        }
+        $prefix = $year . '-' . $account['account_code'] . '-';
+
+        // Pull the highest existing sequence number under this prefix. Taking
+        // the segment after the LAST dash works even though account_code
+        // itself contains a dash (e.g. "07-010").
+        $stmt = $this->db->prepare("
+            SELECT MAX(CAST(SUBSTRING_INDEX(asset_code, '-', -1) AS UNSIGNED)) AS max_seq
+            FROM assets
+            WHERE asset_code LIKE ?
+        ");
+        $likePattern = $prefix . '%';
+        $stmt->bind_param('s', $likePattern);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $nextSeq = ((int)($row['max_seq'] ?? 0)) + 1;
+
+        return $prefix . str_pad((string)$nextSeq, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Insert a new asset. The asset code is generated server-side from the
+     * account + year and is never accepted from client input. If two saves
+     * race for the same sequence number, this retries with a freshly
+     * computed code instead of failing the request.
+     *
      * @param array $data
      * @return int|false
      */
     public function create(array $data) {
+        // Deliberately the CURRENT year — the code's year reflects when it was
+        // registered/assigned, not the asset's acquisition_date (which can be
+        // any year back to 1990). This is what makes the sequence reset on
+        // Jan 1st: the bucket is tied to "today", not to user-entered data.
+        $year = (int)date('Y');
+
+        $maxAttempts = 5;
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $assetCode = $this->generateAssetCode((int)$data['asset_accounts_id'], $year);
+            try {
+                return $this->insertAsset($assetCode, $data);
+            } catch (DuplicateEntryException $e) {
+                // Only retry when the collision was the generated asset_code
+                // itself (a concurrent save grabbed the same sequence number
+                // between our SELECT and our INSERT). Any other unique-field
+                // collision (qr_code_ref, serial_number) is a real problem
+                // and should surface to the user as-is.
+                if ($e->getField() !== 'asset_code' || $attempt === $maxAttempts) {
+                    throw $e;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Raw insert with an already-generated asset code. Split out from
+     * create() so the retry loop can call it repeatedly without re-deciding
+     * the code-generation policy.
+     *
+     * @param string $assetCode
+     * @param array  $data
+     * @return int|false
+     */
+    private function insertAsset(string $assetCode, array $data) {
         $stmt = $this->db->prepare("
             INSERT INTO assets (
                 asset_code, asset_name, qr_code_ref, description, brand, model, serial_number,
@@ -188,7 +262,7 @@ class AssetModel {
         $qr_code_ref = 'QR-' . strtoupper(uniqid());
         $stmt->bind_param(
             'sssssssdsisss',
-            $data['asset_code'],
+            $assetCode,
             $data['asset_name'],
             $qr_code_ref,
             $data['description'],
@@ -222,9 +296,11 @@ class AssetModel {
      * @return bool
      */
     public function update(int $id, array $data) {
+        // asset_code is intentionally NOT updatable — it's generated once at
+        // creation (see create()/generateAssetCode()) and stays fixed for the
+        // life of the asset for audit-trail integrity.
         $stmt = $this->db->prepare("
             UPDATE assets SET
-                asset_code = ?,
                 asset_name = ?,
                 description = ?,
                 brand = ?,
@@ -239,8 +315,7 @@ class AssetModel {
             WHERE asset_id = ?
         ");
         $stmt->bind_param(
-            'ssssssdsisssi',
-            $data['asset_code'],
+            'sssssdsisssi',
             $data['asset_name'],
             $data['description'],
             $data['brand'],
@@ -884,5 +959,107 @@ class AssetModel {
             $id
         );
         return $stmt->execute();
+    }
+
+    // ===== Verification worklist (Inspection Officer "Verify Asset" page) =====
+
+    /**
+     * Shared WHERE/JOIN builder for the verification worklist.
+     * One row per asset, with its active custodian/office (if any) and
+     * account (category) attached. Used by both the paginated row fetch
+     * and the count query so filtering stays identical between the two.
+     * @param string|null $search
+     * @param array       $filters  ['account_id' => int, 'custodian' => string, 'office_id' => int]
+     * @param bool        $countOnly
+     * @return array [string $sql, array $params, string $types]
+     */
+    private function buildVerificationWorklistQuery(?string $search, array $filters, bool $countOnly) {
+        $select = $countOnly
+            ? "SELECT COUNT(*) "
+            : "SELECT
+                    a.asset_id, a.asset_code, a.asset_name, a.serial_number,
+                    a.`condition`, a.status, a.verification_status, a.verified_at, a.inspection_remarks,
+                    aa.asset_accounts_id, aa.account_code, aa.account_name,
+                    p.personnel_id AS custodian_id, p.full_name AS custodian_name, p.position,
+                    o.office_id, o.name AS office_name ";
+
+        $sql = $select . "
+            FROM assets a
+            LEFT JOIN asset_accounts aa ON a.asset_accounts_id = aa.asset_accounts_id
+            LEFT JOIN asset_custodies ac ON a.asset_id = ac.asset_id AND ac.status = 'active'
+            LEFT JOIN personnel p ON ac.custodian_id = p.personnel_id
+            LEFT JOIN offices o ON ac.office_id = o.office_id
+            WHERE a.status != 'inactive'
+        ";
+
+        $params = [];
+        $types = '';
+
+        if (!empty($search)) {
+            $like = '%' . $search . '%';
+            $sql .= " AND (a.asset_code LIKE ? OR a.asset_name LIKE ? OR a.serial_number LIKE ? OR p.full_name LIKE ? OR o.name LIKE ?)";
+            for ($i = 0; $i < 5; $i++) {
+                $params[] = $like;
+                $types .= 's';
+            }
+        }
+        if (!empty($filters['account_id'])) {
+            $sql .= " AND a.asset_accounts_id = ?";
+            $params[] = $filters['account_id'];
+            $types .= 'i';
+        }
+        if (!empty($filters['custodian'])) {
+            $sql .= " AND p.full_name LIKE ?";
+            $params[] = '%' . $filters['custodian'] . '%';
+            $types .= 's';
+        }
+        if (!empty($filters['office_id'])) {
+            $sql .= " AND o.office_id = ?";
+            $params[] = $filters['office_id'];
+            $types .= 'i';
+        }
+
+        return [$sql, $params, $types];
+    }
+
+    /**
+     * Fetch one page of the verification worklist (one row per asset).
+     * @param string|null $search
+     * @param array       $filters
+     * @param int         $limit
+     * @param int         $offset
+     * @return array
+     */
+    public function getVerificationWorklist(?string $search, array $filters, int $limit, int $offset) {
+        [$sql, $params, $types] = $this->buildVerificationWorklistQuery($search, $filters, false);
+        $sql .= " ORDER BY (p.full_name IS NULL), p.full_name, a.asset_code LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $types .= 'i';
+        $params[] = $offset;
+        $types .= 'i';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Count total rows matching the verification worklist filters (for pagination).
+     * @param string|null $search
+     * @param array       $filters
+     * @return int
+     */
+    public function countVerificationWorklist(?string $search, array $filters) {
+        [$sql, $params, $types] = $this->buildVerificationWorklistQuery($search, $filters, true);
+        $stmt = $this->db->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+        return (int)$count;
     }
 }

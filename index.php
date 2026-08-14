@@ -89,6 +89,9 @@ switch ($page) {
             case 'verify':
                 $controller->verify();
                 break;
+            case 'verify_worklist_json':
+                $controller->verifyWorklistJson();
+                break;
             // ===== END ADD =====
             default:
                 $controller->browse();
