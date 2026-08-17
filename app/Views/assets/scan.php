@@ -60,7 +60,7 @@
                     <p class="text-sm">Scan a QR code or search manually to verify an asset.</p>
                 </div>
                 <div id="profileContent" class="hidden">
-                    <form id="verifyForm" method="POST" action="index.php?page=assets&sub=verify">
+                    <form id="verifyForm" method="POST" action="index.php?page=assets&sub=scan">
                         <input type="hidden" name="asset_id" id="assetIdField" value="">
                         <h6 class="font-semibold text-gray-800 border-b pb-2 mb-3">Asset Information (View‑only)</h6>
                         <div id="assetInfo" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm mb-4"></div>
@@ -146,8 +146,19 @@
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="public/js/scanner.js"></script>
+<!--
+    NOTE: public/js/scanner.js is intentionally NOT re-included here.
+    app/Views/layouts/main.php already loads it once at the bottom of every
+    page (including this one). Loading it a second time redeclares its
+    top-level `let`/`const` bindings in the same global script scope and
+    throws "Identifier has already been declared", which also silently
+    breaks the showAssetProfile override below because the failed second
+    load never runs its trailing `window.showAssetProfile = showAssetProfile;`.
+    The override is wrapped in DOMContentLoaded so it runs after main.php's
+    single scanner.js load has finished defining the default.
+-->
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 // Override showAssetProfile to populate the form and show actions
 const originalShowAssetProfile = window.showAssetProfile;
 window.showAssetProfile = function(data) {
@@ -237,14 +248,15 @@ document.getElementById('manualSearchBtn').addEventListener('click', function() 
         .catch(err => alert('Failed to fetch asset: ' + err.message));
 });
 
-// Auto-start scanner
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        if (typeof startScanner === 'function') {
-            startScanner();
-        }
-    }, 500);
-});
+// Auto-start scanner (safe to run in the same DOMContentLoaded callback,
+// after the override above has already replaced window.showAssetProfile)
+setTimeout(() => {
+    if (typeof startScanner === 'function') {
+        startScanner();
+    }
+}, 500);
+
+}); // end DOMContentLoaded
 
 // Reuse escapeHtml from scanner.js
 function escapeHtml(text) {

@@ -57,9 +57,11 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
 
             <?php if ($_SESSION['role'] === 'asset_manager'): ?>
                 <li>
-                    <a class="nav-link <?= ($currentPage === 'add_asset') ? 'active' : '' ?>" href="index.php?page=assets&sub=add">
+                    <button type="button" class="nav-link w-full text-left" data-form-modal
+                            data-form-url="index.php?page=assets&sub=add"
+                            data-form-title="Register Asset">
                         <i class="bi bi-plus-circle"></i> Register Asset
-                    </a>
+                    </button>
                 </li>
                 <li>
                     <a class="nav-link <?= ($currentPage === 'assets') ? 'active' : '' ?>" href="index.php?page=assets&sub=browse">
@@ -142,7 +144,32 @@ $roleLabel = $roleLabels[$_SESSION['role']] ?? ucfirst(str_replace('_', ' ', $_S
     </div>
 </div>
 
+<!-- Shared "Add / Edit" form modal — reused by every form in the app so
+     the load → validate → save → refresh flow (and its animation) is
+     identical everywhere. See public/js/modal-forms.js. -->
+<div id="formModal" class="modal-overlay">
+    <div class="modal-panel modal-panel-xl" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+        <div class="modal-header">
+            <h5 id="formModalTitle">Form</h5>
+            <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body" id="formModalBody">
+            <div class="text-center py-10">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <p class="mt-2 text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="/asset-monitoring-audit-support-system/public/js/modal.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/modal-forms.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/qr-label.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/asset-account-suggest.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/asset-form.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/custody-form.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/employee-form.js"></script>
+<script src="/asset-monitoring-audit-support-system/public/js/user-form.js"></script>
 <script src="/asset-monitoring-audit-support-system/public/js/scanner.js"></script>
 
 <script>

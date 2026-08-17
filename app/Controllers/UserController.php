@@ -32,10 +32,16 @@ class UserController {
     public function add() {
         $personnel = $this->userModel->getPersonnelList();
         $offices = $this->userModel->getOfficeList();
+        $isEdit = false;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/users/form.php';
+            return;
+        }
+
         $pageTitle = 'Add User';
         $currentPage = 'users';
         $viewFile = __DIR__ . '/../Views/users/form.php';
-        $isEdit = false;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -52,10 +58,16 @@ class UserController {
         }
         $personnel = $this->userModel->getPersonnelList();
         $offices = $this->userModel->getOfficeList();
+        $isEdit = true;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/users/form.php';
+            return;
+        }
+
         $pageTitle = 'Edit User';
         $currentPage = 'users';
         $viewFile = __DIR__ . '/../Views/users/form.php';
-        $isEdit = true;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -64,6 +76,7 @@ class UserController {
             header('Location: index.php?page=users');
             exit;
         }
+        $isAjax = $this->isAjaxRequest();
 
         $id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
         $data = [
@@ -111,6 +124,11 @@ class UserController {
         }
 
         if (!empty($errors)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => $errors]);
+                return;
+            }
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $data;
             header('Location: index.php?page=users&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -123,15 +141,26 @@ class UserController {
             $success = $this->userModel->createUser($data);
         }
 
-        if ($success) {
-            unset($_SESSION['form_errors'], $_SESSION['form_data']);
-            $_SESSION['flash'] = 'User saved successfully.';
-            $_SESSION['flash_type'] = 'success';
-        } else {
+        if (!$success) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => ['Failed to save user.']]);
+                return;
+            }
             $_SESSION['flash'] = 'Failed to save user.';
             $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=users&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
+        }
+
+        unset($_SESSION['form_errors'], $_SESSION['form_data']);
+        $_SESSION['flash'] = 'User saved successfully.';
+        $_SESSION['flash_type'] = 'success';
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'message' => 'User saved successfully.']);
+            return;
         }
         header('Location: index.php?page=users');
         exit;
@@ -146,5 +175,14 @@ class UserController {
         }
         header('Location: index.php?page=users');
         exit;
+    }
+
+    /**
+     * True if the current request was sent via fetch()/XHR (not a plain form submit).
+     * @return bool
+     */
+    private function isAjaxRequest() {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 }

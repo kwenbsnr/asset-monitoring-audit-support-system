@@ -22,7 +22,12 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                 </div>
             </form>
             <a href="index.php?page=assets&sub=list_all" class="btn-app btn-app-outline-primary"><i class="bi bi-list-ul"></i> All Assets</a>
-            <a href="index.php?page=assets&sub=add" class="btn-app btn-app-primary"><i class="bi bi-plus-circle"></i> Add Asset</a>
+            <button type="button" class="btn-app btn-app-primary" data-form-modal
+                    data-form-url="index.php?page=assets&sub=add"
+                    data-form-title="Register Asset"
+                    data-form-init="initAssetForm">
+                <i class="bi bi-plus-circle"></i> Add Asset
+            </button>
         </div>
     </div>
 

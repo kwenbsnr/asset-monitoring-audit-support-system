@@ -40,10 +40,16 @@ class EmployeeController {
     public function add() {
         $offices = $this->employeeModel->getOffices();
         $salaryGradeBrackets = SalaryGradeHelper::getBrackets();
+        $isEdit = false;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/employees/form.php';
+            return;
+        }
+
         $pageTitle = 'Add Employee';
         $currentPage = 'employees';
         $viewFile = __DIR__ . '/../Views/employees/form.php';
-        $isEdit = false;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -61,10 +67,16 @@ class EmployeeController {
         $offices = $this->employeeModel->getOffices();
         $salaryGradeBrackets = SalaryGradeHelper::getBrackets();
         $activeAssetCount = $this->employeeModel->getActiveAssetCount($id);
+        $isEdit = true;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/employees/form.php';
+            return;
+        }
+
         $pageTitle = 'Edit Employee';
         $currentPage = 'employees';
         $viewFile = __DIR__ . '/../Views/employees/form.php';
-        $isEdit = true;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -73,6 +85,7 @@ class EmployeeController {
             header('Location: index.php?page=employees');
             exit;
         }
+        $isAjax = $this->isAjaxRequest();
 
         $id = isset($_POST['personnel_id']) ? (int)$_POST['personnel_id'] : 0;
         $data = [
@@ -97,6 +110,11 @@ class EmployeeController {
         }
 
         if (!empty($errors)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => $errors]);
+                return;
+            }
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $data;
             header('Location: index.php?page=employees&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -109,15 +127,26 @@ class EmployeeController {
             $success = $this->employeeModel->create($data) !== false;
         }
 
-        if ($success) {
-            unset($_SESSION['form_errors'], $_SESSION['form_data']);
-            $_SESSION['flash'] = 'Employee profile saved successfully.';
-            $_SESSION['flash_type'] = 'success';
-        } else {
+        if (!$success) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => ['Failed to save employee profile.']]);
+                return;
+            }
             $_SESSION['flash'] = 'Failed to save employee profile.';
             $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=employees&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
+        }
+
+        unset($_SESSION['form_errors'], $_SESSION['form_data']);
+        $_SESSION['flash'] = 'Employee profile saved successfully.';
+        $_SESSION['flash_type'] = 'success';
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'message' => 'Employee profile saved successfully.']);
+            return;
         }
         header('Location: index.php?page=employees');
         exit;
@@ -148,5 +177,14 @@ class EmployeeController {
         $_SESSION['flash_type'] = 'success';
         header('Location: index.php?page=employees');
         exit;
+    }
+
+    /**
+     * True if the current request was sent via fetch()/XHR (not a plain form submit).
+     * @return bool
+     */
+    private function isAjaxRequest() {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
 }

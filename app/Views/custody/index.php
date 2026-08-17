@@ -8,9 +8,12 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
             <span class="page-icon"><i class="bi bi-people"></i></span>
             <span class="page-title">Custody Records</span>
         </div>
-        <a href="index.php?page=custody&sub=add" class="btn-app btn-app-primary">
+        <button type="button" class="btn-app btn-app-primary" data-form-modal
+                data-form-url="index.php?page=custody&sub=add"
+                data-form-title="Assign Custody"
+                data-form-init="initCustodyForm">
             <i class="bi bi-plus-circle"></i> Assign Custody
-        </a>
+        </button>
     </div>
     <div class="card-panel-body">
         <?php if (isset($_SESSION['flash'])): ?>
@@ -71,7 +74,12 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                 <td><span class="badge-app <?= $r['status'] === 'active' ? 'badge-app-success' : 'badge-app-neutral' ?>"><?= $r['status'] ?></span></td>
                                 <td><?= htmlspecialchars($r['property_number'] ?? '') ?></td>
                                 <td class="text-center whitespace-nowrap">
-                                    <a href="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <button type="button" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit" data-form-modal
+                                            data-form-url="index.php?page=custody&sub=edit&id=<?= $r['asset_custodies_id'] ?>"
+                                            data-form-title="Edit Custody Record"
+                                            data-form-init="initCustodyForm">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <a href="index.php?page=custody&sub=delete&id=<?= $r['asset_custodies_id'] ?>" class="btn-app btn-app-sm btn-app-outline-danger" title="End Custody" onclick="return confirm('End this custody record?')"><i class="bi bi-x-circle"></i></a>
                                 </td>
                             </tr>

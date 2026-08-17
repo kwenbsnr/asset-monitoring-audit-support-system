@@ -21,9 +21,12 @@ $statusLabel = [
             <span class="page-icon"><i class="bi bi-person-badge"></i></span>
             <span class="page-title">Employee Management</span>
         </div>
-        <a href="index.php?page=employees&sub=add" class="btn-app btn-app-primary">
+        <button type="button" class="btn-app btn-app-primary" data-form-modal
+                data-form-url="index.php?page=employees&sub=add"
+                data-form-title="Add Employee"
+                data-form-init="initEmployeeForm">
             <i class="bi bi-plus-circle"></i> Add Employee
-        </a>
+        </button>
     </div>
     <div class="card-panel-body">
         <?php if (isset($_SESSION['flash'])): ?>
@@ -97,7 +100,12 @@ $statusLabel = [
                                     </span>
                                 </td>
                                 <td class="text-center whitespace-nowrap">
-                                    <a href="index.php?page=employees&sub=edit&id=<?= $e['personnel_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <button type="button" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit" data-form-modal
+                                            data-form-url="index.php?page=employees&sub=edit&id=<?= $e['personnel_id'] ?>"
+                                            data-form-title="Edit Employee"
+                                            data-form-init="initEmployeeForm">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <button type="button"
                                             class="status-btn btn-app btn-app-sm btn-app-outline"
                                             data-id="<?= $e['personnel_id'] ?>"

@@ -30,7 +30,13 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                 </a>
             <?php endif; ?>
             <?php if (in_array($_SESSION['role'], ['asset_manager', 'admin'])): ?>
-                <a href="index.php?page=assets&sub=add" class="btn-app btn-app-primary"><i class="bi bi-plus-circle"></i> Add</a>
+                <a href="index.php?page=assets&sub=scan" class="btn-app btn-app-outline-primary"><i class="bi bi-qr-code-scan"></i> Scan Asset</a>
+                <button type="button" class="btn-app btn-app-primary" data-form-modal
+                        data-form-url="index.php?page=assets&sub=add"
+                        data-form-title="Register Asset"
+                        data-form-init="initAssetForm">
+                    <i class="bi bi-plus-circle"></i> Add
+                </button>
             <?php endif; ?>
         </div>
     </div>
@@ -138,17 +144,28 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                             <i class="bi bi-eye"></i>
                                         </button>
                                         <?php if (in_array($_SESSION['role'], ['asset_manager', 'admin'])): ?>
-                                            <a href="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                                            <button type="button" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit" data-form-modal
+                                                    data-form-url="index.php?page=assets&sub=edit&id=<?= $asset['asset_id'] ?>"
+                                                    data-form-title="Edit Asset"
+                                                    data-form-init="initAssetForm">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
                                         <?php endif; ?>
                                         <?php if ($asset['status'] === 'active' && in_array($_SESSION['role'], ['asset_manager', 'admin'])): ?>
                                             <?php if (empty($asset['active_custody_id'])): ?>
-                                                <a href="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline-primary" title="Assign Custodian">
+                                                <button type="button" class="btn-app btn-app-sm btn-app-outline-primary" title="Assign Custodian" data-form-modal
+                                                        data-form-url="index.php?page=custody&sub=add&asset_id=<?= $asset['asset_id'] ?>"
+                                                        data-form-title="Assign Custody"
+                                                        data-form-init="initCustodyForm">
                                                     <i class="bi bi-person-plus"></i>
-                                                </a>
+                                                </button>
                                             <?php else: ?>
-                                                <a href="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>" class="btn-app btn-app-sm btn-app-outline-primary" title="Transfer Custodian">
+                                                <button type="button" class="btn-app btn-app-sm btn-app-outline-primary" title="Transfer Custodian" data-form-modal
+                                                        data-form-url="index.php?page=custody&sub=edit&asset_id=<?= $asset['asset_id'] ?>"
+                                                        data-form-title="Transfer Custody"
+                                                        data-form-init="initCustodyForm">
                                                     <i class="bi bi-arrow-left-right"></i>
-                                                </a>
+                                                </button>
                                             <?php endif; ?>
                                         <?php endif; ?>
                                         <?php if ($_SESSION['role'] === 'admin' && $asset['status'] === 'active'): ?>

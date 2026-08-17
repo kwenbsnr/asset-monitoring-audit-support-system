@@ -4,193 +4,83 @@ $data = $_SESSION['form_data'] ?? ($record ?? []);
 $errors = $_SESSION['form_errors'] ?? [];
 unset($_SESSION['form_errors'], $_SESSION['form_data']);
 $isEdit = $isEdit ?? false;
-$title = $isEdit ? 'Edit Custody Record' : 'Assign Custody';
 ?>
-<div class="card-panel">
-    <div class="card-panel-header card-panel-header-solo">
-        <span class="page-icon"><i class="bi bi-<?= $isEdit ? 'pencil-square' : 'person-plus' ?>"></i></span>
-        <span class="page-title"><?= $title ?></span>
+<!-- Modal fragment: fetched via AJAX by public/js/modal-forms.js — no
+     page chrome here, the shared #formModal shell provides it. -->
+<?php if (!empty($errors)): ?>
+    <div class="alert-app alert-app-danger alert-app-top">
+        <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
     </div>
-    <div class="card-panel-body">
-        <?php if (!empty($errors)): ?>
-            <div class="alert-app alert-app-danger alert-app-top">
-                <ul class="list-disc list-inside"><?php foreach ($errors as $e) echo '<li>'.htmlspecialchars($e).'</li>'; ?></ul>
-            </div>
-        <?php endif; ?>
-        <form method="POST" action="index.php?page=custody&sub=save" id="custodyForm">
-            <?php if ($isEdit): ?>
-                <input type="hidden" name="custody_id" value="<?= $record['asset_custodies_id'] ?>">
-            <?php endif; ?>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Asset *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="asset_id" id="asset_id" required>
-                        <option value="">Select Asset</option>
-                        <?php foreach ($assets as $a): ?>
-                            <option value="<?= $a['asset_id'] ?>"
-                                data-cost="<?= htmlspecialchars($a['acquisition_cost'] ?? '0') ?>"
-                                <?= (isset($data['asset_id']) && $data['asset_id'] == $a['asset_id']) ? 'selected' : '' ?>
-                                <?= (isset($preSelectedAsset) && $preSelectedAsset == $a['asset_id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($a['asset_code'] . ' - ' . $a['description']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Custodian *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="custodian_id" id="custodian_id" required>
-                        <option value="">Select Custodian</option>
-                        <?php foreach ($personnel as $p): ?>
-                            <option value="<?= $p['personnel_id'] ?>" 
-                                    data-office-id="<?= $p['office_id'] ?>"
-                                    data-salary-grade="<?= (int)($p['salary_grade'] ?? 0) ?>"
-                                    <?= (isset($data['custodian_id']) && $data['custodian_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ') — SG ' . (int)($p['salary_grade'] ?? 0)) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500" id="sgWarning"></p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Office *</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="office_id" id="office_id" required>
-                        <option value="">Select Office</option>
-                        <?php foreach ($offices as $o): ?>
-                            <option value="<?= $o['office_id'] ?>" <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($o['name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Effectivity Date *</label>
-                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="effectivity_date" value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Date Returned / Relieved of Accountability</label>
-                    <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="end_date" id="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>">
-                    <p class="mt-1 text-xs text-gray-500">Leave blank while the custodian still has this asset. Fill this in only when the item has actually been returned or the custodian has been relieved of accountability — this is not a due date.</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Status</label>
-                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="status" id="status">
-                        <option value="active" <?= (isset($data['status']) && $data['status'] == 'active') ? 'selected' : '' ?>>Active</option>
-                        <option value="inactive" <?= (isset($data['status']) && $data['status'] == 'inactive') ? 'selected' : '' ?>>Inactive</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Automatically set to Inactive when a return date is entered above.</p>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Property Number *</label>
-                    <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="property_number" value="<?= htmlspecialchars($data['property_number'] ?? '') ?>" required>
-                </div>
-            </div>
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-                <a href="index.php?page=custody" class="btn-app btn-app-outline">Cancel</a>
-                <button type="submit" class="btn-app btn-app-primary"><?= $isEdit ? 'Update' : 'Save' ?></button>
-            </div>
-        </form>
+<?php endif; ?>
+<form method="POST" action="index.php?page=custody&sub=save" id="custodyForm">
+    <?php if ($isEdit): ?>
+        <input type="hidden" name="custody_id" value="<?= $record['asset_custodies_id'] ?>">
+    <?php endif; ?>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Asset *</label>
+            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="asset_id" id="asset_id" required>
+                <option value="">Select Asset</option>
+                <?php foreach ($assets as $a): ?>
+                    <option value="<?= $a['asset_id'] ?>"
+                        data-cost="<?= htmlspecialchars($a['acquisition_cost'] ?? '0') ?>"
+                        <?= (isset($data['asset_id']) && $data['asset_id'] == $a['asset_id']) ? 'selected' : '' ?>
+                        <?= (isset($preSelectedAsset) && $preSelectedAsset == $a['asset_id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($a['asset_code'] . ' - ' . $a['description']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Custodian *</label>
+            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="custodian_id" id="custodian_id" required>
+                <option value="">Select Custodian</option>
+                <?php foreach ($personnel as $p): ?>
+                    <option value="<?= $p['personnel_id'] ?>"
+                            data-office-id="<?= $p['office_id'] ?>"
+                            data-salary-grade="<?= (int)($p['salary_grade'] ?? 0) ?>"
+                            <?= (isset($data['custodian_id']) && $data['custodian_id'] == $p['personnel_id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ') — SG ' . (int)($p['salary_grade'] ?? 0)) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p class="mt-1 text-xs text-gray-500" id="sgWarning"></p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Office *</label>
+            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="office_id" id="office_id" required>
+                <option value="">Select Office</option>
+                <?php foreach ($offices as $o): ?>
+                    <option value="<?= $o['office_id'] ?>" <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($o['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Effectivity Date *</label>
+            <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="effectivity_date" value="<?= htmlspecialchars($data['effectivity_date'] ?? date('Y-m-d')) ?>" required>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Date Returned / Relieved of Accountability</label>
+            <input type="date" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="end_date" id="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>">
+            <p class="mt-1 text-xs text-gray-500">Leave blank while the custodian still has this asset. Fill this in only when the item has actually been returned or the custodian has been relieved of accountability — this is not a due date.</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Status</label>
+            <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="status" id="status">
+                <option value="active" <?= (isset($data['status']) && $data['status'] == 'active') ? 'selected' : '' ?>>Active</option>
+                <option value="inactive" <?= (isset($data['status']) && $data['status'] == 'inactive') ? 'selected' : '' ?>>Inactive</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Automatically set to Inactive when a return date is entered above.</p>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Property Number *</label>
+            <input type="text" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" name="property_number" value="<?= htmlspecialchars($data['property_number'] ?? '') ?>" required>
+        </div>
     </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const custodianSelect = document.getElementById('custodian_id');
-    const officeSelect = document.getElementById('office_id');
-    const assetSelect = document.getElementById('asset_id');
-    const sgWarning = document.getElementById('sgWarning');
-    const endDateInput = document.getElementById('end_date');
-    const statusSelect = document.getElementById('status');
-
-    const allCustodianOptions = Array.from(custodianSelect.options);
-
-    // Fixed SG -> threshold table, mirrors app/Helpers/SalaryGradeHelper.php.
-    // Server-side validation is authoritative; this is a client-side heads-up only.
-    function sgThreshold(sg) {
-        if (sg >= 1 && sg <= 7) return 70000;
-        if (sg >= 8 && sg <= 10) return 500000;
-        if (sg >= 11 && sg <= 17) return 1000000;
-        if (sg >= 18 && sg <= 21) return 10000000;
-        if (sg >= 22 && sg <= 30) return Infinity;
-        return 0;
-    }
-
-    function filterCustodiansByOffice(officeId) {
-        custodianSelect.innerHTML = '';
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select Custodian';
-        custodianSelect.appendChild(placeholder);
-
-        allCustodianOptions.forEach(opt => {
-            if (opt.value === '') return;
-            const optOfficeId = opt.getAttribute('data-office-id');
-            if (officeId === '' || optOfficeId == officeId) {
-                const newOpt = document.createElement('option');
-                newOpt.value = opt.value;
-                newOpt.textContent = opt.textContent;
-                newOpt.setAttribute('data-office-id', optOfficeId);
-                newOpt.setAttribute('data-salary-grade', opt.getAttribute('data-salary-grade'));
-                if (opt.selected) newOpt.selected = true;
-                custodianSelect.appendChild(newOpt);
-            }
-        });
-        checkThreshold();
-    }
-
-    function checkThreshold() {
-        const costRaw = assetSelect.options[assetSelect.selectedIndex]?.getAttribute('data-cost');
-        const sgRaw = custodianSelect.options[custodianSelect.selectedIndex]?.getAttribute('data-salary-grade');
-        if (!costRaw || !sgRaw) {
-            sgWarning.textContent = '';
-            return;
-        }
-        const cost = parseFloat(costRaw);
-        const sg = parseInt(sgRaw, 10);
-        const threshold = sgThreshold(sg);
-        if (cost > threshold) {
-            sgWarning.textContent = 'Warning: this asset (₱' + cost.toLocaleString(undefined, {minimumFractionDigits: 2}) +
-                ') exceeds SG ' + sg + '\'s threshold' + (isFinite(threshold) ? ' of ₱' + threshold.toLocaleString() : '') + '. This assignment will be rejected on save.';
-            sgWarning.classList.add('text-red-600');
-            sgWarning.classList.remove('text-gray-500');
-        } else {
-            sgWarning.textContent = '';
-            sgWarning.classList.remove('text-red-600');
-        }
-    }
-
-    // Keep Status in sync with the return date so the two fields can't
-    // silently disagree: entering a return date means custody has ended.
-    endDateInput.addEventListener('change', function() {
-        if (this.value) {
-            statusSelect.value = 'inactive';
-        }
-    });
-    statusSelect.addEventListener('change', function() {
-        if (this.value === 'active') {
-            endDateInput.value = '';
-        }
-    });
-
-    officeSelect.addEventListener('change', function() {
-        filterCustodiansByOffice(this.value);
-    });
-
-    custodianSelect.addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        if (selected && selected.value) {
-            const officeId = selected.getAttribute('data-office-id');
-            if (officeId) {
-                officeSelect.value = officeId;
-            }
-        }
-        checkThreshold();
-    });
-
-    assetSelect.addEventListener('change', checkThreshold);
-
-    if (officeSelect.value) {
-        filterCustodiansByOffice(officeSelect.value);
-    }
-    checkThreshold();
-});
-</script>
+    <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+        <button type="button" class="btn-app btn-app-outline" data-modal-close>Cancel</button>
+        <button type="submit" class="btn-app btn-app-primary"><?= $isEdit ? 'Update' : 'Save' ?></button>
+    </div>
+</form>

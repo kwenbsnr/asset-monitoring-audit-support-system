@@ -40,7 +40,12 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                 <td><?= htmlspecialchars($c['position']) ?></td>
                                 <td><span class="badge-app badge-app-success"><?= $c['asset_count'] ?></span></td>
                                 <td class="text-center">
-                                    <a href="index.php?page=custody&sub=custodian&id=<?= $c['personnel_id'] ?>" class="btn-app btn-app-sm btn-app-outline-primary"><i class="bi bi-eye"></i> View Assets</a>
+                                    <button type="button"
+                                            class="view-custody-assets-btn btn-app btn-app-sm btn-app-outline-primary"
+                                            data-id="<?= $c['personnel_id'] ?>"
+                                            data-name="<?= htmlspecialchars($c['full_name'], ENT_QUOTES) ?>">
+                                        <i class="bi bi-eye"></i> View Assets
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -50,3 +55,114 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
         </div>
     </div>
 </div>
+
+<!-- Custodian Assets Modal (standardized modal system) — mirrors the
+     read-only "View Assets" modal on Views/assets/office_custodians.php,
+     using the fields CustodyModel::getAssetsByCustodian() actually
+     returns (asset_code, description, brand/model, serial_number,
+     status, condition, effectivity_date, property_number), same as the
+     full-page Views/custody/assets.php table. -->
+<div id="custodyCustodianAssetsModal" class="modal-overlay">
+    <div class="modal-panel modal-panel-lg" role="dialog" aria-modal="true" aria-labelledby="custodyCustodianAssetsModalTitle">
+        <div class="modal-header">
+            <h5 id="custodyCustodianAssetsModalTitle">Assets</h5>
+            <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body" id="custodyCustodianAssetsModalBody">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <p class="mt-2 text-gray-500">Loading assets...</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-app btn-app-outline" data-modal-close>Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modalBody = document.getElementById('custodyCustodianAssetsModalBody');
+    const modalTitle = document.getElementById('custodyCustodianAssetsModalTitle');
+
+    document.querySelectorAll('.view-custody-assets-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const custodianId = this.dataset.id;
+            const custodianName = this.dataset.name;
+
+            modalTitle.textContent = 'Assets of ' + custodianName;
+            modalBody.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                    <p class="mt-2 text-gray-500">Loading assets...</p>
+                </div>
+            `;
+            NiaModal.open('custodyCustodianAssetsModal');
+
+            fetch(`index.php?page=custody&sub=custodian_assets_json&id=${custodianId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        modalBody.innerHTML = `<div class="alert-app alert-app-danger">${escapeHtml(data.error)}</div>`;
+                        return;
+                    }
+                    modalBody.innerHTML = buildAssetsHTML(data);
+                })
+                .catch(error => {
+                    modalBody.innerHTML = `<div class="alert-app alert-app-danger">Failed to load assets: ${escapeHtml(error.message)}</div>`;
+                });
+        });
+    });
+
+    function buildAssetsHTML(assets) {
+        if (!assets || assets.length === 0) {
+            return '<div class="empty-state">No assets under this custodian.</div>';
+        }
+        let html = `
+            <div class="table-app-wrap">
+                <table class="table-app">
+                    <thead>
+                        <tr>
+                            <th>Asset Code</th>
+                            <th>Description</th>
+                            <th>Brand/Model</th>
+                            <th>Serial #</th>
+                            <th>Status</th>
+                            <th>Condition</th>
+                            <th>Effectivity</th>
+                            <th>Property No.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        assets.forEach(a => {
+            const statusClass = a.status === 'active' ? 'badge-app-success' : 'badge-app-neutral';
+            const conditionClass = a.condition === 'good' ? 'badge-app-success' : 'badge-app-warning';
+            html += `
+                <tr>
+                    <td class="font-medium text-gray-800">${escapeHtml(a.asset_code)}</td>
+                    <td>${escapeHtml(a.description || '')}</td>
+                    <td>${escapeHtml(a.brand || '')} ${escapeHtml(a.model || '')}</td>
+                    <td>${escapeHtml(a.serial_number || '')}</td>
+                    <td><span class="badge-app ${statusClass}">${escapeHtml(a.status)}</span></td>
+                    <td><span class="badge-app ${conditionClass}">${escapeHtml(a.condition)}</span></td>
+                    <td>${escapeHtml(a.effectivity_date || '')}</td>
+                    <td>${escapeHtml(a.property_number || '')}</td>
+                </tr>
+            `;
+        });
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>

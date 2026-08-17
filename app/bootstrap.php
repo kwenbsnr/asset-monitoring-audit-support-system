@@ -6,6 +6,15 @@ if (!defined('APP_START')) {
 
 session_start();
 
+// Dynamically computes the base URL so asset paths (css/js/images) work
+// whether the app lives in a subfolder (local XAMPP) or at the domain
+// root (InfinityFree, where files live directly under htdocs/).
+if (!defined('BASE_URL')) {
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+    $scriptDir = rtrim($scriptDir, '/');
+    define('BASE_URL', $scriptDir);
+}
+
 // Load Composer autoloader
 if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../vendor/autoload.php';

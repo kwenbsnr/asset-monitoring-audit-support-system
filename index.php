@@ -126,6 +126,9 @@ switch ($page) {
             case 'search_custodians':
                 $controller->searchCustodians();
                 break;
+            case 'custodian_assets_json':
+                $controller->custodianAssetsJson();
+                break;
         }
         break;
     case 'employees':

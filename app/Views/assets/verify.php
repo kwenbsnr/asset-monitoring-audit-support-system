@@ -1,324 +1,500 @@
 <?php if (!defined('APP_START')) exit; ?>
-<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-    <!-- LEFT: Scanner / Search -->
-    <div class="md:col-span-4">
-        <div class="card-panel h-full p-4">
-            <h5 class="font-bold text-gray-800 border-b border-gray-200 pb-3 mb-4 flex items-center gap-2">
-                <span class="page-icon page-icon-sm"><i class="bi bi-qr-code-scan"></i></span> Find Asset
-            </h5>
-            <div class="flex flex-col items-center">
-                <div class="relative w-full max-w-87.5 aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-inner" id="reader-wrapper">
-                    <div id="reader" class="w-full h-full"></div>
-                    <div id="scanner-frame" class="absolute inset-0 pointer-events-none scanner-frame-idle">
-                        <div id="scanner-line" class="scanner-line"></div>
-                        <div id="scanner-checkmark" class="scanner-checkmark hidden">✓</div>
-                    </div>
-                </div>
-                <div class="mt-4 w-full max-w-87.5 space-y-2">
-                    <button id="startScannerBtn" class="w-full btn-app btn-app-primary hidden">
-                        <i class="bi bi-camera"></i> Tap to scan QR code
-                    </button>
-                    <button id="stopScannerBtn" class="w-full btn-app btn-app-danger hidden">
-                        <i class="bi bi-stop-circle"></i> Stop Camera
-                    </button>
-                    <button id="switchCameraBtn" class="w-full btn-app btn-app-outline hidden">
-                        <i class="bi bi-arrow-repeat"></i> Switch Camera
-                    </button>
-                    <p class="text-xs text-gray-500 text-center"><i class="bi bi-info-circle"></i> Point the camera at an asset QR label.</p>
-                </div>
-                <hr class="my-4 w-full max-w-87.5 border-gray-300">
-                <div class="w-full max-w-87.5">
-                    <div class="text-xs text-gray-500 text-center mb-1">— or search manually —</div>
-                    <div class="flex">
-                        <input type="text" id="manualSearchInput" class="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" placeholder="Asset code, serial number, or description...">
-                        <button id="manualSearchBtn" class="btn-app btn-app-primary btn-app-join-r">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                    </div>
-                    <div id="manualSearchError" class="text-red-600 text-xs mt-1 hidden"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- RIGHT: Asset Profile + Actions -->
-    <div class="md:col-span-8">
-        <div class="card-panel h-full flex flex-col">
-            <div class="card-panel-header">
-                <div class="flex items-center gap-3">
-                    <span class="page-icon"><i class="bi bi-file-earmark-text"></i></span>
-                    <span class="page-title">Asset Verification</span>
-                </div>
-                <button id="scanAnotherBtn" class="btn-app btn-app-sm btn-app-outline hidden">
-                    <i class="bi bi-arrow-counterclockwise"></i> Scan Another Asset
-                </button>
-            </div>
-            <div class="flex-1 p-6" id="profileBody">
-                <div id="profilePlaceholder" class="text-center text-gray-500 py-12">
-                    <i class="bi bi-box-seam text-6xl"></i>
-                    <p class="mt-3">No asset selected.</p>
-                    <p class="text-sm">Scan a QR code or search manually to verify an asset.</p>
-                </div>
-                <div id="profileContent" class="hidden">
-                    <form id="verifyForm" method="POST" action="index.php?page=assets&sub=verify">
-                        <input type="hidden" name="asset_id" id="assetIdField" value="">
-
-                        <h6 class="font-semibold text-gray-800 border-b pb-2 mb-3">Asset Information (View‑only)</h6>
-                        <div id="assetInfo" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm mb-4"></div>
-
-                        <div id="currentCustodianInfo" class="grid grid-cols-2 gap-2 text-sm mb-4" style="display: none;">
-                            <div><strong>Custodian:</strong> <span id="currentCustodianName"></span></div>
-                            <div><strong>Office:</strong> <span id="currentOfficeName"></span></div>
-                        </div>
-
-                        <div id="custodyHistoryContainer" class="hidden">
-                            <h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Custody History</h6>
-                            <div id="custodyHistoryTable" class="overflow-x-auto"></div>
-                        </div>
-
-                        <div id="transferHistoryContainer" class="hidden">
-                            <h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Transfer History</h6>
-                            <div id="transferHistoryTable" class="overflow-x-auto"></div>
-                        </div>
-
-                        <div id="actionButtons" class="flex gap-2 mb-4">
-                            <button type="submit" name="mark_verified" class="btn-app btn-app-primary">
-                                <i class="bi bi-check-circle"></i> Mark as Verified
-                            </button>
-                            <button type="button" id="showUpdateBtn" class="btn-app btn-app-gold">
-                                <i class="bi bi-pencil"></i> Update Asset Details
-                            </button>
-                        </div>
-
-                        <div id="editableFields" class="hidden">
-                            <h6 class="font-semibold text-gray-800 border-b pb-2 mt-4">Inspection / Operational Data</h6>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                <div>
-                                    <label for="condition" class="block text-sm font-medium text-gray-700">Condition</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="condition" name="condition">
-                                        <option value="good">Good</option>
-                                        <option value="fair">Fair</option>
-                                        <option value="poor">Poor</option>
-                                        <option value="damaged">Damaged</option>
-                                        <option value="obsolete">Obsolete</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="status" name="status">
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                        <option value="missing">Missing</option>
-                                        <option value="disposed">Disposed</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="verification_status" class="block text-sm font-medium text-gray-700">Verification Status</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="verification_status" name="verification_status">
-                                        <option value="pending">Pending</option>
-                                        <option value="verified">Verified</option>
-                                        <option value="discrepancy">Discrepancy</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="custodian_id" class="block text-sm font-medium text-gray-700">Accountable Custodian</label>
-                                    <select class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="custodian_id" name="custodian_id">
-                                        <option value="">Select Custodian</option>
-                                        <?php foreach ($personnel as $p): ?>
-                                            <option value="<?= $p['personnel_id'] ?>" data-office-id="<?= $p['office_id'] ?>">
-                                                <?= htmlspecialchars($p['full_name'] . ' (' . $p['position'] . ')') ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <input type="hidden" name="office_id" id="office_id" value="">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label for="inspection_remarks" class="block text-sm font-medium text-gray-700">Inspection Remarks</label>
-                                    <textarea class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="inspection_remarks" name="inspection_remarks" rows="2"></textarea>
-                                </div>
-                            </div>
-                            <div class="flex gap-2 mt-4">
-                                <button type="submit" name="update_asset" class="btn-app btn-app-primary">
-                                    <i class="bi bi-save"></i> Save Updates
-                                </button>
-                                <button type="button" id="cancelUpdateBtn" class="btn-app btn-app-outline">Cancel</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="profileFooter" class="border-t border-gray-200 px-6 py-3 bg-gray-50 hidden">
-                <div class="flex justify-between items-center">
-                    <span id="scanSuccessMsg" class="text-sm text-green-600 hidden"><i class="bi bi-check-circle"></i> Asset loaded.</span>
-                    <span id="updateMsg" class="text-sm text-green-600"></span>
-                </div>
+<?php
+/**
+ * NOTE ON SCOPE (for whoever reviews this next):
+ * adapted from included a "verification cycle"
+ * picker (CY2026 Annual Physical Count, etc.) and a per-custodian progress
+ * bar. Neither is backed by anything in the current schema (assets /
+ * asset_custodies / personnel / offices — no cycles table), so both were
+ * dropped rather than faked. Everything below (filters, custodian grouping,
+ * pagination, the verify modal) is wired to real data via
+ * sub=verify_worklist_json, sub=details, and sub=verify (POST).
+ */
+?>
+<div class="card-panel mb-4">
+    <div class="card-panel-header">
+        <div class="flex items-center gap-3">
+            <span class="page-icon"><i class="bi bi-clipboard-check"></i></span>
+            <div>
+                <div class="page-title">Verify Asset</div>
+                <div class="text-xs text-gray-500 font-medium">NIA Regional Office IX &middot; Physical inventory verification</div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script src="/asset-monitoring-audit-support-system/public/js/scanner.js"></script>
+<div class="card-panel">
+    <div class="card-panel-header flex-wrap gap-2">
+        <div class="flex items-center gap-3">
+            <span class="page-icon page-icon-sm"><i class="bi bi-list-ul"></i></span>
+            <span class="font-bold text-gray-800 text-sm">Worklist</span>
+        </div>
+        <span id="filterIndicator" class="badge-app badge-app-info hidden"><i class="bi bi-funnel"></i> Filter active &mdash; custodian names shown</span>
+        <button type="button" id="clearFiltersBtn" class="btn-app btn-app-sm btn-app-outline hidden">
+            <i class="bi bi-x-circle"></i> Clear filters
+        </button>
+    </div>
+
+    <div class="card-panel-body">
+        <div id="ajaxMsg" class="hidden mb-3"></div>
+
+        <!-- Filter bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="lg:col-span-1 sm:col-span-2">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Search</label>
+                <input type="text" id="filterSearch" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" placeholder="Code, name, serial, custodian, office...">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Category</label>
+                <select id="filterAccount" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm">
+                    <option value="">All categories</option>
+                    <?php foreach ($accounts as $acc): ?>
+                        <option value="<?= $acc['asset_accounts_id'] ?>"><?= htmlspecialchars($acc['account_code'] . ' - ' . $acc['account_name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">End user / Custodian</label>
+                <input type="text" id="filterCustodian" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" placeholder="Type custodian name...">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Dep't / Office</label>
+                <select id="filterOffice" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm">
+                    <option value="">All offices</option>
+                    <?php foreach ($offices as $o): ?>
+                        <option value="<?= $o['office_id'] ?>"><?= htmlspecialchars($o['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <!-- No-filter / empty states -->
+        <div id="noFilterMsg" class="text-center text-gray-500 py-12">
+            <i class="bi bi-funnel text-5xl text-gray-300"></i>
+            <div class="text-lg font-semibold text-gray-800 mt-3">Apply at least one filter to see the worklist</div>
+            <div class="text-sm mt-1">Use Search, Category, Custodian, or Dep't above to narrow down the list.<br>Custodian names appear once a filter is active.</div>
+        </div>
+        <div id="noResultsMsg" class="hidden text-center text-gray-500 py-12">
+            <i class="bi bi-search text-5xl text-gray-300"></i>
+            <div class="text-lg font-semibold text-gray-800 mt-3">No assets match your filters</div>
+            <div class="text-sm mt-1">Try adjusting your filter criteria.</div>
+        </div>
+        <div id="loadingMsg" class="hidden text-center text-gray-500 py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            <p class="mt-2">Loading worklist...</p>
+        </div>
+
+        <!-- Worklist groups (populated by JS) -->
+        <div id="worklistGroups" class="hidden divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden"></div>
+
+        <!-- Pagination -->
+        <div id="paginationBar" class="hidden items-center justify-between flex-wrap gap-3 pt-4 mt-4 border-t border-gray-200">
+            <div id="paginationInfo" class="text-sm text-gray-500"></div>
+            <div class="flex items-center gap-1">
+                <button type="button" id="prevPageBtn" class="btn-app btn-app-sm btn-app-outline">Previous</button>
+                <span id="pageNumbers" class="flex items-center gap-1"></span>
+                <button type="button" id="nextPageBtn" class="btn-app btn-app-sm btn-app-outline">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verify Asset Modal (standardized modal system — see public/css/style.css & public/js/modal.js) -->
+<div id="verifyAssetModal" class="modal-overlay">
+    <div class="modal-panel modal-panel-lg" role="dialog" aria-modal="true" aria-labelledby="verifyAssetModalTitle">
+        <div class="modal-header">
+            <h5 id="verifyAssetModalTitle"><i class="bi bi-clipboard-check text-green-700 mr-1"></i> Verify Asset</h5>
+            <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body" id="verifyModalBody">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <p class="mt-2 text-gray-500">Loading asset...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Small, view-scoped additions not already covered by the shared stylesheet. */
+    .worklist-group .worklist-head { cursor: pointer; }
+    .worklist-group.is-collapsed .worklist-body { display: none; }
+    .worklist-group .chevron { transition: transform .15s; }
+    .worklist-group.is-collapsed .chevron { transform: rotate(-90deg); }
+    .custodian-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: #eaf3ea; color: #15803d;
+        display: flex; align-items: center; justify-content: center;
+        font-size: .74rem; font-weight: 700; flex-shrink: 0;
+    }
+    .page-num {
+        padding: 4px 10px; border: 1px solid transparent; border-radius: 8px;
+        font-size: .8rem; font-weight: 600; background: transparent; cursor: pointer;
+    }
+    .page-num.active { background: #eaf3ea; border-color: #15803d; color: #15803d; }
+    .page-num:hover:not(.active) { background: #f1f3f1; }
+</style>
+
 <script>
-// Override showAssetProfile to populate the form and display full history
-const originalShowAssetProfile = window.showAssetProfile;
-window.showAssetProfile = function(data) {
-    const asset = data.asset;
-    const custody = data.custody || [];
-    const transfers = data.transfers || [];
-    const activeCustody = custody.find(c => c.custody_status === 'active');
+(function () {
+    const pageSize = 20;
+    let currentPage = 1;
+    let totalRows = 0;
+    let debounceTimer = null;
 
-    document.getElementById('assetIdField').value = asset.asset_id;
+    const els = {
+        search: document.getElementById('filterSearch'),
+        account: document.getElementById('filterAccount'),
+        custodian: document.getElementById('filterCustodian'),
+        office: document.getElementById('filterOffice'),
+        clearBtn: document.getElementById('clearFiltersBtn'),
+        filterIndicator: document.getElementById('filterIndicator'),
+        noFilterMsg: document.getElementById('noFilterMsg'),
+        noResultsMsg: document.getElementById('noResultsMsg'),
+        loadingMsg: document.getElementById('loadingMsg'),
+        groups: document.getElementById('worklistGroups'),
+        pagBar: document.getElementById('paginationBar'),
+        pagInfo: document.getElementById('paginationInfo'),
+        prevBtn: document.getElementById('prevPageBtn'),
+        nextBtn: document.getElementById('nextPageBtn'),
+        pageNumbers: document.getElementById('pageNumbers'),
+        ajaxMsg: document.getElementById('ajaxMsg'),
+        modalBody: document.getElementById('verifyModalBody'),
+    };
 
-    const infoDiv = document.getElementById('assetInfo');
-    infoDiv.innerHTML = `
-        <div class="md:col-span-1"><strong>Asset Code:</strong> ${escapeHtml(asset.asset_code)}</div>
-        <div class="md:col-span-1"><strong>Property Number:</strong> ${escapeHtml(asset.asset_code)}</div>
-        <div class="md:col-span-1"><strong>Asset Name:</strong> ${escapeHtml(asset.asset_name)}</div>
-        <div class="md:col-span-1"><strong>Description:</strong> ${escapeHtml(asset.description || 'N/A')}</div>
-        <div class="md:col-span-1"><strong>Classification:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
-        <div class="md:col-span-1"><strong>Account Code:</strong> ${escapeHtml(asset.account_code || 'N/A')}</div>
-        <div class="md:col-span-1"><strong>Brand:</strong> ${escapeHtml(asset.brand || 'N/A')}</div>
-        <div class="md:col-span-1"><strong>Model:</strong> ${escapeHtml(asset.model || 'N/A')}</div>
-        <div class="md:col-span-1"><strong>Serial Number:</strong> ${escapeHtml(asset.serial_number || 'N/A')}</div>
-        <div class="md:col-span-1"><strong>Acquisition Date:</strong> ${asset.acquisition_date || 'N/A'}</div>
-        <div class="md:col-span-1"><strong>Acquisition Cost:</strong> ${asset.acquisition_cost ? '₱' + Number(asset.acquisition_cost).toFixed(2) : 'N/A'}</div>
-        <div class="md:col-span-1"><strong>Supplier:</strong> N/A</div>
-        <div class="md:col-span-1"><strong>Funding Source:</strong> N/A</div>
-        <div class="md:col-span-1"><strong>Status:</strong> <span class="badge-app ${asset.status === 'active' ? 'badge-app-success' : 'badge-app-neutral'}">${asset.status}</span></div>
-        <div class="md:col-span-1"><strong>Condition:</strong> <span class="badge-app ${asset.condition === 'good' ? 'badge-app-success' : 'badge-app-warning'}">${asset.condition}</span></div>
-        <div class="md:col-span-1"><strong>Created:</strong> ${asset.created_at || 'N/A'}</div>
-        <div class="md:col-span-1"><strong>Updated:</strong> ${asset.updated_at || 'N/A'}</div>
-        <div class="md:col-span-1"><strong>Verification Status:</strong> <span class="badge-app ${asset.verification_status === 'verified' ? 'badge-app-success' : 'badge-app-neutral'}">${asset.verification_status || 'pending'}</span></div>
-        <div class="md:col-span-1"><strong>Last Verified:</strong> ${asset.verified_at ? new (window.Date)(asset.verified_at).toLocaleString() : 'Never'}</div>
-        <div class="md:col-span-1"><strong>Verified By:</strong> ${asset.verified_by_username || 'N/A'}</div>
-    `;
-
-    const custodianInfo = document.getElementById('currentCustodianInfo');
-    if (activeCustody) {
-        document.getElementById('currentCustodianName').textContent = activeCustody.custodian_name + ' (' + (activeCustody.position || '') + ')';
-        document.getElementById('currentOfficeName').textContent = activeCustody.office_name;
-        custodianInfo.style.display = 'grid';
-    } else {
-        document.getElementById('currentCustodianName').textContent = 'Not assigned';
-        document.getElementById('currentOfficeName').textContent = 'N/A';
-        custodianInfo.style.display = 'grid';
+    function hasActiveFilter() {
+        return !!(els.search.value.trim() || els.account.value || els.custodian.value.trim() || els.office.value);
     }
 
-    const custodyContainer = document.getElementById('custodyHistoryContainer');
-    const custodyTable = document.getElementById('custodyHistoryTable');
-    if (custody.length === 0) {
-        custodyTable.innerHTML = '<p class="text-gray-500 text-sm">No custody records found.</p>';
-    } else {
-        let tableHtml = '<div class="table-app-wrap"><table class="table-app"><thead><tr><th>From</th><th>To</th><th>Custodian</th><th>Office</th><th>Status</th><th>Property No.</th></tr></thead><tbody>';
-        custody.forEach(c => {
-            tableHtml += `<tr>
-                <td>${c.effectivity_date || 'N/A'}</td>
-                <td>${c.end_date || 'Current'}</td>
-                <td>${escapeHtml(c.custodian_name)} <br><span class="text-xs text-gray-500">${escapeHtml(c.position || '')}</span></td>
-                <td>${escapeHtml(c.office_name)}</td>
-                <td><span class="badge-app ${c.custody_status === 'active' ? 'badge-app-success' : 'badge-app-neutral'}">${c.custody_status}</span></td>
-                <td>${escapeHtml(c.property_number || '')}</td>
-            </tr>`;
+    function buildQuery(page) {
+        const params = new URLSearchParams();
+        if (els.search.value.trim()) params.set('search', els.search.value.trim());
+        if (els.account.value) params.set('account_id', els.account.value);
+        if (els.custodian.value.trim()) params.set('custodian', els.custodian.value.trim());
+        if (els.office.value) params.set('office_id', els.office.value);
+        params.set('page', page);
+        return params.toString();
+    }
+
+    function debounceLoad() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => loadWorklist(1), 300);
+    }
+
+    function setState(showGroups, showNoFilter, showNoResults, showLoading) {
+        els.groups.classList.toggle('hidden', !showGroups);
+        els.noFilterMsg.classList.toggle('hidden', !showNoFilter);
+        els.noResultsMsg.classList.toggle('hidden', !showNoResults);
+        els.loadingMsg.classList.toggle('hidden', !showLoading);
+        els.pagBar.classList.toggle('hidden', !showGroups);
+        els.pagBar.classList.toggle('flex', showGroups);
+    }
+
+    function loadWorklist(page) {
+        const active = hasActiveFilter();
+        els.filterIndicator.classList.toggle('hidden', !active);
+        els.clearFiltersBtn.classList.toggle('hidden', !active);
+
+        if (!active) {
+            setState(false, true, false, false);
+            return;
+        }
+
+        currentPage = page;
+        setState(false, false, false, true);
+
+        fetch(`index.php?page=assets&sub=verify_worklist_json&${buildQuery(page)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                totalRows = data.total;
+                if (totalRows === 0) {
+                    setState(false, false, true, false);
+                    return;
+                }
+                renderGroups(data.rows);
+                renderPagination(data.page, data.page_size, data.total);
+                setState(true, false, false, false);
+            })
+            .catch(err => {
+                setState(false, false, false, false);
+                alert('Failed to load worklist: ' + err.message);
+            });
+    }
+
+    function initials(name) {
+        if (!name) return '?';
+        return name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+    }
+
+    function verificationBadge(status) {
+        status = status || 'pending';
+        const map = { verified: 'badge-app-success', discrepancy: 'badge-app-danger', pending: 'badge-app-neutral' };
+        return `<span class="badge-app ${map[status] || 'badge-app-neutral'}">${escapeHtml(status.charAt(0).toUpperCase() + status.slice(1))}</span>`;
+    }
+
+    function statusBadge(status) {
+        const map = { active: 'badge-app-success', missing: 'badge-app-danger', disposed: 'badge-app-neutral', inactive: 'badge-app-neutral' };
+        return `<span class="badge-app ${map[status] || 'badge-app-neutral'}">${escapeHtml(status)}</span>`;
+    }
+
+    function renderGroups(rows) {
+        // Group the current page's rows by custodian (unassigned assets bucketed together).
+        const groups = new Map();
+        rows.forEach(row => {
+            const key = row.custodian_id || 'unassigned';
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    name: row.custodian_name || 'Unassigned',
+                    position: row.position || '',
+                    office: row.office_name || 'No office on record',
+                    rows: [],
+                });
+            }
+            groups.get(key).rows.push(row);
         });
-        tableHtml += '</tbody></table></div>';
-        custodyTable.innerHTML = tableHtml;
-    }
-    custodyContainer.style.display = 'block';
 
-    const transferContainer = document.getElementById('transferHistoryContainer');
-    const transferTable = document.getElementById('transferHistoryTable');
-    if (transfers.length === 0) {
-        transferTable.innerHTML = '<p class="text-gray-500 text-sm">No transfer records found.</p>';
-    } else {
-        let tableHtml = '<div class="table-app-wrap"><table class="table-app"><thead><tr><th>Transfer #</th><th>Date</th><th>From</th><th>To</th><th>Status</th><th>Remarks</th></tr></thead><tbody>';
-        transfers.forEach(t => {
-            tableHtml += `<tr>
-                <td>${escapeHtml(t.transfer_number)}</td>
-                <td>${escapeHtml(t.transfer_date)}</td>
-                <td>${escapeHtml(t.from_custodian)} (${escapeHtml(t.from_office || '')})</td>
-                <td>${escapeHtml(t.to_custodian)} (${escapeHtml(t.to_office || '')})</td>
-                <td><span class="badge-app ${t.status === 'approved' ? 'badge-app-success' : 'badge-app-warning'}">${escapeHtml(t.status)}</span></td>
-                <td>${escapeHtml(t.remarks || '')}</td>
-            </tr>`;
+        let html = '';
+        groups.forEach((group, key) => {
+            html += `
+            <div class="worklist-group" data-group="${key}">
+                <div class="worklist-head flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50" onclick="this.closest('.worklist-group').classList.toggle('is-collapsed')">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="custodian-avatar">${escapeHtml(initials(group.name))}</div>
+                        <div class="min-w-0">
+                            <div class="font-semibold text-sm text-gray-800 truncate">${escapeHtml(group.name)}${group.position ? ' <span class="text-gray-400 font-normal">&middot; ' + escapeHtml(group.position) + '</span>' : ''}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(group.office)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <span class="badge-app badge-app-neutral">${group.rows.length} on this page</span>
+                        <i class="bi bi-chevron-down chevron text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="worklist-body">
+                    <div class="table-app-wrap" style="border:none;border-radius:0;">
+                        <table class="table-app">
+                            <thead><tr><th>Asset code</th><th>Name</th><th>Category</th><th>Condition</th><th>Verification</th><th>Last verified</th><th></th></tr></thead>
+                            <tbody>
+                                ${group.rows.map(row => `
+                                    <tr>
+                                        <td class="font-semibold">${escapeHtml(row.asset_code)}</td>
+                                        <td>${escapeHtml(row.asset_name)}</td>
+                                        <td>${escapeHtml(row.account_code || 'N/A')}</td>
+                                        <td>${statusBadge(row.condition)}</td>
+                                        <td>${verificationBadge(row.verification_status)}</td>
+                                        <td class="text-xs text-gray-500">${row.verified_at ? new Date(row.verified_at).toLocaleDateString() : 'Never'}</td>
+                                        <td><button type="button" class="btn-app btn-app-xs btn-app-primary verify-row-btn" data-id="${row.asset_id}">Verify</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
         });
-        tableHtml += '</tbody></table></div>';
-        transferTable.innerHTML = tableHtml;
-    }
-    transferContainer.style.display = 'block';
 
-    document.getElementById('condition').value = asset.condition || 'good';
-    document.getElementById('status').value = asset.status || 'active';
-    document.getElementById('verification_status').value = asset.verification_status || 'pending';
-    document.getElementById('inspection_remarks').value = asset.inspection_remarks || '';
-
-    const custodianSelect = document.getElementById('custodian_id');
-    const officeHidden = document.getElementById('office_id');
-    if (activeCustody) {
-        custodianSelect.value = activeCustody.custodian_id;
-        officeHidden.value = activeCustody.office_id;
-    } else {
-        custodianSelect.value = '';
-        officeHidden.value = '';
+        els.groups.innerHTML = html;
+        els.groups.querySelectorAll('.verify-row-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openVerifyModal(btn.dataset.id);
+            });
+        });
     }
 
-    custodianSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const officeId = selectedOption ? selectedOption.getAttribute('data-office-id') : '';
-        officeHidden.value = officeId || '';
+    function renderPagination(page, size, total) {
+        const totalPages = Math.max(1, Math.ceil(total / size));
+        const start = (page - 1) * size + 1;
+        const end = Math.min(page * size, total);
+        els.pagInfo.textContent = `Showing ${start}-${end} of ${total}`;
+        els.prevBtn.disabled = page <= 1;
+        els.nextBtn.disabled = page >= totalPages;
+
+        let numsHtml = '';
+        const maxVisible = 5;
+        let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        startPage = Math.max(1, endPage - maxVisible + 1);
+        for (let i = startPage; i <= endPage; i++) {
+            numsHtml += `<span class="page-num ${i === page ? 'active' : ''}" data-page="${i}">${i}</span>`;
+        }
+        els.pageNumbers.innerHTML = numsHtml;
+        els.pageNumbers.querySelectorAll('.page-num').forEach(el => {
+            el.addEventListener('click', () => loadWorklist(parseInt(el.dataset.page, 10)));
+        });
+    }
+
+    els.prevBtn.addEventListener('click', () => { if (currentPage > 1) loadWorklist(currentPage - 1); });
+    els.nextBtn.addEventListener('click', () => loadWorklist(currentPage + 1));
+    els.search.addEventListener('input', debounceLoad);
+    els.custodian.addEventListener('input', debounceLoad);
+    els.account.addEventListener('change', () => loadWorklist(1));
+    els.office.addEventListener('change', () => loadWorklist(1));
+    els.clearFiltersBtn.addEventListener('click', () => {
+        els.search.value = '';
+        els.account.value = '';
+        els.custodian.value = '';
+        els.office.value = '';
+        loadWorklist(1);
     });
 
-    document.getElementById('profilePlaceholder').style.display = 'none';
-    document.getElementById('profileContent').style.display = 'block';
-    document.getElementById('profileFooter').style.display = 'flex';
-    document.getElementById('scanAnotherBtn').style.display = 'inline-block';
-    document.getElementById('scanSuccessMsg').style.display = 'inline';
-    document.getElementById('editableFields').style.display = 'none';
-    document.getElementById('actionButtons').style.display = 'flex';
-};
+    // ---- Verify modal ----
+    function openVerifyModal(assetId) {
+        els.modalBody.innerHTML = `
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <p class="mt-2 text-gray-500">Loading asset...</p>
+            </div>`;
+        NiaModal.open('verifyAssetModal');
 
-document.getElementById('showUpdateBtn').addEventListener('click', function() {
-    document.getElementById('editableFields').style.display = 'block';
-    document.getElementById('actionButtons').style.display = 'none';
-});
-
-document.getElementById('cancelUpdateBtn').addEventListener('click', function() {
-    document.getElementById('editableFields').style.display = 'none';
-    document.getElementById('actionButtons').style.display = 'flex';
-});
-
-document.getElementById('manualSearchBtn').addEventListener('click', function() {
-    const query = document.getElementById('manualSearchInput').value.trim();
-    if (query.length < 2) {
-        document.getElementById('manualSearchError').textContent = 'Please enter at least 2 characters.';
-        document.getElementById('manualSearchError').style.display = 'block';
-        return;
+        fetch(`index.php?page=assets&sub=details&id=${assetId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    els.modalBody.innerHTML = `<div class="alert-app alert-app-danger">${escapeHtml(data.error)}</div>`;
+                    return;
+                }
+                renderVerifyForm(data);
+            })
+            .catch(err => {
+                els.modalBody.innerHTML = `<div class="alert-app alert-app-danger">Failed to load asset: ${escapeHtml(err.message)}</div>`;
+            });
     }
-    document.getElementById('manualSearchError').style.display = 'none';
-    fetch(`index.php?page=assets&sub=details&q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-            window.showAssetProfile(data);
-        })
-        .catch(err => alert('Failed to fetch asset: ' + err.message));
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        if (typeof startScanner === 'function') {
-            startScanner();
+    function renderVerifyForm(data) {
+        const asset = data.asset;
+        const custody = data.custody || [];
+        const active = custody.find(c => c.custody_status === 'active');
+
+        const personnelOptions = <?= json_encode(array_map(fn($p) => ['id' => $p['personnel_id'], 'label' => $p['full_name'] . ' (' . $p['position'] . ')', 'office_id' => $p['office_id']], $personnel)) ?>;
+        const officeOptions = <?= json_encode(array_map(fn($o) => ['id' => $o['office_id'], 'label' => $o['name']], $offices)) ?>;
+
+        els.modalBody.innerHTML = `
+            <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm mb-4">
+                <span class="font-bold text-green-700">${escapeHtml(asset.asset_code)}</span> &middot;
+                ${escapeHtml(asset.asset_name)} &middot;
+                SN: ${escapeHtml(asset.serial_number || 'N/A')}<br>
+                Recorded custodian: ${active ? escapeHtml(active.custodian_name) + ', ' + escapeHtml(active.office_name) : 'Not assigned'} &middot;
+                Last verified: ${asset.verified_at ? new Date(asset.verified_at).toLocaleString() : 'Never'}
+            </div>
+
+            <form id="verifyRowForm">
+                <input type="hidden" name="asset_id" value="${asset.asset_id}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Condition observed</label>
+                        <select name="condition" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            ${['good', 'fair', 'poor', 'damaged', 'obsolete'].map(v => `<option value="${v}" ${asset.condition === v ? 'selected' : ''}>${v.charAt(0).toUpperCase() + v.slice(1)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Physical status</label>
+                        <select name="status" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            ${[['active', 'Found / Active'], ['missing', 'Not found / Missing'], ['inactive', 'Inactive'], ['disposed', 'Disposed']].map(([v, label]) => `<option value="${v}" ${asset.status === v ? 'selected' : ''}>${label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Verification status</label>
+                        <select name="verification_status" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            ${[['pending', 'Pending'], ['verified', 'Verified'], ['discrepancy', 'Discrepancy (custodian/other mismatch)']].map(([v, label]) => `<option value="${v}" ${(asset.verification_status || 'pending') === v ? 'selected' : ''}>${label}</option>`).join('')}
+                        </select>
+                        <div class="text-xs text-gray-500 mt-1">Discrepancy flags this for Custodial Tracking follow-up — it won't reassign custody automatically.</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Accountable custodian</label>
+                        <select name="custodian_id" id="modalCustodianSelect" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="">Select custodian</option>
+                            ${personnelOptions.map(p => `<option value="${p.id}" data-office-id="${p.office_id}" ${active && String(active.custodian_id) === String(p.id) ? 'selected' : ''}>${escapeHtml(p.label)}</option>`).join('')}
+                        </select>
+                        <select name="office_id" id="modalOfficeSelect" class="hidden">
+                            ${officeOptions.map(o => `<option value="${o.id}">${escapeHtml(o.label)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Inspection remarks</label>
+                        <textarea name="inspection_remarks" rows="2" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Any notes for the inventory committee...">${escapeHtml(asset.inspection_remarks || '')}</textarea>
+                    </div>
+                </div>
+            </form>
+        `;
+
+        // Keep the hidden office_id select in sync with the chosen custodian.
+        const custodianSelect = document.getElementById('modalCustodianSelect');
+        const officeSelect = document.getElementById('modalOfficeSelect');
+        function syncOffice() {
+            const opt = custodianSelect.options[custodianSelect.selectedIndex];
+            const officeId = opt ? opt.getAttribute('data-office-id') : '';
+            if (officeId) officeSelect.value = officeId;
         }
-    }, 500);
-});
+        custodianSelect.addEventListener('change', syncOffice);
+        syncOffice();
 
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+        // Footer buttons rendered separately so they can submit the form above.
+        const footer = document.createElement('div');
+        footer.className = 'modal-footer';
+        footer.innerHTML = `
+            <span id="modalSaveMsg" class="text-sm text-green-600 mr-auto"></span>
+            <button type="button" class="btn-app btn-app-outline" data-modal-close>Cancel</button>
+            <button type="button" id="saveUpdatesBtn" class="btn-app btn-app-outline-primary"><i class="bi bi-save"></i> Save Updates</button>
+            <button type="button" id="markVerifiedBtn" class="btn-app btn-app-primary"><i class="bi bi-check-circle"></i> Mark as Verified</button>
+        `;
+        els.modalBody.parentElement.querySelectorAll('.modal-footer').forEach(f => f.remove());
+        els.modalBody.parentElement.appendChild(footer);
+        // The Cancel button above carries data-modal-close but was added
+        // after NiaModal's initial DOMContentLoaded scan, so it needs a
+        // rescan to get its close listener wired up (see public/js/modal.js).
+        if (window.NiaModal && typeof NiaModal.rescan === 'function') NiaModal.rescan();
+
+        document.getElementById('saveUpdatesBtn').addEventListener('click', () => submitVerify(false));
+        document.getElementById('markVerifiedBtn').addEventListener('click', () => submitVerify(true));
+    }
+
+    function submitVerify(markVerified) {
+        const form = document.getElementById('verifyRowForm');
+        const body = new URLSearchParams(new FormData(form));
+        if (markVerified) body.set('mark_verified', '1');
+
+        fetch('index.php?page=assets&sub=verify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: body.toString(),
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) {
+                    const msg = document.getElementById('modalSaveMsg');
+                    if (msg) { msg.className = 'text-sm text-red-600 mr-auto'; msg.textContent = res.message || 'Failed to save.'; }
+                    return;
+                }
+                NiaModal.close('verifyAssetModal');
+                showAjaxMsg(res.message || 'Asset verification updated successfully.');
+                loadWorklist(currentPage);
+            })
+            .catch(err => alert('Failed to save: ' + err.message));
+    }
+
+    function showAjaxMsg(message) {
+        els.ajaxMsg.innerHTML = `<div class="alert-app alert-app-success"><span>${escapeHtml(message)}</span></div>`;
+        els.ajaxMsg.classList.remove('hidden');
+        setTimeout(() => els.ajaxMsg.classList.add('hidden'), 4000);
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    // Nothing loads until the officer applies a filter (keeps custodian
+    // names from being dumped on page load — matches the reference design).
+    setState(false, true, false, false);
+})();
 </script>

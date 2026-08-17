@@ -8,9 +8,12 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
             <span class="page-icon"><i class="bi bi-people"></i></span>
             <span class="page-title">User Management</span>
         </div>
-        <a href="index.php?page=users&sub=add" class="btn-app btn-app-primary">
+        <button type="button" class="btn-app btn-app-primary" data-form-modal
+                data-form-url="index.php?page=users&sub=add"
+                data-form-title="Add User"
+                data-form-init="initUserForm">
             <i class="bi bi-plus-circle"></i> Add User
-        </a>
+        </button>
     </div>
     <div class="card-panel-body">
         <?php if (isset($_SESSION['flash'])): ?>
@@ -49,7 +52,12 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
                                 <td><span class="badge-app <?= $u['is_active'] ? 'badge-app-success' : 'badge-app-danger' ?>"><?= $u['is_active'] ? 'Active' : 'Inactive' ?></span></td>
                                 <td><?= $u['last_login'] ?? 'Never' ?></td>
                                 <td class="text-center whitespace-nowrap">
-                                    <a href="index.php?page=users&sub=edit&id=<?= $u['users_id'] ?>" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <button type="button" class="btn-app btn-app-sm btn-app-outline-warning" title="Edit" data-form-modal
+                                            data-form-url="index.php?page=users&sub=edit&id=<?= $u['users_id'] ?>"
+                                            data-form-title="Edit User"
+                                            data-form-init="initUserForm">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <a href="index.php?page=users&sub=delete&id=<?= $u['users_id'] ?>" class="btn-app btn-app-sm btn-app-outline-danger" title="Deactivate" onclick="return confirm('Deactivate this user?')"><i class="bi bi-person-slash"></i></a>
                                 </td>
                             </tr>

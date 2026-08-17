@@ -83,11 +83,17 @@ class CustodyController {
         $personnel = $this->custodyModel->getPersonnel();
         $offices = $this->custodyModel->getOffices();
         $assets = $this->custodyModel->getAssets();
+        $isEdit = false;
+        $preSelectedAsset = $assetId ? $assetId : 0;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/custody/form.php';
+            return;
+        }
+
         $pageTitle = 'Assign Custody';
         $currentPage = 'custody';
         $viewFile = __DIR__ . '/../Views/custody/form.php';
-        $isEdit = false;
-        $preSelectedAsset = $assetId ? $assetId : 0;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -120,11 +126,17 @@ class CustodyController {
         $personnel = $this->custodyModel->getPersonnel();
         $offices = $this->custodyModel->getOffices();
         $assets = $this->custodyModel->getAssets();
+        $isEdit = true;
+        $preSelectedAsset = 0;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/custody/form.php';
+            return;
+        }
+
         $pageTitle = 'Edit Custody';
         $currentPage = 'custody';
         $viewFile = __DIR__ . '/../Views/custody/form.php';
-        $isEdit = true;
-        $preSelectedAsset = 0;
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -133,6 +145,7 @@ class CustodyController {
             header('Location: index.php?page=custody');
             exit;
         }
+        $isAjax = $this->isAjaxRequest();
 
         $id = isset($_POST['custody_id']) ? (int)$_POST['custody_id'] : 0;
         $data = [
@@ -169,6 +182,11 @@ class CustodyController {
         }
 
         if (!empty($errors)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => $errors]);
+                return;
+            }
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $data;
             header('Location: index.php?page=custody&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -181,18 +199,55 @@ class CustodyController {
             $success = $this->custodyModel->create($data);
         }
 
-        if ($success) {
-            unset($_SESSION['form_errors'], $_SESSION['form_data']);
-            $_SESSION['flash'] = 'Custody record saved successfully.';
-            $_SESSION['flash_type'] = 'success';
-        } else {
+        if (!$success) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => ['Failed to save custody record.']]);
+                return;
+            }
             $_SESSION['flash'] = 'Failed to save custody record.';
             $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=custody&sub=' . ($id ? 'edit&id=' . $id : 'add'));
             exit;
         }
+
+        unset($_SESSION['form_errors'], $_SESSION['form_data']);
+        $_SESSION['flash'] = 'Custody record saved successfully.';
+        $_SESSION['flash_type'] = 'success';
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'message' => 'Custody record saved successfully.']);
+            return;
+        }
         header('Location: index.php?page=custody');
         exit;
+    }
+
+    /**
+     * True if the current request was sent via fetch()/XHR (not a plain form submit).
+     * @return bool
+     */
+    private function isAjaxRequest() {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    /**
+     * AJAX: full (non-paginated) asset list for one custodian, used by the
+     * "View Assets" modal on the Custodians-by-office page.
+     */
+    public function custodianAssetsJson() {
+        $custodianId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$custodianId) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing custodian id.']);
+            return;
+        }
+        $assets = $this->custodyModel->getAssetsByCustodian($custodianId, 1000, 0);
+        header('Content-Type: application/json');
+        echo json_encode($assets);
     }
 
     /**

@@ -112,10 +112,18 @@ class AssetController {
         $offices = $this->assetModel->getOffices();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
-        $pageTitle = 'Add Asset';
-        $currentPage = 'add_asset';  
-        $viewFile = __DIR__ . '/../Views/assets/form.php';
         $isEdit = false;
+
+        // AJAX: return just the form fragment for the shared modal.
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/assets/form.php';
+            return;
+        }
+
+        // Non-AJAX fallback (direct link, JS disabled): full page.
+        $pageTitle = 'Add Asset';
+        $currentPage = 'add_asset';
+        $viewFile = __DIR__ . '/../Views/assets/form.php';
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -144,10 +152,16 @@ class AssetController {
         $accounts = $this->assetModel->getAssetAccounts();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
-        $pageTitle = 'Edit Asset';
-        $currentPage = 'assets'; // Keep highlighting "Asset Records"
-        $viewFile = __DIR__ . '/../Views/assets/form.php';
         $isEdit = true;
+
+        if ($this->isAjaxRequest()) {
+            require __DIR__ . '/../Views/assets/form.php';
+            return;
+        }
+
+        $pageTitle = 'Edit Asset';
+        $currentPage = 'assets';
+        $viewFile = __DIR__ . '/../Views/assets/form.php';
         require_once __DIR__ . '/../Views/layouts/main.php';
     }
 
@@ -160,12 +174,11 @@ class AssetController {
             header('Location: index.php?page=assets&sub=browse');
             exit;
         }
+        $isAjax = $this->isAjaxRequest();
 
         $id = isset($_POST['asset_id']) ? (int)$_POST['asset_id'] : 0;
-        // Note: asset_code is NOT read from $_POST. It's generated server-side
-        // (AssetModel::generateAssetCode) from the account + year on create,
-        // and is immutable on update — see AssetModel::update().
         $data = [
+            'asset_code' => trim($_POST['asset_code']),
             'asset_name' => trim($_POST['asset_name']),
             'description' => trim($_POST['description'] ?? ''),
             'brand' => trim($_POST['brand'] ?? ''),
@@ -180,6 +193,7 @@ class AssetController {
         ];
 
         $errors = [];
+        if (empty($data['asset_code'])) $errors[] = 'Asset code is required.';
         if (empty($data['asset_name'])) $errors[] = 'Asset name is required.';
         if (empty($data['asset_accounts_id'])) $errors[] = 'Account is required.';
         
@@ -222,6 +236,11 @@ class AssetController {
         }
 
         if (!empty($errors)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => $errors]);
+                return;
+            }
             $_SESSION['form_errors'] = $errors;
             $_SESSION['form_data'] = $data;
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -243,6 +262,11 @@ class AssetController {
         } catch (\App\Models\DuplicateEntryException $e) {
             // A unique field (asset_code, qr_code_ref, or serial_number) collided
             // with an existing asset — show it the same way as a validation error.
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => [$e->getMessage()]]);
+                return;
+            }
             $_SESSION['form_errors'] = [$e->getMessage()];
             $_SESSION['form_data'] = $data;
             $_SESSION['flash'] = $e->getMessage();
@@ -251,6 +275,11 @@ class AssetController {
             exit;
         } catch (\mysqli_sql_exception $e) {
             // Any other unexpected database error — fail gracefully instead of a fatal error.
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => ['A database error occurred while saving the asset. Please try again.']]);
+                return;
+            }
             $_SESSION['form_data'] = $data;
             $_SESSION['flash'] = 'A database error occurred while saving the asset. Please try again.';
             $_SESSION['flash_type'] = 'danger';
@@ -259,6 +288,11 @@ class AssetController {
         }
 
         if (!$success) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'errors' => ['Failed to save asset. Please try again.']]);
+                return;
+            }
             $_SESSION['flash'] = 'Failed to save asset. Please try again.';
             $_SESSION['flash_type'] = 'danger';
             header('Location: index.php?page=assets&sub=' . ($id ? 'edit&id=' . $id : 'add'));
@@ -325,6 +359,12 @@ class AssetController {
                 'status' => 'active'
             ];
             $custodyModel->create($custodyData);
+        }
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'message' => 'Asset saved successfully.']);
+            return;
         }
 
         if ($id) {
