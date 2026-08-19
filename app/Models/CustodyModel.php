@@ -144,7 +144,9 @@ class CustodyModel {
     }
 
     /**
-     * Get personnel for dropdown.
+     * Get personnel for dropdown (unfiltered — retained for callers
+     * outside the custody Assign/Transfer cascade, e.g. reports/search
+     * screens that intentionally need the full roster).
      * @return array
      */
     public function getPersonnel() {
@@ -153,20 +155,148 @@ class CustodyModel {
     }
 
     /**
-     * Get offices for dropdown.
+     * Get offices for dropdown — internal departments (fully-tracked custody)
+     * plus external division offices that are valid transfer destinations.
+     * Each row carries office_type and head_personnel_id/head_name so the
+     * form can auto-fill the accountable officer and skip SG validation
+     * client-side when an external office is selected.
+     *
+     * Retained for backward compatibility with any other screen that
+     * still expects a single flat office list. The Assign/Transfer modal
+     * itself no longer uses this — see getTopLevelOffices(),
+     * getDepartmentsByOffice(), and getExternalOffices() below.
      * @return array
      */
     public function getOffices() {
-        $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
+        $sql = "
+            SELECT o.office_id, o.name, o.office_type, o.head_personnel_id,
+                   p.full_name AS head_name
+            FROM offices o
+            LEFT JOIN personnel p ON o.head_personnel_id = p.personnel_id
+            WHERE o.office_type = 'internal'
+               OR (o.office_type = 'external' AND o.is_transfer_destination = 1)
+            ORDER BY (o.office_type = 'internal') DESC, o.name
+        ";
+        $result = $this->db->query($sql);
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
     /**
-     * Get assets for dropdown.
+     * Internal offices only — used anywhere that must never offer an
+     * external division as a choice (e.g. ordinary personnel lookups).
+     * @return array
+     */
+    public function getInternalOffices() {
+        $result = $this->db->query("SELECT office_id, name FROM offices WHERE office_type = 'internal' ORDER BY name");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * ===== Internal Office -> Department -> Custodian cascade =====
+     */
+
+    /**
+     * Step 1: top-level internal offices (no parent_office_id). In the
+     * current data set there is exactly one (the Regional Office), but
+     * the query stays general rather than hardcoding that assumption.
+     * @return array
+     */
+    public function getTopLevelOffices() {
+        $result = $this->db->query("
+            SELECT office_id, name FROM offices
+            WHERE office_type = 'internal' AND parent_office_id IS NULL
+            ORDER BY name
+        ");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Step 2: departments (child offices) under a selected top-level
+     * office. The top-level office row itself is included as a
+     * selectable "department" too, so personnel who are on record
+     * directly under it (e.g. the Regional Director, who has no child
+     * department of their own) remain assignable.
+     * @param int $officeId
+     * @return array
+     */
+    public function getDepartmentsByOffice($officeId) {
+        $stmt = $this->db->prepare("
+            SELECT office_id, name FROM offices
+            WHERE office_type = 'internal' AND (office_id = ? OR parent_office_id = ?)
+            ORDER BY (office_id = ?) DESC, name
+        ");
+        $stmt->bind_param('iii', $officeId, $officeId, $officeId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Step 3: active personnel belonging to one specific Department —
+     * this is what "filtered/narrowed by Department" means. Never
+     * returns the unfiltered roster.
+     * @param int $departmentId
+     * @return array
+     */
+    public function getPersonnelByDepartment($departmentId) {
+        $stmt = $this->db->prepare("
+            SELECT personnel_id, full_name, position, office_id, salary_grade
+            FROM personnel
+            WHERE office_id = ? AND is_active = 1
+            ORDER BY full_name
+        ");
+        $stmt->bind_param('i', $departmentId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * ===== External sub-office transfer destinations =====
+     * Each row carries its Division Manager/Head (head_personnel_id /
+     * head_name / head_position) so the external-transfer form can
+     * auto-populate the accountable officer with no manual custodian
+     * pick at all.
+     * @return array
+     */
+    public function getExternalOffices() {
+        $sql = "
+            SELECT o.office_id, o.name, o.head_personnel_id,
+                   p.full_name AS head_name, p.position AS head_position
+            FROM offices o
+            LEFT JOIN personnel p ON o.head_personnel_id = p.personnel_id
+            WHERE o.office_type = 'external' AND o.is_transfer_destination = 1
+            ORDER BY o.name
+        ";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Get assets for dropdown. Each row also carries its CURRENT active
+     * custody (if any) — current_custodian_id / current_custodian_name /
+     * current_office_id / current_office_name — so the form can tell,
+     * for a given selected asset, whether an internal Assign or an
+     * internal Transfer is about to happen, without a second round-trip.
      * @return array
      */
     public function getAssets() {
-        $result = $this->db->query("SELECT asset_id, asset_code, description, acquisition_cost FROM assets WHERE status != 'inactive' ORDER BY asset_code");
+        $sql = "
+            SELECT 
+                a.asset_id, a.asset_code, a.description, a.acquisition_cost,
+                ac.custodian_id   AS current_custodian_id,
+                p.full_name       AS current_custodian_name,
+                ac.office_id      AS current_office_id,
+                o.name            AS current_office_name,
+                o.office_type     AS current_office_type
+            FROM assets a
+            LEFT JOIN asset_custodies ac ON ac.asset_id = a.asset_id AND ac.status = 'active'
+            LEFT JOIN personnel p ON p.personnel_id = ac.custodian_id
+            LEFT JOIN offices o ON o.office_id = ac.office_id
+            WHERE a.status != 'inactive'
+            ORDER BY a.asset_code
+        ";
+        $result = $this->db->query($sql);
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -223,6 +353,7 @@ class CustodyModel {
             FROM offices o
             INNER JOIN asset_custodies ac ON o.office_id = ac.office_id
             WHERE ac.status = 'active'
+              AND o.office_type = 'internal'
             ORDER BY o.name
         ";
         $result = $this->db->query($sql);

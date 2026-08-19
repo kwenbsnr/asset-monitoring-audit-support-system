@@ -10,9 +10,9 @@ $alertClass = $flashType === 'success' ? 'alert-app-success' : 'alert-app-danger
         </div>
         <button type="button" class="btn-app btn-app-primary" data-form-modal
                 data-form-url="index.php?page=custody&sub=add"
-                data-form-title="Assign Custody"
+                data-form-title="Assign / Transfer Custody"
                 data-form-init="initCustodyForm">
-            <i class="bi bi-plus-circle"></i> Assign Custody
+            <i class="bi bi-plus-circle"></i> Assign / Transfer Custody
         </button>
     </div>
     <div class="card-panel-body">

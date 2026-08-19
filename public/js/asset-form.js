@@ -70,6 +70,59 @@ function initAssetForm(root) {
         return 0;
     }
 
+    // ===== External-office handling =====
+    // When the selected office is external, the accountable officer is
+    // always that office's head — auto-filled, read-only, no SG check.
+    // Server-side (AssetController::save()) re-resolves this independently,
+    // so this is a UX convenience, not the source of truth.
+    const custodianWrap = root.querySelector('.custodian-ac-wrap');
+    const externalHeadNotice = root.querySelector('#externalHeadNotice');
+    const externalHeadName = root.querySelector('#externalHeadName');
+    const externalNoHeadWarning = root.querySelector('#externalNoHeadWarning');
+
+    let custodianWasAutoFilled = false;
+
+    function syncOfficeTypeUI() {
+        if (!officeSelect || !custodianWrap) return;
+        const opt = officeSelect.options[officeSelect.selectedIndex];
+        const officeType = opt ? opt.getAttribute('data-office-type') : null;
+
+        if (officeType === 'external') {
+            const headId = opt.getAttribute('data-head-id');
+            const headName = opt.getAttribute('data-head-name');
+
+            custodianWrap.style.display = 'none';
+            if (sgWarning) sgWarning.textContent = '';
+
+            if (headId) {
+                custodianIdInput.value = headId;
+                if (custodianSearch) custodianSearch.value = headName;
+                custodianWasAutoFilled = true;
+                if (externalHeadNotice) externalHeadNotice.style.display = 'block';
+                if (externalHeadName) externalHeadName.textContent = headName;
+                if (externalNoHeadWarning) externalNoHeadWarning.style.display = 'none';
+            } else {
+                // No head on file — block the client from silently submitting
+                // a blank/invalid custodian; server-side rejects this too.
+                custodianIdInput.value = '';
+                custodianWasAutoFilled = false;
+                if (externalHeadNotice) externalHeadNotice.style.display = 'none';
+                if (externalNoHeadWarning) externalNoHeadWarning.style.display = 'block';
+            }
+        } else {
+            custodianWrap.style.display = '';
+            if (externalHeadNotice) externalHeadNotice.style.display = 'none';
+            if (externalNoHeadWarning) externalNoHeadWarning.style.display = 'none';
+            // Clear a head auto-fill left over from a previous external pick —
+            // never touch a real manually-selected custodian.
+            if (custodianWasAutoFilled) {
+                custodianIdInput.value = '';
+                if (custodianSearch) custodianSearch.value = '';
+                custodianWasAutoFilled = false;
+            }
+        }
+    }
+
     if (custodianSearch && custodianIdInput && custodianDropdown && custodianDataEl) {
         const people = JSON.parse(custodianDataEl.textContent || '[]');
         const byId = new Map(people.map(p => [String(p.id), p]));
@@ -304,6 +357,7 @@ function initAssetForm(root) {
         if (officeSelect) {
             officeSelect.addEventListener('change', function () {
                 if (!custodianDropdown.hidden) openDropdownWithCurrentInput();
+                syncOfficeTypeUI();
             });
         }
 
@@ -313,6 +367,10 @@ function initAssetForm(root) {
 
         checkSgThreshold();
     }
+
+    // Correct state on load — e.g. edit mode with an external office
+    // already selected, or a failed-validation re-render.
+    syncOfficeTypeUI();
 
     // Progressive-enhancement account suggestion (public/js/asset-account-suggest.js)
     if (typeof window.initAssetAccountSuggest === 'function') {

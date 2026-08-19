@@ -308,10 +308,30 @@ class AssetController {
             $custodyModel = new CustodyModel();
             $existing = $custodyModel->getActiveCustody($id);
 
-            $newCustodianId = (int)$_POST['custodian_id'];
             $newOfficeId = (int)$_POST['office_id'];
             $effectivityDate = $_POST['effectivity_date'] ?? date('Y-m-d');
             $propertyNumber = trim($_POST['property_number'] ?? '');
+
+            // ===== External-office transfer handling =====
+            // Resolved server-side: the accountable officer for an external
+            // division is always that division's head, never a manually
+            // picked custodian, and this path skips the Salary Grade check
+            // entirely (see verify()/CustodyController::save() for the
+            // same rule applied elsewhere).
+            $destOffice = $custodyModel->getOfficeById($newOfficeId);
+            $isExternalTransfer = $destOffice && $destOffice['office_type'] === 'external';
+
+            if ($isExternalTransfer) {
+                if (empty($destOffice['head_personnel_id'])) {
+                    $_SESSION['flash'] = 'This office has no accountable officer on file. Add one before transferring to it.';
+                    $_SESSION['flash_type'] = 'danger';
+                    header('Location: index.php?page=assets&sub=edit&id=' . $id);
+                    exit;
+                }
+                $newCustodianId = (int)$destOffice['head_personnel_id'];
+            } else {
+                $newCustodianId = (int)$_POST['custodian_id'];
+            }
 
             // If there is an existing active custody, end it and log transfer
             if ($existing) {
@@ -757,8 +777,28 @@ class AssetController {
             return;
         }
 
+        // ===== External-office transfer handling =====
+        // Same rule as save() / CustodyController::save(): an external
+        // division's accountable officer is always its head, resolved
+        // server-side, and this path skips the Salary Grade check.
+        $isExternalTransfer = false;
+        if ($data['office_id'] > 0) {
+            $custodyModelForOffice = new CustodyModel();
+            $destOffice = $custodyModelForOffice->getOfficeById($data['office_id']);
+            if ($destOffice && $destOffice['office_type'] === 'external') {
+                $isExternalTransfer = true;
+                if (empty($destOffice['head_personnel_id'])) {
+                    $_SESSION['flash'] = 'This office has no accountable officer on file. Add one before transferring to it.';
+                    $_SESSION['flash_type'] = 'danger';
+                    return;
+                }
+                $data['custodian_id'] = (int)$destOffice['head_personnel_id'];
+            }
+        }
+
         // ===== Salary Grade vs. asset value validation =====
-        if ($data['custodian_id'] > 0) {
+        // Skipped entirely for external transfers (see above).
+        if (!$isExternalTransfer && $data['custodian_id'] > 0) {
             $assetForCheck = $this->assetModel->getById($assetId);
             if ($assetForCheck) {
                 $employeeModel = new EmployeeModel();

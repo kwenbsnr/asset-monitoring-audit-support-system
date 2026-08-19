@@ -1,120 +1,255 @@
 /**
- * Behavior for the Custody Assign/Edit form (app/Views/custody/form.php).
- * Exposed as window.initCustodyForm() — see asset-form.js for why this
- * can't just be an inline <script> in the fetched fragment.
+ * Custody Assign/Transfer modal.
+ *
+ * Two independent flows, toggled by "assignment_mode":
+ *   internal: Office -> Department -> Custodian (cascading selects)
+ *   external: Destination Sub-office -> Division Manager/Head (auto)
+ *
+ * "Assign" vs "Transfer" is a DISPLAY-ONLY indicator here (the server
+ * is the source of truth and recomputes it in CustodyController::save()).
+ * It is derived from:
+ *   - external mode            -> always "Transfer"
+ *   - internal mode + no prior custodian on the selected asset -> "Assign"
+ *   - internal mode + has prior custodian on the selected asset -> "Transfer"
+ *
+ * Mirrors the Salary Grade brackets in app/Helpers/SalaryGradeHelper.php
+ * for an instant client-side warning; the server re-validates regardless.
  */
-function initCustodyForm(root) {
-    root = root || document;
+function initCustodyForm() {
+    const form = document.getElementById('custodyForm');
+    if (!form) return;
 
-    const custodianSelect = root.querySelector('#custodian_id');
-    const officeSelect = root.querySelector('#office_id');
-    const assetSelect = root.querySelector('#asset_id');
-    const sgWarning = root.querySelector('#sgWarning');
-    const endDateInput = root.querySelector('#end_date');
-    const statusSelect = root.querySelector('#status');
+    const assetSelect = document.getElementById('asset_id');
+    const modeInternal = document.getElementById('mode_internal');
+    const modeExternal = document.getElementById('mode_external');
+    const internalSection = document.getElementById('internalSection');
+    const externalSection = document.getElementById('externalSection');
 
-    if (!custodianSelect || !officeSelect || !assetSelect) return;
+    const topOfficeSelect = document.getElementById('top_office_id');
+    const departmentSelect = document.getElementById('department_id');
+    const custodianSelect = document.getElementById('custodian_id');
 
-    const allCustodianOptions = Array.from(custodianSelect.options);
+    const destinationOfficeSelect = document.getElementById('destination_office_id');
+    const externalHeadDisplay = document.getElementById('externalHeadDisplay');
 
-    // Fixed SG -> threshold table, mirrors app/Helpers/SalaryGradeHelper.php.
-    // Server-side validation is authoritative; this is a client-side heads-up only.
-    function sgThreshold(sg) {
-        if (sg >= 1 && sg <= 7) return 70000;
-        if (sg >= 8 && sg <= 10) return 500000;
-        if (sg >= 11 && sg <= 17) return 1000000;
-        if (sg >= 18 && sg <= 21) return 10000000;
-        if (sg >= 22 && sg <= 30) return Infinity;
-        return 0;
+    const actionTypeIndicator = document.getElementById('actionTypeIndicator');
+    const sgWarning = document.getElementById('sgWarning');
+    const endDateInput = document.getElementById('end_date');
+    const statusSelect = document.getElementById('status');
+
+    const SG_BRACKETS = [
+        { min: 1, max: 7, threshold: 70000 },
+        { min: 8, max: 10, threshold: 500000 },
+        { min: 11, max: 17, threshold: 1000000 },
+        { min: 18, max: 21, threshold: 10000000 },
+        { min: 22, max: 30, threshold: Infinity },
+    ];
+
+    function thresholdFor(sg) {
+        const b = SG_BRACKETS.find(x => sg >= x.min && sg <= x.max);
+        return b ? b.threshold : 0;
     }
 
-    function filterCustodiansByOffice(officeId) {
-        const currentValue = custodianSelect.value;
-        custodianSelect.innerHTML = '';
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select Custodian';
-        custodianSelect.appendChild(placeholder);
+    // ---------- Mode toggle ----------
+    function applyMode() {
+        const isExternal = modeExternal && modeExternal.checked;
+        if (internalSection) internalSection.style.display = isExternal ? 'none' : '';
+        if (externalSection) externalSection.style.display = isExternal ? '' : 'none';
 
-        allCustodianOptions.forEach(opt => {
-            if (opt.value === '') return;
-            const optOfficeId = opt.getAttribute('data-office-id');
-            if (officeId === '' || optOfficeId == officeId) {
-                const newOpt = document.createElement('option');
-                newOpt.value = opt.value;
-                newOpt.textContent = opt.textContent;
-                newOpt.setAttribute('data-office-id', optOfficeId);
-                newOpt.setAttribute('data-salary-grade', opt.getAttribute('data-salary-grade'));
-                if (opt.value === currentValue) newOpt.selected = true;
-                custodianSelect.appendChild(newOpt);
-            }
-        });
-        checkThreshold();
+        // Only the fields belonging to the active path are required, so
+        // the browser doesn't block submission on a hidden field.
+        if (departmentSelect) departmentSelect.required = !isExternal;
+        if (custodianSelect) custodianSelect.required = !isExternal;
+        if (destinationOfficeSelect) destinationOfficeSelect.required = isExternal;
+
+        updateActionIndicator();
     }
 
-    function checkThreshold() {
-        if (!sgWarning) return;
-        const costRaw = assetSelect.options[assetSelect.selectedIndex]?.getAttribute('data-cost');
-        const sgRaw = custodianSelect.options[custodianSelect.selectedIndex]?.getAttribute('data-salary-grade');
-        if (!costRaw || !sgRaw) {
-            sgWarning.textContent = '';
+    if (modeInternal) modeInternal.addEventListener('change', applyMode);
+    if (modeExternal) modeExternal.addEventListener('change', applyMode);
+
+    // ---------- Internal cascade: Office -> Department -> Custodian ----------
+    function loadDepartments(officeId, preselectDepartmentId) {
+        if (!departmentSelect) return;
+        departmentSelect.innerHTML = '<option value="">Loading...</option>';
+        custodianSelect.innerHTML = '<option value="">Select Department first</option>';
+
+        if (!officeId) {
+            departmentSelect.innerHTML = '<option value="">Select Department</option>';
             return;
         }
-        const cost = parseFloat(costRaw);
-        const sg = parseInt(sgRaw, 10);
-        const threshold = sgThreshold(sg);
-        if (cost > threshold) {
-            sgWarning.textContent = 'Warning: this asset (₱' + cost.toLocaleString(undefined, {minimumFractionDigits: 2}) +
-                ') exceeds SG ' + sg + '\'s threshold' + (isFinite(threshold) ? ' of ₱' + threshold.toLocaleString() : '') + '. This assignment will be rejected on save.';
-            sgWarning.classList.add('text-red-600');
-            sgWarning.classList.remove('text-gray-500');
+
+        fetch(`index.php?page=custody&sub=department_json&office_id=${officeId}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(r => r.json())
+            .then(list => {
+                departmentSelect.innerHTML = '<option value="">Select Department</option>';
+                list.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.office_id;
+                    opt.textContent = d.name;
+                    if (preselectDepartmentId && String(preselectDepartmentId) === String(d.office_id)) {
+                        opt.selected = true;
+                    }
+                    departmentSelect.appendChild(opt);
+                });
+                if (departmentSelect.value) {
+                    loadCustodians(departmentSelect.value);
+                }
+            })
+            .catch(() => {
+                departmentSelect.innerHTML = '<option value="">Failed to load departments</option>';
+            });
+    }
+
+    function loadCustodians(departmentId, preselectCustodianId) {
+        if (!custodianSelect) return;
+        custodianSelect.innerHTML = '<option value="">Loading...</option>';
+
+        if (!departmentId) {
+            custodianSelect.innerHTML = '<option value="">Select Department first</option>';
+            return;
+        }
+
+        fetch(`index.php?page=custody&sub=custodian_json&department_id=${departmentId}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(r => r.json())
+            .then(list => {
+                if (!list.length) {
+                    custodianSelect.innerHTML = '<option value="">No active personnel in this Department</option>';
+                    return;
+                }
+                custodianSelect.innerHTML = '<option value="">Select Custodian</option>';
+                list.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.personnel_id;
+                    opt.dataset.salaryGrade = p.salary_grade || 0;
+                    opt.textContent = `${p.full_name} (${p.position || ''}) — SG ${p.salary_grade || 0}`;
+                    if (preselectCustodianId && String(preselectCustodianId) === String(p.personnel_id)) {
+                        opt.selected = true;
+                    }
+                    custodianSelect.appendChild(opt);
+                });
+                checkSalaryGrade();
+            })
+            .catch(() => {
+                custodianSelect.innerHTML = '<option value="">Failed to load custodians</option>';
+            });
+    }
+
+    if (topOfficeSelect) {
+        topOfficeSelect.addEventListener('change', () => loadDepartments(topOfficeSelect.value));
+    }
+    if (departmentSelect) {
+        departmentSelect.addEventListener('change', () => loadCustodians(departmentSelect.value));
+    }
+    if (custodianSelect) {
+        custodianSelect.addEventListener('change', checkSalaryGrade);
+    }
+
+    // ---------- External: Destination Sub-office -> Head (auto) ----------
+    function applyExternalHead() {
+        if (!destinationOfficeSelect || !externalHeadDisplay) return;
+        const opt = destinationOfficeSelect.selectedOptions[0];
+        if (!opt || !opt.value) {
+            externalHeadDisplay.textContent = '—';
+            return;
+        }
+        if (opt.dataset.hasHead !== '1') {
+            externalHeadDisplay.textContent = 'No Division Manager/Head on file for this sub-office.';
+            return;
+        }
+        const name = opt.dataset.headName || '';
+        const position = opt.dataset.headPosition || '';
+        externalHeadDisplay.textContent = position ? `${name} (${position})` : name;
+    }
+
+    if (destinationOfficeSelect) {
+        destinationOfficeSelect.addEventListener('change', () => {
+            applyExternalHead();
+            updateActionIndicator();
+        });
+        applyExternalHead();
+    }
+
+    // ---------- Assign / Transfer indicator (display only) ----------
+    function updateActionIndicator() {
+        if (!actionTypeIndicator || !assetSelect) return;
+        const isExternal = modeExternal && modeExternal.checked;
+        const opt = assetSelect.selectedOptions[0];
+
+        if (!opt || !opt.value) {
+            actionTypeIndicator.textContent = '';
+            return;
+        }
+
+        if (isExternal) {
+            actionTypeIndicator.textContent = 'This will be recorded as a Transfer to another sub-office.';
+            actionTypeIndicator.className = 'mt-1 text-xs font-medium text-amber-600';
+            return;
+        }
+
+        const hasCustodian = opt.dataset.hasCustodian === '1';
+        if (hasCustodian) {
+            const from = opt.dataset.currentCustodianName || 'the current custodian';
+            actionTypeIndicator.textContent = `This will be recorded as a Transfer (currently with ${from}).`;
+            actionTypeIndicator.className = 'mt-1 text-xs font-medium text-amber-600';
         } else {
-            sgWarning.textContent = '';
-            sgWarning.classList.remove('text-red-600');
+            actionTypeIndicator.textContent = 'This will be recorded as a first-time Assign (no previous custodian).';
+            actionTypeIndicator.className = 'mt-1 text-xs font-medium text-green-600';
         }
     }
 
-    // Keep Status in sync with the return date so the two fields can't
-    // silently disagree: entering a return date means custody has ended.
+    if (assetSelect) {
+        assetSelect.addEventListener('change', () => {
+            checkSalaryGrade();
+            updateActionIndicator();
+        });
+    }
+
+    // ---------- Salary Grade warning (internal path only; UX hint) ----------
+    function checkSalaryGrade() {
+        if (!sgWarning) return;
+        const isExternal = modeExternal && modeExternal.checked;
+        sgWarning.textContent = '';
+        if (isExternal) return;
+
+        const assetOpt = assetSelect && assetSelect.selectedOptions[0];
+        const custodianOpt = custodianSelect && custodianSelect.selectedOptions[0];
+        if (!assetOpt || !assetOpt.value || !custodianOpt || !custodianOpt.value) return;
+
+        const cost = parseFloat(assetOpt.dataset.cost || '0');
+        const sg = parseInt(custodianOpt.dataset.salaryGrade || '0', 10);
+        const threshold = thresholdFor(sg);
+
+        if (cost > threshold) {
+            sgWarning.textContent = `Warning: this asset's value exceeds the assignable threshold for Salary Grade ${sg}. The server will reject this on save.`;
+            sgWarning.className = 'mt-1 text-xs text-red-600';
+        }
+    }
+
+    // ---------- Returned/relieved date auto-sets status ----------
     if (endDateInput && statusSelect) {
-        endDateInput.addEventListener('change', function() {
-            if (this.value) {
+        endDateInput.addEventListener('change', () => {
+            if (endDateInput.value) {
                 statusSelect.value = 'inactive';
             }
         });
-        statusSelect.addEventListener('change', function() {
-            if (this.value === 'active') {
-                endDateInput.value = '';
-            }
-        });
     }
 
-    officeSelect.addEventListener('change', function() {
-        filterCustodiansByOffice(this.value);
-    });
+    // ---------- Initial state on open ----------
+    applyMode();
+    updateActionIndicator();
+    checkSalaryGrade();
 
-    custodianSelect.addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        if (selected && selected.value) {
-            const officeId = selected.getAttribute('data-office-id');
-            if (officeId) {
-                officeSelect.value = officeId;
-            }
-        }
-        checkThreshold();
-    });
-
-    assetSelect.addEventListener('change', checkThreshold);
-
-    if (officeSelect.value) {
-        filterCustodiansByOffice(officeSelect.value);
+    // If the internal Department select already has a value pre-rendered
+    // (edit mode) but no top-office change has fired yet, nothing further
+    // to do — the controller pre-loaded matching Department/Custodian
+    // lists server-side. Only wire the case where a Department is
+    // selected but Custodians weren't pre-loaded (defensive).
+    if (departmentSelect && departmentSelect.value && custodianSelect && custodianSelect.options.length <= 1) {
+        loadCustodians(departmentSelect.value, form.dataset.presetCustodianId);
     }
-    checkThreshold();
 }
-
-// Non-AJAX fallback (JS-disabled / direct link access to the full page).
-document.addEventListener('DOMContentLoaded', function () {
-    if (document.getElementById('custodyForm')) {
-        initCustodyForm(document);
-    }
-});

@@ -526,7 +526,16 @@ class AssetModel {
      * @return array
      */
     public function getOffices() {
-        $result = $this->db->query("SELECT office_id, name FROM offices ORDER BY name");
+        $sql = "
+            SELECT o.office_id, o.name, o.office_type, o.head_personnel_id,
+                   p.full_name AS head_name
+            FROM offices o
+            LEFT JOIN personnel p ON o.head_personnel_id = p.personnel_id
+            WHERE o.office_type = 'internal'
+               OR (o.office_type = 'external' AND o.is_transfer_destination = 1)
+            ORDER BY (o.office_type = 'internal') DESC, o.name
+        ";
+        $result = $this->db->query($sql);
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

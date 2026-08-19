@@ -279,11 +279,26 @@ if (!function_exists('js_attr')) {
                                 <option value="">Select Office</option>
                                 <?php foreach ($offices as $o): ?>
                                     <option value="<?= $o['office_id'] ?>"
+                                        data-office-type="<?= htmlspecialchars($o['office_type']) ?>"
+                                        data-head-id="<?= htmlspecialchars($o['head_personnel_id'] ?? '') ?>"
+                                        data-head-name="<?= htmlspecialchars($o['head_name'] ?? '') ?>"
                                         <?= (isset($data['office_id']) && $data['office_id'] == $o['office_id']) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($o['name']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <!--
+                                Shown instead of the custodian search box when the selected
+                                office is external — the accountable officer is always that
+                                office's head, resolved automatically, never manually picked.
+                            -->
+                            <p class="mt-1 text-xs text-gray-600" id="externalHeadNotice" style="display:none;">
+                                Accountable Officer: <strong id="externalHeadName"></strong>
+                                <span class="block text-gray-400">Auto-assigned — the receiving office's head is accountable once transferred.</span>
+                            </p>
+                            <p class="mt-1 text-xs text-red-600" id="externalNoHeadWarning" style="display:none;">
+                                This office has no accountable officer on file. Add one before transferring here.
+                            </p>
                         </div>
                         <div>
                             <label for="effectivity_date" class="block text-sm font-medium text-gray-700">Effectivity Date</label>
