@@ -14,6 +14,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 // Start session if not already
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
+    
 }
 
 // ---- Logout ----
