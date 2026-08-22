@@ -108,8 +108,6 @@ class AssetController {
             exit;
         }
         $accounts = $this->assetModel->getAssetAccounts();
-        $personnel = $this->assetModel->getPersonnel();
-        $offices = $this->assetModel->getOffices();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
         $isEdit = false;
@@ -145,10 +143,6 @@ class AssetController {
             header('Location: index.php?page=assets&sub=browse');
             exit;
         }
-        $custodyModel = new CustodyModel();
-        $currentCustody = $custodyModel->getActiveCustody($id);
-        $personnel = $this->assetModel->getPersonnel();
-        $offices = $this->assetModel->getOffices();
         $accounts = $this->assetModel->getAssetAccounts();
         $statusOptions = ['active', 'inactive', 'disposed', 'missing'];
         $conditionOptions = ['good', 'fair', 'poor', 'damaged', 'obsolete'];
@@ -219,21 +213,11 @@ class AssetController {
         }
 
         // ===== Salary Grade vs. asset value validation =====
-        // If a custodian is being assigned/reassigned right here, the asset's
-        // value must not exceed that custodian's Salary Grade threshold.
-        if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1') {
-            $newCustodianId = (int)($_POST['custodian_id'] ?? 0);
-            if ($newCustodianId && $data['acquisition_cost'] !== null) {
-                $employeeModel = new EmployeeModel();
-                $sgCheck = $employeeModel->validateAssetAssignment($newCustodianId, $data['acquisition_cost']);
-                if ($sgCheck !== true) {
-                    $errors[] = $sgCheck;
-                }
-            }
-            if (empty(trim($_POST['property_number'] ?? ''))) {
-                $errors[] = 'Property number is required.';
-            }
-        }
+        // NOTE: custodian assignment at registration time was removed from
+        // the Register Asset form — this form now only creates/edits the
+        // asset record. Custody is assigned separately via the Custodial
+        // Tracking module (CustodyController), which performs its own
+        // Salary Grade check.
 
         if (!empty($errors)) {
             if ($isAjax) {
@@ -302,84 +286,6 @@ class AssetController {
         unset($_SESSION['form_errors'], $_SESSION['form_data']);
         $_SESSION['flash'] = 'Asset saved successfully.';
         $_SESSION['flash_type'] = 'success';
-
-        // Handle custody assignment and transfer logging
-        if (isset($_POST['assign_custodian']) && $_POST['assign_custodian'] == '1' && $id) {
-            $custodyModel = new CustodyModel();
-            $existing = $custodyModel->getActiveCustody($id);
-
-            $newOfficeId = (int)$_POST['office_id'];
-            $effectivityDate = $_POST['effectivity_date'] ?? date('Y-m-d');
-            $propertyNumber = trim($_POST['property_number'] ?? '');
-
-            // ===== External-office transfer handling =====
-            // Resolved server-side: the accountable officer for an external
-            // division is always that division's head, never a manually
-            // picked custodian, and this path skips the Salary Grade check
-            // entirely (see verify()/CustodyController::save() for the
-            // same rule applied elsewhere).
-            $destOffice = $custodyModel->getOfficeById($newOfficeId);
-            $isExternalTransfer = $destOffice && $destOffice['office_type'] === 'external';
-
-            if ($isExternalTransfer) {
-                if (empty($destOffice['head_personnel_id'])) {
-                    $_SESSION['flash'] = 'This office has no accountable officer on file. Add one before transferring to it.';
-                    $_SESSION['flash_type'] = 'danger';
-                    header('Location: index.php?page=assets&sub=edit&id=' . $id);
-                    exit;
-                }
-                $newCustodianId = (int)$destOffice['head_personnel_id'];
-            } else {
-                $newCustodianId = (int)$_POST['custodian_id'];
-            }
-
-            // If there is an existing active custody, end it and log transfer
-            if ($existing) {
-                // Log transfer before ending
-                $this->assetModel->logTransfer(
-                    $id,
-                    $existing['custodian_id'],
-                    $newCustodianId,
-                    $existing['office_id'],
-                    $newOfficeId,
-                    $effectivityDate,
-                    'approved'
-                );
-
-                // End old custody
-                $custodyModel->update($existing['asset_custodies_id'], [
-                    'custodian_id' => $existing['custodian_id'],
-                    'office_id' => $existing['office_id'],
-                    'property_number' => $existing['property_number'],
-                    'effectivity_date' => $existing['effectivity_date'],
-                    'end_date' => date('Y-m-d'),
-                    'status' => 'inactive'
-                ]);
-            } else {
-                // No previous custody – this is an initial assignment.
-                // Optionally log a transfer with from_custodian_id = NULL, from_office_id = NULL
-                $this->assetModel->logTransfer(
-                    $id,
-                    null,
-                    $newCustodianId,
-                    null,
-                    $newOfficeId,
-                    $effectivityDate,
-                    'approved'
-                );
-            }
-
-            // Create new custody
-            $custodyData = [
-                'asset_id' => $id,
-                'custodian_id' => $newCustodianId,
-                'office_id' => $newOfficeId,
-                'property_number' => $propertyNumber,
-                'effectivity_date' => $effectivityDate,
-                'status' => 'active'
-            ];
-            $custodyModel->create($custodyData);
-        }
 
         if ($isAjax) {
             header('Content-Type: application/json');

@@ -144,27 +144,15 @@ class CustodyModel {
     }
 
     /**
-     * Get personnel for dropdown (unfiltered — retained for callers
-     * outside the custody Assign/Transfer cascade, e.g. reports/search
-     * screens that intentionally need the full roster).
-     * @return array
-     */
-    public function getPersonnel() {
-        $result = $this->db->query("SELECT personnel_id, full_name, position, office_id, salary_grade FROM personnel WHERE is_active = 1 ORDER BY full_name");
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
-    /**
      * Get offices for dropdown — internal departments (fully-tracked custody)
      * plus external division offices that are valid transfer destinations.
      * Each row carries office_type and head_personnel_id/head_name so the
      * form can auto-fill the accountable officer and skip SG validation
      * client-side when an external office is selected.
      *
-     * Retained for backward compatibility with any other screen that
-     * still expects a single flat office list. The Assign/Transfer modal
-     * itself no longer uses this — see getTopLevelOffices(),
-     * getDepartmentsByOffice(), and getExternalOffices() below.
+     * Used by ReportController for its office filter — NOT by the
+     * Assign/Transfer modal itself, which uses getTopLevelOffices(),
+     * getDepartmentsByOffice(), and getExternalOffices() below instead.
      * @return array
      */
     public function getOffices() {
@@ -178,16 +166,6 @@ class CustodyModel {
             ORDER BY (o.office_type = 'internal') DESC, o.name
         ";
         $result = $this->db->query($sql);
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
-
-    /**
-     * Internal offices only — used anywhere that must never offer an
-     * external division as a choice (e.g. ordinary personnel lookups).
-     * @return array
-     */
-    public function getInternalOffices() {
-        $result = $this->db->query("SELECT office_id, name FROM offices WHERE office_type = 'internal' ORDER BY name");
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 

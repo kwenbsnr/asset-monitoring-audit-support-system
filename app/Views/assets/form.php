@@ -134,17 +134,3 @@ $assetId = $asset['asset_id'] ?? 0;
             </div>
         </form>
 </div>
-
-<!--
- <div class="mt-4">
-                <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
-                <textarea class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 transition" id="remarks" name="remarks" rows="2"><?= htmlspecialchars($data['remarks'] ?? '') ?></textarea>
-            </div>
-
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-                <button type="button" class="btn-app btn-app-outline" data-modal-close>Cancel</button>
-                <button type="submit" class="btn-app btn-app-primary"><?= $isEdit ? 'Update' : 'Create' ?> Asset</button>
-            </div>
-        </form>
-</div>
-                    
